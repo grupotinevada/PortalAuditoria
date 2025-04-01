@@ -1,0 +1,11 @@
+<h2>Proyectos</h2>
+<div class="containerProyectos">
+  <div class="card proyecto-card" *ngFor="let proyecto of proyectos" (click)="seleccionarProyecto(proyecto.ProyectoID)">
+    <div class="card-body">
+      <h4 class="project-name">{{ proyecto.NombreProyecto }}</h4>
+      <p>Inicio: {{ proyecto.FechaInicio | date }}</p>
+      <p>Fin: {{ proyecto.FechaFin | date }}</p>
+      <p>Estado: {{ proyecto.descEstado }}</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+
+<div class="containerProyectos">
+    <div class="card country-card" *ngFor="let pais of paises" (click)="seleccionarPais(pais.PaisID)">
+      <div class="card-body">
+        <h3 class="country-name">{{ pais.NombrePais }}</h3>
+        <p class="country-code">Código: {{ pais.Cod }}</p>
+        <a (click)="seleccionarPais(pais.PaisID)" class="btn btn-outline-primary view-link" >
+          Ver proyectos
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  

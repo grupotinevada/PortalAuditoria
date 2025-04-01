@@ -1,0 +1,113 @@
+@if (!loginDisplay) {
+  <div class="container">
+    <!-- Left Section: Login -->
+    <div class="left-section">
+        <div class="login-content">
+            <div class="logo">
+                <mat-icon>bar_chart</mat-icon>
+                <span>Portal de Auditoría</span>
+            </div>
+            <h2>Bienvenido</h2>
+            <p>Inicie sesión con su cuenta de Microsoft para acceder al portal</p>
+            <div class="login-button">
+                <button (click)="loginMicrosoft()">
+                    <svg class="icon" viewBox="0 0 291.346 291.346" >
+                        <path style="fill:#26A6D1;" d="M117.547,266.156L0,249.141v-94.296h117.547V266.156z"></path>
+                        <path style="fill:#3DB39E;" d="M291.346,136.51H136.31l0.055-114.06L291.346,0.009V136.51z"></path>
+                        <path style="fill:#F4B459;" d="M291.346,291.337l-155.091-22.459l0.182-114.015h154.909V291.337z"></path>
+                        <path style="fill:#E2574C;" d="M117.547,136.51H0V42.205l117.547-17.024V136.51z"></path>
+                    </svg>
+                    Iniciar sesión con Microsoft
+                </button>
+            </div>
+            <p class="subtext">Sistema de auditoría corporativa</p>
+        </div>
+    </div>
+
+    <!-- Right Section: Description -->
+    <div class="right-section">
+        <h2>Plataforma de Gestión de Auditorías</h2>
+        <p>
+            Gestione de manera eficiente los procesos de auditoría en diferentes países, 
+            proyectos y sociedades desde una única plataforma centralizada.
+        </p>
+    </div>
+</div>
+}
+
+@if (loginDisplay) {
+
+  <div class="container mt-4">
+    <div class="row">
+      <!-- Welcome Section -->
+      <div class="col-12 text-center mb-4">
+        <h1>Bienvenido al Dashboard</h1>
+        <p>Visualice los informes y métricas clave de auditoría.</p>
+      </div>
+    </div>
+    <div class="row">
+      <!-- Card 1 -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Auditorías Completadas</h5>
+            <p class="card-text display-4 text-primary">45</p>
+          </div>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Auditorías Pendientes</h5>
+            <p class="card-text display-4 text-warning">12</p>
+          </div>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Auditorías en Progreso</h5>
+            <p class="card-text display-4 text-success">8</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <!-- Chart Section -->
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Distribución de Auditorías</h5>
+            <canvas id="auditChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simulated data for the chart
+    const ctx = document.getElementById('auditChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Completadas', 'Pendientes', 'En Progreso'],
+        datasets: [{
+          data: [45, 12, 8],
+          backgroundColor: ['#007bff', '#ffc107', '#28a745']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        }
+      }
+    });
+  </script>
+  
+}

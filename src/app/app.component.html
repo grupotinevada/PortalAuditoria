@@ -1,0 +1,107 @@
+<!-- Navbar -->
+<nav *ngIf="loginDisplay" class="navbar navbar-expand-lg" [ngClass]="{'dark-theme': isDarkMode}">
+  <div class="container-fluid">
+    <!-- Logo y título -->
+    <a class="navbar-brand text-primary d-flex align-items-center" routerLink="/">
+      <i class="bi bi-bar-chart me-2"></i> Portal de Auditoría
+    </a>
+
+    <!-- Botón de colapso para móviles -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+      <!-- Botón de Login -->
+      <button *ngIf="!loginDisplay" class="btn btn-outline-primary me-2" (click)="loginRedirect()">Login</button>
+
+      <!-- Menú de usuario -->
+      <ng-container *ngIf="loginDisplay">
+        <div class="dropdown">
+          <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button"
+            id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i> <span>Usuario</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li>
+              <a class="dropdown-item" routerLink="/profile">
+                <i class="bi bi-person"></i> Mi Perfil
+              </a>
+            </li>
+            <li>
+              <button class="dropdown-item" (click)="logout()">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </button>
+            </li>
+          </ul>
+        </div>
+      </ng-container>
+
+      <!-- Botón de Modo Oscuro -->
+      <button class="btn btn-outline-primary ms-2" (click)="toggleDarkMode()">
+        <i class="bi" [ngClass]="{'bi-moon': isDarkMode, 'bi-sun': !isDarkMode}"></i>
+      </button>
+    </div>
+  </div>
+</nav>
+
+
+<div *ngIf="loginDisplay" class="d-flex">
+  <!-- Sidebar -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarCanvas">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title">Menú</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div class="list-group">
+        <a class="list-group-item list-group-item-action" routerLink="/">
+          <i class="bi bi-house"></i> Inicio
+        </a>
+        <a class="list-group-item list-group-item-action" routerLink="/pais">
+          <i class="bi bi-globe"></i> Países
+        </a>
+        <a class="list-group-item list-group-item-action" routerLink="/informes">
+          <i class="bi bi-bar-chart"></i> Informes
+        </a>
+        <a class="list-group-item list-group-item-action" routerLink="/configuracion">
+          <i class="bi bi-person"></i> Mi perfil
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div id="main-content" class="content flex-grow-1 p-3">
+    
+    <!-- Toolbar estilo Fluent UI -->
+    <div class="toolbar d-flex align-items-center justify-content-between mb-3">
+      <div class="d-flex align-items-center">
+        <button class="btn btn-outline-primary mb-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarCanvas">
+          <i class="bi bi-list"></i>
+        </button>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="ms-3">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item" *ngFor="let breadcrumb of breadcrumbs; let last = last">
+              <a *ngIf="!last" [routerLink]="breadcrumb.url">{{ breadcrumb.label }}</a>
+              <span *ngIf="last">{{ breadcrumb.label }}</span>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      
+      <!-- Espacio para futuras opciones -->
+      <div class="toolbar-actions">
+        <ng-content></ng-content> 
+      </div>
+    </div>
+
+    <router-outlet></router-outlet>
+  </div>
+</div>
+
+<router-outlet *ngIf="!loginDisplay"></router-outlet>
+

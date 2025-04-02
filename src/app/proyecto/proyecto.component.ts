@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectoService } from '../../services/proyecto.service';
-import { IUsuario } from 'src/models/user.model';
 import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
 
@@ -33,13 +32,13 @@ private cargarProyectosPorPais(): void {
       this.proyectos = proyectos;
       console.log('proyecto: ', this.proyectos)
     });
-    this.proyectos = this.proyectos.filter(p => p.PaisID === this.idPais);
+    this.proyectos = this.proyectos.filter(p => p.idpais === this.idPais);
 
   }
 
 }
 
-seleccionarProyecto(idProyecto: number) {
+seleccionarProyecto(idProyecto: number | null) {
   this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
 }
 

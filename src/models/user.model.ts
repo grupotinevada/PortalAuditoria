@@ -1,7 +1,8 @@
 export interface IUsuario {
-  UsuarioID?: string;
-  NombreUsuario: string;
-  CorreoElectronico: string;
-  idPerfil: number;
-  descPerfil?: string | null;
+  idusuario?: string;
+  nombreUsuario: string;
+  correo: string;
+  habilitado: number | null;
+  idrol: number;
+  descrol?: string | null;
 }

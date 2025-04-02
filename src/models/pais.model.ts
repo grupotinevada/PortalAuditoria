@@ -1,5 +1,5 @@
 export interface IPais{
-    PaisID: string | number | null,
-    NombrePais: String | number | null,
-    Cod: string | null
+    idpais: string | number | null,
+    nombrepais: string | number | null,
+    cod: string | null
 }

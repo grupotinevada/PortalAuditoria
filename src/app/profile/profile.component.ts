@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { IUsuario } from '../../models/user.model';
 
 
@@ -10,7 +9,6 @@ import { IUsuario } from '../../models/user.model';
 })
 export class ProfileComponent implements OnInit {
   profile: IUsuario | null = null;
-  constructor() {}
 
   ngOnInit() {
     this.getProfile();

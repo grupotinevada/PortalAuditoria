@@ -30,7 +30,7 @@ export class PaisComponent implements OnInit{
         });
   }
   
-  seleccionarPais(PaisID: any) {
-    this.router.navigate(['/pais', PaisID]);
+  seleccionarPais(idpais: number | string | null) {
+    this.router.navigate(['/pais', idpais]);
   }
 }

@@ -1,17 +1,13 @@
 export interface IProyecto {
-    ProyectoID: number;
-    NombreProyecto: string;
-    FechaInicio: Date | null;
-    FechaFin: Date | null;
-    habilitado: number;
-    descEstado: string;
-    PaisID: number;
-    NombrePais: string;
-    cod: string;
-    AuditorNombre: string;
-    AuditorIdPerfil: number;
-    AuditorCorreo: string;
-    RevisorNombre: string;
-    RevisorIdPerfil: number;
-    RevisorCorreo: string;
+    idpais: number | null;
+    nombrepais: string | null;
+    cod: string | null;
+    nombreUsuario: string | null;
+    correo: string | null;
+    idproyecto: number | null;
+    fecha_inicio: Date | null;
+    fecha_termino: Date | null;
+    habilitado: number | null;
+    nombreproyecto: string | null;
+    nombresociedad: string | null;
 }

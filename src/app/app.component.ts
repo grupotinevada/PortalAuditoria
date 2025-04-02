@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
-import { CommonModule, JsonPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -30,9 +30,6 @@ import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { UserService } from '../services/user.service';
 import { IUsuario } from '../models/user.model';
-import { response } from 'express';
-import { MatIcon } from '@angular/material/icon';
-import { BehaviorSubject } from 'rxjs';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 
@@ -136,19 +133,20 @@ export class AppComponent implements OnInit, OnDestroy {
     if (accounts.length > 0) {
       const account = accounts[0];
       const usuario: IUsuario = {
-        UsuarioID: account.localAccountId || '',
-        NombreUsuario: account.name || '',
-        CorreoElectronico: account.username || '',
-        idPerfil: 1,
+        idusuario: account.localAccountId || '',
+        nombreUsuario: account.name || '',
+        correo: account.username || '',
+        idrol: 1,
+        habilitado: 1
       };
       this.userService.guardarUsuario(usuario).subscribe((response) => {
         console.log('Usuario Guardado: ', response);
       });
       this.userService
-        .obtenerPerfil(usuario.UsuarioID!, usuario.CorreoElectronico)
-        .subscribe((perfilResponse: any) => {
-          usuario.idPerfil = perfilResponse.idPerfil;
-          usuario.descPerfil = perfilResponse.descPerfil;
+        .obtenerPerfil(usuario.idusuario!, usuario.correo)
+        .subscribe((perfilResponse: IUsuario) => {
+          usuario.idrol = perfilResponse.idrol;
+          usuario.descrol = perfilResponse.descrol;
           sessionStorage.setItem('userData', JSON.stringify(usuario));
           console.log(
             'Usuario Cargado con idPerfil en sessionStorage',

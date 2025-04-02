@@ -9,5 +9,4 @@ export interface IProyecto {
     fecha_termino: Date | null;
     habilitado: number | null;
     nombreproyecto: string | null;
-    nombresociedad: string | null;
 }

@@ -1,5 +1,5 @@
 @if (!loginDisplay) {
-  <div class="container">
+  <div class="containerLogin">
     <!-- Left Section: Login -->
     <div class="left-section">
         <div class="login-content">
@@ -38,55 +38,55 @@
 @if (loginDisplay) {
 
   <div class="container mt-4">
-    <div class="row">
-      <!-- Welcome Section -->
-      <div class="col-12 text-center mb-4">
+    <!-- Welcome Section -->
+    <div class="row text-center mb-4">
+      <div class="col-12">
         <h1>Bienvenido al Dashboard</h1>
         <p>Visualice los informes y métricas clave de auditoría.</p>
       </div>
     </div>
-    <div class="row">
-      <!-- Card 1 -->
-      <div class="col-md-4 mb-4">
-        <div class="card">
-          <div class="card-body">
+    
+    <!-- Metrics Cards -->
+    <div class="row g-4">
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
             <h5 class="card-title">Auditorías Completadas</h5>
             <p class="card-text display-4 text-primary">45</p>
           </div>
         </div>
       </div>
-      <!-- Card 2 -->
-      <div class="col-md-4 mb-4">
-        <div class="card">
-          <div class="card-body">
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
             <h5 class="card-title">Auditorías Pendientes</h5>
             <p class="card-text display-4 text-warning">12</p>
           </div>
         </div>
       </div>
-      <!-- Card 3 -->
-      <div class="col-md-4 mb-4">
-        <div class="card">
-          <div class="card-body">
+      <div class="col-12 col-sm-6 col-md-4 mx-auto">
+        <div class="card h-100">
+          <div class="card-body text-center">
             <h5 class="card-title">Auditorías en Progreso</h5>
             <p class="card-text display-4 text-success">8</p>
           </div>
         </div>
       </div>
     </div>
-    <div class="row">
-      <!-- Chart Section -->
+    
+    <!-- Chart Section -->
+    <div class="row mt-4">
       <div class="col-12">
         <div class="card">
-          <div class="card-body">
+          <div class="card-body text-center">
             <h5 class="card-title">Distribución de Auditorías</h5>
-            <canvas id="auditChart" width="400" height="200"></canvas>
+            <canvas id="auditChart"></canvas>
           </div>
         </div>
       </div>
     </div>
   </div>
-
+  
   <script>
     // Simulated data for the chart
     const ctx = document.getElementById('auditChart').getContext('2d');
@@ -101,6 +101,7 @@
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'top'

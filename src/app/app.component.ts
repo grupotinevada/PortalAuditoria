@@ -93,6 +93,7 @@ export class AppComponent implements OnInit, OnDestroy {
         )
       )
       .subscribe((result: EventMessage) => {
+        
         if (this.authService.instance.getAllAccounts().length === 0) {
           window.location.pathname = '/';
         } else {
@@ -249,26 +250,26 @@ export class AppComponent implements OnInit, OnDestroy {
         let label = this.getBreadcrumbLabel(routeConfig.path, child.snapshot.params);
         breadcrumbs.push({ label, url: nextUrl });
   
-        // Sigue recorriendo las rutas hijas sin cortar la ejecución
+        // Sigue recorriendo las rutas hijas
         this.generateBreadcrumbs(child, nextUrl, breadcrumbs);
       }
     }
   
     return breadcrumbs;
   }
-
-private getBreadcrumbLabel(path: string, params: any): string {
-  const labels: { [key: string]: string } = {
-    'pais': 'Países',
-    'pais/:PaisID': `País > ${params.PaisID || ''}`,
-    'pais/:PaisID/proyecto/:ProyectoID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''}`,
-    'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID': `País > ${params.PaisID || ''}> Proyecto > ${params.ProyectoID || ''} > Sociedad > ${params.SociedadID || ''}`,
-  };
-
-  // Verifica si la ruta coincide con una clave exacta, de lo contrario devuelve la ruta con parámetros reemplazados
-  return labels[path] || this.replaceParamsWithValues(path, params);
-}
-private replaceParamsWithValues(path: string, params: any): string {
-  return path.replace(/:([a-zA-Z]+)/g, (_, key) => params[key] || key);
-}
+  
+  private getBreadcrumbLabel(path: string, params: any): string {
+    const labels: { [key: string]: string } = {
+      'pais': 'Países',
+      'pais/:PaisID': `País > ${params.PaisID || ''}`,
+      'pais/:PaisID/proyecto/:ProyectoID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''}`,
+      'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''} > Sociedad > ${params.SociedadID || ''}`,
+    };
+  
+    return labels[path] || this.replaceParamsWithValues(path, params);
+  }
+  
+  private replaceParamsWithValues(path: string, params: any): string {
+    return path.replace(/:([a-zA-Z]+)/g, (_, key) => params[key] || key);
+  }
 }

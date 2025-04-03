@@ -1,12 +1,17 @@
 <h2>Proyectos</h2>
 <div class="containerProyectos">
-  <div class="card proyecto-card" *ngFor="let proyecto of proyectos" (click)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)">
+  <div class="card project-card" *ngFor="let proyecto of proyectos" (click)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)">
     <div class="card-body">
-      <h4 class="project-name">{{ proyecto.nombreproyecto }}</h4>
+      <h3 class="project-name">{{ proyecto.nombreproyecto }}</h3>
+      
       <p>Inicio: {{ proyecto.fecha_inicio| date }}</p>
       <p>Fin: {{ proyecto.fecha_termino| date }}</p>
       <p>Creado por: {{proyecto.nombreUsuario}}</p>
-      <p>Pais: {{proyecto.cod}}</p>
+      <p class="project-code">Pais: {{proyecto.cod}}</p>
+      <a (click)="seleccionarProyecto(proyecto.idproyecto)" class="btn btn-outline-primary view-link" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0">
+        Ver proyectos
+        <i class="bi bi-chevron-right"></i>
+      </a>
     </div>
   </div>
 </div>

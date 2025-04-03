@@ -57,17 +57,7 @@
     font-size: 1.1rem;
   }
   
-  /* Asegurando que los botones outline se vean correctamente */
-  .btn-outline-primary {
-    color: var(--bs-primary) !important;
-    border: 1px solid var(--bs-primary) !important;
-    background-color: transparent !important;
-  }
-  
-  .btn-outline-primary:hover {
-    background-color: var(--bs-primary) !important;
-    color: var(--bs-primary-text) !important;
-  }
+
   
   
   

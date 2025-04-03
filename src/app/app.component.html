@@ -52,22 +52,25 @@
   <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarCanvas">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title">Menú</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"><p></p></button>
     </div>
     <div class="offcanvas-body">
-      <div class="list-group">
-        <a class="list-group-item list-group-item-action" routerLink="/">
+      <div class="list-group ">
+        <a class="list-group-item list-group-item-action " routerLink="/" data-bs-dismiss="offcanvas">
           <i class="bi bi-house"></i> Inicio
         </a>
-        <a class="list-group-item list-group-item-action" routerLink="/pais">
+        <a class="list-group-item list-group-item-action mt-2" routerLink="/pais" data-bs-dismiss="offcanvas">
           <i class="bi bi-globe"></i> Países
         </a>
-        <a class="list-group-item list-group-item-action" routerLink="/informes">
+        <a class="list-group-item list-group-item-action mt-2" routerLink="/informes" data-bs-dismiss="offcanvas">
           <i class="bi bi-bar-chart"></i> Informes
         </a>
-        <a class="list-group-item list-group-item-action" routerLink="/configuracion">
+        <a class="list-group-item list-group-item-action mt-2" routerLink="/profile" data-bs-dismiss="offcanvas">
           <i class="bi bi-person"></i> Mi perfil
         </a>
+        <button class="list-group-item list-group-item-action list-group-item-danger border-t mt-5" (click)="logout()" (keydown.enter)="logout()" data-bs-dismiss="offcanvas">
+          <i class="bi bi-escape"></i> Cerrar sesión
+        </button>
       </div>
     </div>
   </div>
@@ -86,11 +89,11 @@
         <nav aria-label="breadcrumb" class="ms-3">
           <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item" *ngFor="let breadcrumb of breadcrumbs; let last = last">
-              <a *ngIf="!last" [routerLink]="breadcrumb.url">{{ breadcrumb.label }}</a>
+              <a *ngIf="!last" [routerLink]="breadcrumb.url">{{ breadcrumb.url }}</a>
               <span *ngIf="last">{{ breadcrumb.label }}</span>
             </li>
           </ol>
-        </nav>
+        </nav>  
       </div>
       
       <!-- Espacio para futuras opciones -->

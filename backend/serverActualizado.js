@@ -154,40 +154,40 @@ app.get('/pais', async (req, res) => {
 // Obtener sociedades
 app.get('/sociedades/:idproyecto', async (req, res) => {
     const { idproyecto } = req.params;
- 
+
     console.debug(`[DEBUG] Petición recibida: /sociedades/${idproyecto}`);
- 
+
     const sql = `
-        SELECT
+        SELECT 
             s.idsociedad,
             s.nombresociedad
         FROM panelAuditoria.sociedad s
         JOIN panelAuditoria.proyecto_sociedad ps ON s.idsociedad = ps.idsociedad
         WHERE ps.idproyecto = ?;
     `;
- 
+
     try {
         console.debug(`[DEBUG] Ejecutando consulta SQL con idproyecto: ${idproyecto}`);
- 
+
         const [results] = await db.promise().query(sql, [idproyecto]);
- 
+
         if (results.length === 0) {
             console.warn(`[WARN] No se encontraron sociedades para el idproyecto: ${idproyecto}`);
             return res.status(404).json({ error: 'No se encontraron sociedades para el proyecto especificado' });
         }
- 
+
         console.info(`[INFO] Consulta exitosa. Sociedades encontradas: ${results.length}`);
         console.debug(`[SUCCESS] Datos enviados al frontend:`, results);
- 
+
         res.json(results);
     } catch (err) {
         console.error(`[ERROR] Error al obtener sociedades para idproyecto: ${idproyecto}`, err);
         res.status(500).json({ error: 'Error al obtener sociedades', details: err.message });
     }
 });
- 
- 
- 
+
+
+
 //proyecto endpoint
 // Obtener proyectos por país con depuración detallada
 app.get('/proyectos/:PaisID', async (req, res) => {
@@ -203,9 +203,9 @@ app.get('/proyectos/:PaisID', async (req, res) => {
             u.nombreUsuario,
             u.correo,
             p.idproyecto,
-            p.fecha_inicio,
-            p.fecha_termino,
-            p.habilitado,
+            p.fecha_inicio, 
+            p.fecha_termino, 
+            p.habilitado, 
             p.nombreproyecto
         FROM panelAuditoria.proyecto p    
         JOIN panelAuditoria.pais p2 ON p.idpais = p2.idpais  

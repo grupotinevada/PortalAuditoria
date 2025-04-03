@@ -1,6 +1,6 @@
 export interface ISociedad {
-    SociedadID: number;
+    idsociedad: number;
     PaisID: number;
-    NombreSociedad: string;
+    nombresociedad: string;
     ProyectoID: number;
 }

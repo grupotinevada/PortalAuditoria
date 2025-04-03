@@ -1,7 +1,17 @@
-<div class="card" style="width: 18rem;">
-    <div class="card-body">
-        <h5 class="card-title">Sociedades</h5>
-        <p class="card-text">Aquí puedes ver información sobre las sociedades.</p>
-        <a href="#" class="btn btn-primary">Ver más</a>
+<div class="containerSociedades">
+    <div class="card sociedad-card" *ngFor="let sociedad of sociedades" 
+         (click)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0" 
+         (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)">
+      <div class="card-body">
+        <h3 class="sociedad-name">{{ sociedad.nombresociedad }}</h3>
+        <p class="sociedad-pais">Nombre Sociedad:  {{ sociedad.nombresociedad }}</p>
+        <p class="sociedad-id">ID Sociedad: {{ sociedad.idsociedad }}</p>
+        <a (click)="seleccionarSociedad(sociedad.idsociedad)" class="btn btn-outline-primary view-link" 
+           (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0">
+          Ver detalles
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </div>
     </div>
-</div>
+  </div>
+  

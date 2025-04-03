@@ -26,12 +26,13 @@ import {
   EventMessage,
   EventType,
 } from '@azure/msal-browser';
-import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { combineLatest, from, Observable, of, Subject } from 'rxjs';
+import { filter, last, map, mergeMap, takeUntil } from 'rxjs/operators';
 import { UserService } from '../services/user.service';
 import { IUsuario } from '../models/user.model';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
+import { BreadcrumbService } from 'src/services/breadcrumb.service';
 
 @Component({
   selector: 'app-root',
@@ -67,7 +68,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location
+    private location: Location,
+    private breadcrumbService: BreadcrumbService
   ) {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -123,10 +125,13 @@ export class AppComponent implements OnInit, OnDestroy {
       });
     //breadcrumb
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => {
-        this.breadcrumbs = this.generateBreadcrumbs(this.route.root);
+    .pipe(filter(event => event instanceof NavigationEnd))
+    .subscribe(() => {
+      this.generateBreadcrumbs(this.route.root).subscribe(breadcrumbs => {
+        this.breadcrumbs = breadcrumbs;
       });
+    });
+  
   }
 
   setLoginDisplay() {
@@ -240,40 +245,60 @@ export class AppComponent implements OnInit, OnDestroy {
     route: ActivatedRoute,
     url: string = '',
     breadcrumbs: any[] = []
-  ): any[] {
-    if (route.children.length === 0) return breadcrumbs;
+  ): Observable<any[]> {
+    if (route.children.length === 0) return of(breadcrumbs);
   
-    for (let child of route.children) {
-      const routeConfig = child.routeConfig;
-      if (routeConfig && routeConfig.path) {
-        // Reemplaza los parámetros en la URL con los valores reales
+    return from(route.children).pipe(
+      mergeMap(child => {
+        const routeConfig = child.routeConfig;
+        if (!routeConfig || !routeConfig.path) return of([]);
+  
         let nextUrl = `${url}/${routeConfig.path}`;
         Object.keys(child.snapshot.params).forEach(param => {
           nextUrl = nextUrl.replace(`:${param}`, child.snapshot.params[param]);
         });
   
-        let label = this.getBreadcrumbLabel(routeConfig.path, child.snapshot.params);
-        breadcrumbs.push({ label, url: nextUrl });
+        return this.getBreadcrumbLabel(routeConfig.path, child.snapshot.params).pipe(
+          map(label => {
+            breadcrumbs.push({ label, url: nextUrl });
+            return breadcrumbs;
+          }),
+          mergeMap(() => this.generateBreadcrumbs(child, nextUrl, breadcrumbs))
+        );
+      }),
+      last()
+    );
+  }
   
-        // Sigue recorriendo las rutas hijas
-        this.generateBreadcrumbs(child, nextUrl, breadcrumbs);
-      }
+  private getBreadcrumbLabel(path: string, params: any): Observable<string> {
+    switch (path) {
+      case 'pais':
+        return of('Inicio');
+      case 'pais/:PaisID':
+        return this.breadcrumbService.obtenerNombrePais(params.PaisID).pipe(
+          map(nombre => `Inicio > ${nombre}`)
+        );
+      case 'pais/:PaisID/proyecto/:ProyectoID':
+        return combineLatest([
+          this.breadcrumbService.obtenerNombrePais(params.PaisID),
+          this.breadcrumbService.obtenerNombreProyecto(params.PaisID, params.ProyectoID),
+        ]).pipe(
+          map(([nombrePais, nombreProyecto]) => `Inicio > ${nombrePais} > ${nombreProyecto}`)
+        );
+      case 'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID':
+        return combineLatest([
+          this.breadcrumbService.obtenerNombrePais(params.PaisID),
+          this.breadcrumbService.obtenerNombreProyecto(params.PaisID, params.ProyectoID),
+          this.breadcrumbService.obtenerNombreSociedad(params.ProyectoID, params.SociedadID),
+        ]).pipe(
+          map(([nombrePais, nombreProyecto, nombreSociedad]) => 
+            `Inicio > ${nombrePais} > ${nombreProyecto} > ${nombreSociedad}`
+          )
+        );
+      default:
+        return of(this.replaceParamsWithValues(path, params));
     }
-  
-    return breadcrumbs;
   }
-  
-  private getBreadcrumbLabel(path: string, params: any): string {
-    const labels: { [key: string]: string } = {
-      'pais': 'Países',
-      'pais/:PaisID': `País > ${params.PaisID || ''}`,
-      'pais/:PaisID/proyecto/:ProyectoID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''}`,
-      'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''} > Sociedad > ${params.SociedadID || ''}`,
-    };
-    console.log('parametros?',params)
-    return labels[path] || this.replaceParamsWithValues(path, params);
-  }
-  
   private replaceParamsWithValues(path: string, params: any): string {
     return path.replace(/:([a-zA-Z]+)/g, (_, key) => params[key] || key);
   }

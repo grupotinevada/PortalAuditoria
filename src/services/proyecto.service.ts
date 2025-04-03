@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { environment } from 'src/environments/environment';
 import { IProyecto } from 'src/models/proyecto.model';
 import { ISociedad } from 'src/models/sociedad.model';
 import { UserService } from './user.service';
@@ -10,10 +11,10 @@ import { UserService } from './user.service';
 })
 export class ProyectoService {
 
-  private apiUrl = 'http://localhost:3000';
   private proyectosSubject = new BehaviorSubject<IProyecto[]>([]);
   proyectos$ = this.proyectosSubject.asObservable();
   constructor(private http: HttpClient, private userService: UserService) { }
+  private apiUrl = environment.apiUrl.api;
 
   obtenerProyectosPorPais(PaisID: number): Observable<IProyecto[]> {
     return this.http.get<IProyecto[]>(`${this.apiUrl}/proyectos/${PaisID}`);

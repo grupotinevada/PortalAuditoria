@@ -1,0 +1,12 @@
+2025-04-03T18:56:24.527Z [INFO]: [INFO] Verificando si el usuario con correo isalazar@inevada.cl existe...
+2025-04-03T18:56:24.548Z [INFO]: [INFO] Usuario encontrado con idusuario: 2a1115b0-7823-40a9-af64-86a84ce67b57
+2025-04-03T18:56:24.549Z [INFO]: [INFO] Usuario ya registrado con el mismo idusuario. No se realizan cambios.
+2025-04-03T18:57:38.025Z [INFO]: [SUCCESS] Conectado a MySQL con Pool de conexiones
+2025-04-03T19:01:21.305Z [INFO]: [SUCCESS] Conectado a MySQL con Pool de conexiones
+2025-04-03T19:01:34.247Z [INFO]: [SUCCESS] Conectado a MySQL con Pool de conexiones
+2025-04-03T19:04:34.016Z [INFO]: [INFO] Verificando si el usuario con correo isalazar@inevada.cl existe...
+2025-04-03T19:04:34.049Z [INFO]: [INFO] Usuario encontrado con idusuario: 2a1115b0-7823-40a9-af64-86a84ce67b57
+2025-04-03T19:04:34.049Z [INFO]: [INFO] Usuario ya registrado con el mismo idusuario. No se realizan cambios.
+2025-04-03T19:05:27.456Z [INFO]: [INFO] Verificando si el usuario con correo isalazar@inevada.cl existe...
+2025-04-03T19:05:27.458Z [INFO]: [INFO] Usuario encontrado con idusuario: 2a1115b0-7823-40a9-af64-86a84ce67b57
+2025-04-03T19:05:27.459Z [INFO]: [INFO] Usuario ya registrado con el mismo idusuario. No se realizan cambios.

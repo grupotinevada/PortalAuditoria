@@ -4,71 +4,76 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
- 
+const logger = require('./logger');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
- 
-// Configurar conexión a MySQL
-const db = mysql.createConnection({
+
+// Crear pool de conexiones en lugar de una única conexión
+const db = mysql.createPool({
     host: process.env.DB_HOST || '192.168.195.147',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD ||'NEVada--3621',
+    password: process.env.DB_PASSWORD || 'NEVada--3621',
     database: process.env.DB_NAME || 'panelAuditoria',
-    // ssl: { ca: fs.readFileSync('./DigiCertGlobalRootCA.crt.pem') }
+    waitForConnections: true,
+    connectionLimit: 10, // Número máximo de conexiones simultáneas
+    queueLimit: 0
 });
  
-db.connect(err => {
+// Verificar la conexión
+db.getConnection((err, connection) => {
     if (err) {
-        console.error('Error conectando a MySQL:', err);
+        logger.error('[ERROR] Fallo en la conexión a MySQL:', err);
         return;
     }
-    console.log('Conectado a MySQL');
+    logger.info('[SUCCESS] Conectado a MySQL con Pool de conexiones');
+    connection.release(); // Liberar la conexión después de la prueba
 });
  
 // Guardar o actualizar usuario autenticado
 app.post('/usuarios', async (req, res) => {
     const { idusuario, nombreUsuario, correo, idrol, habilitado } = req.body;
- 
+
     if (!idusuario || !nombreUsuario || !correo || !idrol || !habilitado) {
-        console.warn('[WARN] Datos incompletos en la solicitud:', req.body);
+        logger.warn('[WARN] Datos incompletos en la solicitud', { body: req.body });
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
- 
+
     try {
-        console.log(`[INFO] Verificando si el usuario con correo ${correo} existe...`);
-       
+        logger.info(`[INFO] Verificando si el usuario con correo ${correo} existe...`);
+
         // Verificar si el usuario ya existe por correo
         const sqlCheck = `SELECT idusuario FROM usuario WHERE correo = ?`;
         const [results] = await db.promise().query(sqlCheck, [correo]);
- 
+
         if (results.length > 0) {
             const storedIdUsuario = results[0].idusuario;
-            console.log(`[INFO] Usuario encontrado con idusuario: ${storedIdUsuario}`);
- 
+            logger.info(`[INFO] Usuario encontrado con idusuario: ${storedIdUsuario}`);
+
             if (storedIdUsuario === idusuario) {
-                console.log('[INFO] El usuario ya está registrado con el mismo idusuario. No se realizan cambios.');
+                logger.info('[INFO] Usuario ya registrado con el mismo idusuario. No se realizan cambios.');
                 return res.json({ message: 'Usuario ya registrado con el mismo idusuario, no se realizan cambios' });
             }
- 
+
             // Si el token ID (idusuario) ha cambiado, actualizarlo
-            console.log(`[INFO] El idusuario ha cambiado (antes: ${storedIdUsuario}, ahora: ${idusuario}). Actualizando...`);
+            logger.info(`[INFO] idusuario ha cambiado (antes: ${storedIdUsuario}, ahora: ${idusuario}). Actualizando...`);
             const sqlUpdate = `UPDATE usuario SET idusuario = ? WHERE correo = ?`;
             await db.promise().query(sqlUpdate, [idusuario, correo]);
- 
-            console.log('[SUCCESS] idusuario actualizado correctamente.');
+
+            logger.info('[SUCCESS] idusuario actualizado correctamente.');
             return res.json({ message: 'idusuario actualizado correctamente' });
         }
- 
+
         // Si el usuario no existe, insertarlo con habilitado = 1
-        console.log('[INFO] El usuario no existe. Insertando nuevo usuario...');
+        logger.info('[INFO] Usuario no encontrado. Insertando nuevo usuario...');
         const sqlInsert = `INSERT INTO usuario (idusuario, nombreUsuario, correo, idrol, habilitado) VALUES (?, ?, ?, ?, ?)`;
         await db.promise().query(sqlInsert, [idusuario, nombreUsuario, correo, idrol, habilitado]);
- 
-        console.log('[SUCCESS] Usuario guardado con éxito.');
+
+        logger.info('[SUCCESS] Usuario guardado con éxito.');
         res.json({ message: 'Usuario guardado con éxito' });
     } catch (error) {
-        console.error('[ERROR] Error en el proceso:', error);
+        logger.error('[ERROR] Error en el proceso', { error });
         res.status(500).json({ error: 'Error en el servidor' });
     }
 });
@@ -239,5 +244,5 @@ app.get('/proyectos/:PaisID', async (req, res) => {
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`[SUCCESS] Servidor corriendo en http://localhost:${PORT}`);
 });

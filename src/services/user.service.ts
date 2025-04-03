@@ -25,4 +25,10 @@ export class UserService {
   obtenerPaises(){
     return this.http.get<IPais[]>(`${this.apiUrl}/pais`);
   }
+
+  // Obtener usuario actual desde sessionStorage
+  getCurrentUser(): IUsuario | null {
+    const userData = sessionStorage.getItem('userData');
+    return userData ? JSON.parse(userData) as IUsuario : null;
+  }
 }

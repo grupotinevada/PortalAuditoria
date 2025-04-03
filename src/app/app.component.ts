@@ -32,6 +32,8 @@ import { UserService } from '../services/user.service';
 import { IUsuario } from '../models/user.model';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
+import { ReactiveFormsModule } from '@angular/forms';
+import { CrearProyectoComponent } from "./crear-proyecto/crear-proyecto.component";
 import { BreadcrumbService } from 'src/services/breadcrumb.service';
 
 @Component({
@@ -50,9 +52,12 @@ import { BreadcrumbService } from 'src/services/breadcrumb.service';
     MatToolbarModule,
     MatListModule,
     RouterLink,
-  ],
+    ReactiveFormsModule,
+    CrearProyectoComponent
+],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  mostrarModalProyecto = false;
   title = 'Portal Auditoria';
   isIframe = false;
   loginDisplay = false;
@@ -304,5 +309,41 @@ export class AppComponent implements OnInit, OnDestroy {
   }
   get isHomePage(): boolean {
     return this.router.url === '/';
+  }
+
+  get showNewProjectButton(): boolean {
+    // Verifica si la ruta actual coincide con /pais/:id
+    const urlRegex = /^\/pais\/\d+$/;
+    return urlRegex.test(this.router.url);
+  }
+
+  paisId: number | null = null;
+
+  abrirModalCrearProyecto(): void {
+    console.log('Función abrirModalCrearProyecto ejecutada');
+    const match = this.router.url.match(/^\/pais\/(\d+)$/);
+    console.log('Match de URL:', match);
+    
+    if (match && match[1]) {
+      this.paisId = parseInt(match[1], 10);
+      console.log('ID de país obtenido:', this.paisId);
+      this.mostrarModalProyecto = true;
+      console.log('Modal debería estar visible ahora');
+    } else {
+      console.warn('No se pudo extraer el ID del país de la URL');
+    }
+  }
+
+  cerrarModalProyecto(): void {
+    this.mostrarModalProyecto = false;
+  }
+
+  onProyectoCreado(proyecto: any): void {
+    console.log('Proyecto creado:', proyecto);
+    // Aquí puedes agregar lógica adicional si necesitas
+    this.cerrarModalProyecto();
+    
+    // Opcional: Recargar la página o actualizar datos
+    // window.location.reload();
   }
 }

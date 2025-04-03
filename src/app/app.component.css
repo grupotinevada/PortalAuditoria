@@ -11,15 +11,7 @@
   opacity: 0;
   pointer-events: none; /* Evita que sea clickeable */
 }
-.list-group-item {
-  border-radius: 5px;
-  font-size: 15px;
-  font-weight: 500;
-}
 
-.list-group-item:hover {
-  background: var(--bs-primary-bg-subtle);
-}
 
 /* Contenido Principal */
 .content {
@@ -72,4 +64,9 @@
 .toolbar-actions {
   display: flex;
   align-items: center;
+}
+
+.offcanvas {
+  --bs-offcanvas-width: 280px; /* Cambia este valor según lo que necesites */
+  width: var(--bs-offcanvas-width); /* Asegura que el cambio se aplique */
 }

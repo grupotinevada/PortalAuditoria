@@ -3,7 +3,7 @@
 ::view-transition-new(root) {
   animation-duration: 0.5s;
 }
-/* PALETA */
+
 /* PALETA */
 :root {
   --md-sys-color-primary: #000000;
@@ -171,9 +171,59 @@ a:hover {
 .text-white { color: var(--md-sys-color-on-primary); }
 .text-dark { color: var(--bs-dark); }
 
+/* Lista de elementos sin borde tradicional, con separación sutil */
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid var(--bs-border-color); /* Línea sutil de separación */
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 12px;
+}
+
+/* Efecto moderno en hover */
+.list-group-item:hover {
+  background: var(--bs-primary); /* Color principal */
+  color: var(--bs-primary-text); /* Texto sobre el color principal */
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1); /* Sombra sutil en hover */
+  transform: translateY(-1px); /* Efecto de elevación ligera */
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+/* Botón Cerrar Sesión */
+.list-group-item-danger {
+  background-color: #dc3545; /* Rojo Bootstrap */
+  color: #ffffff;
+  border: none;
+}
+
+.list-group-item-danger:hover {
+  background-color: #b02a37; /* Rojo más oscuro */
+  color: #ffffff;
+  filter: brightness(1.1);
+}
+
+/* Botones Danger */
+.btn-danger {
+  background-color: #dc3545;
+  color: #ffffff;
+  border: 1px solid #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #b02a37;
+  color: #ffffff;
+  filter: brightness(1.1);
+}
 
 /* Contenedor principal */
 .container {
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
+}
+
+.btn:focus, .btn:active {
+  outline: none !important;
+  box-shadow: none !important;
 }

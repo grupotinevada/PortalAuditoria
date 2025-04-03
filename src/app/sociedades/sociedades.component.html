@@ -4,8 +4,7 @@
          (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)">
       <div class="card-body">
         <h3 class="sociedad-name">{{ sociedad.nombresociedad }}</h3>
-        <p class="sociedad-pais">Nombre Sociedad:  {{ sociedad.nombresociedad }}</p>
-        <p class="sociedad-id">ID Sociedad: {{ sociedad.idsociedad }}</p>
+        <p class="sociedad-id">COD: {{ sociedad.idsociedad }}</p>
         <a (click)="seleccionarSociedad(sociedad.idsociedad)" class="btn btn-outline-primary view-link" 
            (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0">
           Ver detalles

@@ -1,29 +1,60 @@
 <!-- Navbar -->
-<nav *ngIf="loginDisplay" class="navbar navbar-expand-lg" [ngClass]="{'dark-theme': isDarkMode}">
+<nav
+  *ngIf="loginDisplay"
+  class="navbar navbar-expand-lg"
+  [ngClass]="{ 'dark-theme': isDarkMode }"
+>
   <div class="container-fluid">
     <!-- Logo y título -->
-    <a class="navbar-brand text-primary d-flex align-items-center" routerLink="/">
+    <a
+      class="navbar-brand text-primary d-flex align-items-center"
+      routerLink="/"
+    >
       <i class="bi bi-bar-chart me-2"></i> Portal de Auditoría
     </a>
 
     <!-- Botón de colapso para móviles -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarContent"
+      aria-controls="navbarContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+    <div
+      class="collapse navbar-collapse justify-content-end"
+      id="navbarContent"
+    >
       <!-- Botón de Login -->
-      <button *ngIf="!loginDisplay" class="btn btn-outline-primary me-2" (click)="loginRedirect()">Login</button>
+      <button
+        *ngIf="!loginDisplay"
+        class="btn btn-outline-primary me-2"
+        (click)="loginRedirect()"
+      >
+        Login
+      </button>
 
       <!-- Menú de usuario -->
       <ng-container *ngIf="loginDisplay">
         <div class="dropdown">
-          <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button"
-            id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <button
+            class="btn btn-outline-primary dropdown-toggle d-flex align-items-center"
+            type="button"
+            id="userDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
             <i class="bi bi-person-circle me-2"></i> <span>Usuario</span>
           </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+          <ul
+            class="dropdown-menu dropdown-menu-end"
+            aria-labelledby="userDropdown"
+          >
             <li>
               <a class="dropdown-item" routerLink="/profile">
                 <i class="bi bi-person"></i> Mi Perfil
@@ -40,50 +71,84 @@
 
       <!-- Botón de Modo Oscuro -->
       <button class="btn btn-outline-primary ms-2" (click)="toggleDarkMode()">
-        <i class="bi" [ngClass]="{'bi-moon': isDarkMode, 'bi-sun': !isDarkMode}"></i>
+        <i
+          class="bi"
+          [ngClass]="{ 'bi-moon': isDarkMode, 'bi-sun': !isDarkMode }"
+        ></i>
       </button>
     </div>
   </div>
 </nav>
-
 
 <div *ngIf="loginDisplay" class="d-flex">
   <!-- Sidebar -->
   <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarCanvas">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title">Menú</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas">
+        <p></p>
+      </button>
     </div>
     <div class="offcanvas-body">
       <div class="list-group">
-        <a class="list-group-item list-group-item-action" routerLink="/">
+        <a
+          class="list-group-item list-group-item-action"
+          routerLink="/"
+          data-bs-dismiss="offcanvas"
+        >
           <i class="bi bi-house"></i> Inicio
         </a>
-        <a class="list-group-item list-group-item-action" routerLink="/pais">
+        <a
+          class="list-group-item list-group-item-action mt-2"
+          routerLink="/pais"
+          data-bs-dismiss="offcanvas"
+        >
           <i class="bi bi-globe"></i> Países
         </a>
-        <a class="list-group-item list-group-item-action" routerLink="/informes">
+        <a
+          class="list-group-item list-group-item-action mt-2"
+          routerLink="/informes"
+          data-bs-dismiss="offcanvas"
+        >
           <i class="bi bi-bar-chart"></i> Informes
         </a>
-        <a class="list-group-item list-group-item-action" routerLink="/configuracion">
+        <a
+          class="list-group-item list-group-item-action mt-2"
+          routerLink="/profile"
+          data-bs-dismiss="offcanvas"
+        >
           <i class="bi bi-person"></i> Mi perfil
         </a>
+        <button
+          class="list-group-item list-group-item-action list-group-item-danger border-t mt-5"
+          (click)="logout()"
+          (keydown.enter)="logout()"
+          data-bs-dismiss="offcanvas"
+        >
+          <i class="bi bi-escape"></i> Cerrar sesión
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Contenido Principal -->
   <div id="main-content" class="content flex-grow-1 p-3">
-    
     <!-- Toolbar estilo Fluent UI -->
-    <div class="toolbar d-flex align-items-center justify-content-between mb-3">
-      <div class="d-flex align-items-center">
+    <div class="toolbar d-flex flex-wrap align-items-center justify-content-between mb-3">
+      
+      <!-- Sección Izquierda (Menú, Botón Volver, Breadcrumb) -->
+      <div class="d-flex align-items-center gap-2">
+        <!-- Botón menú sidebar -->
         <button class="btn btn-outline-primary mb-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarCanvas">
           <i class="bi bi-list"></i>
         </button>
-
+  
+        <!-- Botón Volver -->
+        <button *ngIf="!isHomePage" class="btn btn-outline-primary mb-2" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i> Volver
+        </button>
+  
         <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="ms-3">
+        <nav aria-label="breadcrumb" class="ms-2 mb-2">
           <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item" *ngFor="let breadcrumb of breadcrumbs; let last = last">
               <a *ngIf="!last" [routerLink]="breadcrumb.url">{{ breadcrumb.label }}</a>
@@ -92,16 +157,16 @@
           </ol>
         </nav>
       </div>
-      
-      <!-- Espacio para futuras opciones -->
+  
+      <!-- Sección Derecha (Opciones futuras) -->
       <div class="toolbar-actions">
-        <ng-content></ng-content> 
+        <ng-content></ng-content>
       </div>
     </div>
 
     <router-outlet></router-outlet>
   </div>
-</div>
-
-<router-outlet *ngIf="!loginDisplay"></router-outlet>
-
+  </div>
+  
+  <router-outlet *ngIf="!loginDisplay"></router-outlet>
+  

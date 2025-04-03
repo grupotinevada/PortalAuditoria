@@ -222,3 +222,8 @@ a:hover {
   background-color: var(--bs-body-bg);
   color: var(--bs-body-color);
 }
+
+.btn:focus, .btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}

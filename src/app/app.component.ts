@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -66,7 +66,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private msalBroadcastService: MsalBroadcastService,
     private userService: UserService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private location: Location
   ) {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -231,6 +232,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  goBack(): void {
+    this.location.back();
+  }
+
   private generateBreadcrumbs(
     route: ActivatedRoute,
     url: string = '',
@@ -265,11 +270,14 @@ export class AppComponent implements OnInit, OnDestroy {
       'pais/:PaisID/proyecto/:ProyectoID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''}`,
       'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID': `País > ${params.PaisID || ''} > Proyecto > ${params.ProyectoID || ''} > Sociedad > ${params.SociedadID || ''}`,
     };
-  
+    console.log('parametros?',params)
     return labels[path] || this.replaceParamsWithValues(path, params);
   }
   
   private replaceParamsWithValues(path: string, params: any): string {
     return path.replace(/:([a-zA-Z]+)/g, (_, key) => params[key] || key);
+  }
+  get isHomePage(): boolean {
+    return this.router.url === '/';
   }
 }

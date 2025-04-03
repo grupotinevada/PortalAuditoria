@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 import { IProyecto } from 'src/models/proyecto.model';
 import { ISociedad } from 'src/models/sociedad.model';
 
@@ -9,7 +10,8 @@ import { ISociedad } from 'src/models/sociedad.model';
 })
 export class ProyectoService {
 
-  private apiUrl = 'http://localhost:3000';
+  private apiUrl = environment.apiUrl.api;
+
   constructor(private http: HttpClient) { }
 
   obtenerProyectosPorPais(PaisID: number): Observable<IProyecto[]> {

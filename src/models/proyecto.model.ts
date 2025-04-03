@@ -1,5 +1,6 @@
 export interface IProyecto {
     idpais: number | null;
+    idusuario: string | null;
     nombrepais: string | null;
     cod: string | null;
     nombreUsuario: string | null;

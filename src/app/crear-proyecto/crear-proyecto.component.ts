@@ -65,9 +65,11 @@ export class CrearProyectoComponent {
       if (this.proyectoForm.valid && this.paisId) {
         this.isLoading = true;
         this.errorMessage = '';
+        this.getProfile();
   
         const proyectoData: IProyecto = {
           idpais: this.paisId,
+          idusuario: this.profile?.idusuario || null, // ID del usuario autenticado
           nombreproyecto: this.proyectoForm.get('nombre')?.value,
           fecha_inicio: this.proyectoForm.get('fechaInicio')?.value,
           fecha_termino: this.proyectoForm.get('fechaFin')?.value,

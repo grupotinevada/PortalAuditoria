@@ -38,7 +38,7 @@ export class ProyectoService {
 
     const body = {
       idpais: proyecto.idpais,
-      idusuario: currentUser.idusuario, // Usamos el ID real del usuario
+      idusuario: proyecto.idusuario, // Usamos el ID real del usuario
       nombreproyecto: proyecto.nombreproyecto,
       fecha_inicio: proyecto.fecha_inicio,
       fecha_termino: proyecto.fecha_termino,

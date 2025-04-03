@@ -40,8 +40,9 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
-
+/backend/logs_server/
 package-lock.json
 
 DigiCertGlobalRootCA.crt.pem
 DigiCertGlobalRootG2.crt.pem
+

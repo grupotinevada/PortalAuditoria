@@ -1,3 +1,15 @@
+<!-- proyectos.component.html o donde llames al modal
+<button (click)="abrirModal()" class="btn btn-primary mb-3">
+  <i class="fas fa-plus"></i> Nuevo Proyecto
+</button>
+
+ Modal para crear proyecto 
+<app-crear-proyecto 
+  *ngIf="mostrarModalProyecto"
+  (proyectoCreado)="onProyectoCreado($event)"
+  (cerrarModal)="cerrarModalProyecto()">
+</app-crear-proyecto> -->
+
 <h2>Proyectos</h2>
 <div class="containerProyectos">
   <div class="card project-card" *ngFor="let proyecto of proyectos" (click)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)">

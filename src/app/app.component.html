@@ -146,6 +146,15 @@
         <button *ngIf="!isHomePage" class="btn btn-outline-primary mb-2" (click)="goBack()">
           <i class="bi bi-arrow-left"></i> Volver
         </button>
+
+        <!-- En tu toolbar -->
+        <div class="toolbar-actions">
+          <button *ngIf="showNewProjectButton" 
+                  class="btn btn-primary" 
+                  (click)="abrirModalCrearProyecto()">
+            <i class="fas fa-plus"></i> Nuevo Proyecto
+          </button>
+        </div>
   
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="ms-2 mb-2">
@@ -170,3 +179,10 @@
   
   <router-outlet *ngIf="!loginDisplay"></router-outlet>
   
+<!-- Fuera del toolbar, al final del archivo -->
+<app-crear-proyecto 
+  *ngIf="mostrarModalProyecto"
+  [paisId]="paisId || 0"
+  (proyectoCreado)="onProyectoCreado($event)"
+  (cerrarModal)="cerrarModalProyecto()">
+</app-crear-proyecto>

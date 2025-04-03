@@ -1,0 +1,44 @@
+<div class="modal fade show d-block" [class.show]="true" id="modalProyecto" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px; display: block;">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Crear Nuevo Proyecto</h5>
+          <button type="button" class="close" (click)="onCancel()" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        
+        <form [formGroup]="proyectoForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Nombre del Proyecto*</label>
+              <input type="text" formControlName="nombre" class="form-control" id="nombreInput">
+            </div>
+            
+            <div class="form-group">
+              <label>Descripción</label>
+              <textarea formControlName="descripcion" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label>Fecha de Inicio*</label>
+              <input type="date" formControlName="fechaInicio" class="form-control">
+            </div>
+            
+            <div class="form-group">
+              <label>Fecha de Fin</label>
+              <input type="date" formControlName="fechaFin" class="form-control">
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="proyectoForm.invalid">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>

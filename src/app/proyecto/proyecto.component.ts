@@ -42,4 +42,22 @@ seleccionarProyecto(idProyecto: number | null) {
   this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
 }
 
+
+mostrarModal = false;
+
+abrirModal(): void {
+  this.mostrarModal = true;
+}
+
+cerrarModal(): void {
+  this.mostrarModal = false;
+}
+
+onProyectoCreado(proyecto: any): void {
+  console.log('Proyecto creado:', proyecto);
+  // Aquí puedes actualizar tu lista de proyectos
+  this.proyectos.push(proyecto);
+  this.cerrarModal();
+}
+
 }

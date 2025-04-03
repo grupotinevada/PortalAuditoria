@@ -233,6 +233,33 @@ app.get('/proyectos/:PaisID', async (req, res) => {
     }
 });
 
+app.post('/proyecto', async (req, res) => {
+    console.log('[INFO] Petición recibida para crear un nuevo proyecto.');
+    
+    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado } = req.body;
+    console.log('[DEBUG] Datos recibidos:', { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado });
+
+
+    // Validación básica
+    if (!nombreproyecto || !fecha_inicio || !fecha_termino || habilitado == null) {
+        console.warn('[WARN] Datos insuficientes para crear un proyecto.');
+        return res.status(400).json({ error: 'Faltan datos obligatorios' });
+    }
+
+    try {
+        const sql = `INSERT INTO proyecto (idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado) 
+                    VALUES (?, ?, ?, ?, ?, ?)`;
+        const values = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado];
+
+        const [result] = await db.promise().query(sql, values);
+        console.log(`[SUCCESS] Proyecto creado con ID: ${result.insertId}`);
+        res.status(201).json({ idproyecto: result.insertId, message: 'Proyecto creado exitosamente' });
+    } catch (error) {
+        console.error('[ERROR] Error al crear el proyecto:', error.sqlMessage || error.message);    
+        res.status(500).json({ error: 'Error en el servidor al crear el proyecto' });
+    }
+});
+
 // Obtener procesos para una sociedad 
 app.get('/procesos/:idSociedad', async (req, res) => {
     const { idSociedad } = req.params;

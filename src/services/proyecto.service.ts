@@ -17,4 +17,8 @@ export class ProyectoService {
   obtenerSociedades(idProyecto: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/sociedades/${idProyecto}`);
   }
+
+  obtenerProcesosPorSociedad(idSociedad: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/procesos/${idSociedad}`);
+  }
 }

@@ -233,7 +233,60 @@ app.get('/proyectos/:PaisID', async (req, res) => {
     }
 });
 
+// Obtener procesos para una sociedad 
+app.get('/procesos/:idSociedad', async (req, res) => {
+    const { idSociedad } = req.params;
 
+    console.debug(`[DEBUG] Petición recibida: /procesos/${idSociedad}`);
+
+    // Consulta SQL para obtener los procesos de un proyecto
+    const sql = `
+        SELECT 
+            p.idproceso,
+            p.idsociedad,
+            p.nombreproceso,
+            p.fecha_inicio,
+            p.fecha_fin,
+            p.responsable,
+            p.revisor,
+            p.idestado,
+            s.nombresociedad,
+            e.descestado,
+            r1.nombreusuario AS responsable_nombre,
+            r2.nombreusuario AS revisor_nombre
+        FROM panelAuditoria.proceso p
+        JOIN panelAuditoria.proyecto_sociedad ps ON p.idsociedad = ps.idsociedad
+        LEFT JOIN panelAuditoria.sociedad s ON p.idsociedad = s.idsociedad
+        LEFT JOIN panelAuditoria.estado e ON p.idestado = e.idestado
+        LEFT JOIN panelAuditoria.usuario r1 ON p.responsable = r1.idusuario
+        LEFT JOIN panelAuditoria.usuario r2 ON p.revisor = r2.idusuario
+        WHERE ps.idsociedad = ?;
+    `;
+
+    try {
+        console.debug(`[DEBUG] Ejecutando consulta SQL con idSociedad: ${idSociedad}`);
+
+        // Ejecutar la consulta SQL
+        const [results] = await db.promise().query(sql, [idSociedad]);
+
+        // Si no se encuentran procesos para el proyecto
+        if (results.length === 0) {
+            console.warn(`[WARN] No se encontraron procesos para el idSociedad: ${idSociedad}`);
+            return res.status(404).json({ error: 'No se encontraron procesos para el proyecto especificado' });
+        }
+
+        // Si la consulta fue exitosa y se encontraron resultados
+        console.info(`[INFO] Consulta exitosa. Procesos encontrados: ${results.length}`);
+        console.debug(`[SUCCESS] Datos enviados al frontend:`, results);
+
+        // Devolver los resultados en formato JSON
+        res.json(results);
+    } catch (err) {
+        // Manejo de errores
+        console.error(`[ERROR] Error al obtener procesos para idSociedad: ${idSociedad}`, err);
+        res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
+    }
+});
 
 
 // Iniciar servidor

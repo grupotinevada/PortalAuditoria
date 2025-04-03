@@ -1,1 +1,33 @@
-<p>procesos works!</p>
+<div class="container mt-4">
+    <h2 class="mb-3">Procesos</h2>
+  
+    <!--<div *ngIf="loading" class="alert alert-info">Cargando procesos...</div>-->
+  
+    <div *ngIf="errorMessage" class="alert alert-warning">{{ errorMessage }}</div>
+  
+    <table *ngIf="!loading && procesos.length > 0" class="table table-bordered table-striped">
+      <thead class="table-dark">
+        <tr>
+          <th>Nombre</th>
+          <th>Fecha-Inicio</th>
+          <th>Fecha-Vencimiento</th>
+          <th>Estado</th>
+          <th>Responsable - Revisor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let proceso of procesos">
+          <td>{{ proceso.nombreproceso }}</td>
+          <td>{{ proceso.fecha_inicio}}</td>
+          <td>{{ proceso.fecha_termino}}</td>
+          <td>{{ proceso.idestado }}</td>
+          <td>{{ proceso.responsable }} - {{ proceso.revisor }}</td>
+        </tr>
+      </tbody>
+    </table>
+  
+    <div *ngIf="!loading && procesos.length === 0" class="alert alert-warning">
+      No se encontraron procesos
+    </div>
+  </div>
+  

@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { IProyecto } from 'src/models/proyecto.model';
 import { ISociedad } from 'src/models/sociedad.model';
 import { UserService } from './user.service';
+import { IProceso } from 'src/models/proceso.model';
 
 @Injectable({
   providedIn: 'root'
@@ -24,8 +25,8 @@ export class ProyectoService {
     return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/${idProyecto}`);
   }
 
-  obtenerProcesosPorSociedad(idSociedad: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/procesos/${idSociedad}`);
+  obtenerProcesosPorSociedad(idSociedad: number): Observable<IProceso[]> {
+    return this.http.get<IProceso[]>(`${this.apiUrl}/procesos/${idSociedad}`);
   }
 
   // Nuevo método para crear proyecto

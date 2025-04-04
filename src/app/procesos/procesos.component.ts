@@ -2,17 +2,20 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProyectoService } from 'src/services/proyecto.service';
 import { IProceso } from 'src/models/proceso.model';
-import { NgIf, NgFor, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { catchError, finalize } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-procesos',
-  imports: [CommonModule, NgIf, NgFor],
+  imports: [CommonModule],
   templateUrl: './procesos.component.html',
   styleUrl: './procesos.component.css'
 })
 export class ProcesosComponent implements OnInit {
   procesos: IProceso[] = [];
   idSociedad!: number;
+  nombreSociedad: string | null = null;
   PaisID!: number;
   idProyecto!: number;
   loading: boolean = true;
@@ -30,35 +33,53 @@ export class ProcesosComponent implements OnInit {
       this.idProyecto = Number(params.get('ProyectoID'));
       this.idSociedad = Number(params.get('SociedadID'));
       
-      // Agregar un console.log para ver los parámetros
-      console.log('🔹 Parámetros obtenidos:', params)
+      console.log('🔹 Parámetros obtenidos:', {
+        PaisID: this.PaisID,
+        ProyectoID: this.idProyecto,
+        SociedadID: this.idSociedad
+      });
 
-      // Validar si idProyecto es un número válido
-      if (isNaN(this.idProyecto) || !this.idProyecto) {
-          console.warn('⚠️ No se proporcionó un ID de proyecto válido.');
-          return;
-          }
-    
-    
-    }
-    
-    )
-    }
+      // Validar parámetros
+      if (isNaN(this.idSociedad)) {
+        this.errorMessage = 'ID de sociedad no válido';
+        this.loading = false;
+        console.error('⚠️ ID de sociedad no válido:', this.idSociedad);
+        return;
+      }
+
+      // Llamar a cargar procesos solo si tenemos un ID válido
+      this.cargarProcesos();
+    });
+  }
 
   cargarProcesos(): void {
-    console.log('[ACTION] Cargando procesos para sociedad ID:', this.idSociedad);
-
-    this.proyectoService.obtenerProcesosPorSociedad(this.idSociedad).subscribe({
-      next: (data) => {
-        console.log('[SUCCESS] Procesos obtenidos:', data);
-        this.procesos = data;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('[ERROR] Error al obtener procesos:', error);
-        this.errorMessage = 'No se encontraron procesos';
-        this.loading = false;
-      }
-    });
+    this.loading = true;
+    this.errorMessage = null;
+    
+    console.log('🔹 Cargando procesos para sociedad:', this.idSociedad);
+    
+    this.proyectoService.obtenerProcesosPorSociedad(this.idSociedad)
+      .pipe(
+        finalize(() => this.loading = false),
+        catchError(error => {
+          this.errorMessage = 'Error al cargar los procesos';
+          console.error('❌ Error al obtener procesos:', error);
+          return of([]); // Retorna un array vacío para que la suscripción no falle
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.procesos = data;
+          console.log('✅ Procesos recibidos:', data);
+              // Asumiendo que el primer elemento tiene el nombre de la sociedad
+            if(data.length > 0) {
+              this.nombreSociedad = data[0].nombresociedad; 
+              //console.log('nombre socieda: ',this.nombreSociedad);
+            }
+          if (data.length === 0) {
+            this.errorMessage = 'No se encontraron procesos para esta sociedad';
+          }
+        }
+      });
   }
 }

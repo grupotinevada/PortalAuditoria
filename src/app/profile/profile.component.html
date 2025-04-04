@@ -1,6 +1,14 @@
-<div>
-    <p><strong>First Name: </strong> {{profile?.nombreUsuario}}</p>
-    <p><strong>Email: </strong> {{profile?.correo}}</p>
-    <p><strong>Id: </strong> {{profile?.idusuario}}</p>
-    <p><strong>perfil: </strong> {{profile?.descrol}}</p>
-</div>
+<div class="containerProyectos">
+
+    <div class="country-card p-4 text-center">
+
+      <div class="mb-3">
+        <i class="bi bi-person-circle country-name" style="font-size: 4rem;"></i>
+      </div>
+      <h5 class="country-name">{{ profile?.nombreUsuario }}</h5>
+      <p class="country-code mb-1">{{ profile?.correo }}</p>
+      <span class="badge bg-primary px-3 py-2">{{ profile?.descrol }}</span>
+      <p class="text-muted mt-4" style="font-size: x-small !important;"> {{ profile?.idusuario }}</p>
+    </div>
+  </div>
+  

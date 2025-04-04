@@ -133,56 +133,92 @@
 
   <div id="main-content" class="content flex-grow-1 p-3">
     <!-- Toolbar estilo Fluent UI -->
-    <div class="toolbar d-flex flex-wrap align-items-center justify-content-between mb-3">
-      
+    <div
+      class="toolbar d-flex flex-wrap align-items-center justify-content-between mb-3"
+    >
       <!-- Sección Izquierda (Menú, Botón Volver, Breadcrumb) -->
       <div class="d-flex align-items-center gap-2">
         <!-- Botón menú sidebar -->
-        <button class="btn btn-outline-primary mb-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarCanvas">
+        <button
+          class="btn btn-outline-primary mb-2"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarCanvas"
+        >
           <i class="bi bi-list"></i>
         </button>
-  
-        <!-- Botón Volver -->
-        <button *ngIf="!isHomePage" class="btn btn-outline-primary mb-2" (click)="goBack()">
-          <i class="bi bi-arrow-left"></i> Volver
-        </button>
 
-        <!-- En tu toolbar -->
         <div class="toolbar-actions">
-          <button *ngIf="showNewProjectButton" 
-                  class="btn btn-primary" 
-                  (click)="abrirModalCrearProyecto()">
-            <i class="fas fa-plus"></i> Nuevo Proyecto
+          <!-- Botón Volver para pantallas grandes -->
+          <button
+            *ngIf="!isHomePage"
+            class="btn btn-outline-primary mb-2 d-none d-md-inline-flex"
+            (click)="goBack()"
+          >
+            <i class="bi bi-chevron-left"></i> Volver
+          </button>
+
+          <!-- Botón Volver para móviles (solo ícono) -->
+          <button
+            *ngIf="!isHomePage"
+            class="btn btn-outline-primary mb-2 d-md-none"
+            (click)="goBack()"
+          >
+            <i class="bi bi-chevron-left"></i>
           </button>
         </div>
-  
+
+        <!-- En tu toolbar -->
+
         <!-- Breadcrumb -->
         <nav aria-label="breadcrumb" class="ms-2 mb-2">
           <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item" *ngFor="let breadcrumb of breadcrumbs; let last = last">
-              <a *ngIf="!last" [routerLink]="breadcrumb.url">{{ breadcrumb.label }}</a>
+            <li
+              class="breadcrumb-item"
+              *ngFor="let breadcrumb of breadcrumbs; let last = last"
+            >
+              <a *ngIf="!last" [routerLink]="breadcrumb.url">{{
+                breadcrumb.label
+              }}</a>
               <span *ngIf="last">{{ breadcrumb.label }}</span>
             </li>
           </ol>
         </nav>
       </div>
-  
+
       <!-- Sección Derecha (Opciones futuras) -->
       <div class="toolbar-actions">
-        <ng-content></ng-content>
+        <!-- Botón para pantallas grandes -->
+        <button
+          *ngIf="showNewProjectButton"
+          class="btn btn-outline-primary d-none d-md-inline-flex  mb-2"
+          (click)="abrirModalCrearProyecto()"
+        >
+          <i class="fas fa-plus"></i> Nuevo Proyecto
+        </button>
+
+        <!-- Botón para móviles -->
+        <button
+          *ngIf="showNewProjectButton"
+          class="btn btn-outline-primary d-md-none"
+          (click)="abrirModalCrearProyecto()"
+        >
+          <i class="bi bi-plus"></i>
+        </button>
       </div>
     </div>
 
     <router-outlet></router-outlet>
   </div>
-  </div>
-  
-  <router-outlet *ngIf="!loginDisplay"></router-outlet>
-  
+</div>
+
+<router-outlet *ngIf="!loginDisplay"></router-outlet>
+
 <!-- Fuera del toolbar, al final del archivo -->
-<app-crear-proyecto 
+<app-crear-proyecto
   *ngIf="mostrarModalProyecto"
   [paisId]="paisId || 0"
   (proyectoCreado)="onProyectoCreado($event)"
-  (cerrarModal)="cerrarModalProyecto()">
+  (cerrarModal)="cerrarModalProyecto()"
+>
 </app-crear-proyecto>

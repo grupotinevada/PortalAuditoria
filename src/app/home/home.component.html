@@ -87,28 +87,6 @@
     </div>
   </div>
   
-  <script>
-    // Simulated data for the chart
-    const ctx = document.getElementById('auditChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: ['Completadas', 'Pendientes', 'En Progreso'],
-        datasets: [{
-          data: [45, 12, 8],
-          backgroundColor: ['#007bff', '#ffc107', '#28a745']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'top'
-          }
-        }
-      }
-    });
-  </script>
-  
+
+   
 }

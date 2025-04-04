@@ -1,5 +1,5 @@
 <div class="containerProyectos">
-  <div class="card country-card" *ngFor="let pais of paises" (click)="seleccionarPais(pais.idpais)" tabindex="0" (keydown.enter)="seleccionarPais(pais.idpais)">
+  <div class="card country-card" *ngFor="let pais of paises">
     <div class="card-body">
     <h3 class="country-name">{{ pais.nombrepais }}</h3>
     <p class="country-code">Código: {{ pais.cod }}</p>

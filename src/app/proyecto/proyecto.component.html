@@ -12,7 +12,7 @@
 
 <h2>Proyectos</h2>
 <div class="containerProyectos">
-  <div class="card project-card" *ngFor="let proyecto of proyectos" (click)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)">
+  <div class="card project-card" *ngFor="let proyecto of proyectos">
     <div class="card-body">
       <h3 class="project-name">{{ proyecto.nombreproyecto }}</h3>
       

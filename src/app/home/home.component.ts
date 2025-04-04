@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import {
@@ -17,7 +17,7 @@ import { AppComponent } from '../app.component';
 import { IPais } from 'src/models/pais.model';
 import { UserService } from '../../services/user.service';
 import { Router } from '@angular/router';
-
+import Chart from 'chart.js/auto';
 
 @Component({
     selector: 'app-home',
@@ -25,7 +25,7 @@ import { Router } from '@angular/router';
     styleUrls: ['./home.component.css'],
     imports: [CommonModule, MatCardModule, MatTabsModule, MatButtonModule, MatIcon ]
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, AfterViewInit{
   loginDisplay = false;
   tabs: { label: string; content: '' }[] = [];
   paises: IPais[] = []
@@ -40,6 +40,10 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this.cargaEstadoSuccessUsuario()
     
+  }
+
+  ngAfterViewInit(): void {
+    this.loadChart();
   }
 
   cargaEstadoSuccessUsuario(){
@@ -71,4 +75,29 @@ export class HomeComponent implements OnInit {
     this.appComponent.loginRedirect();
   }
 
+  loadChart() {
+    const canvas = document.getElementById('auditChart') as HTMLCanvasElement;
+    if (!canvas) return;
+    console.log('hola')
+    new Chart(canvas.getContext('2d')!, {
+      type: 'pie',
+      data: {
+        labels: ['Completadas', 'Pendientes', 'En Progreso'],
+        datasets: [{
+          data: [45, 12, 8],
+          backgroundColor: ['#007bff', '#ffc107', '#28a745']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        }
+      }
+    });
+  }
 }

@@ -118,3 +118,10 @@
     }
 }
 
+.auditChart {
+    display: block;   /* Hace que el canvas se comporte como un bloque */
+    margin: 0 auto;   /* Centra el canvas horizontalmente */
+    max-width: 200px;
+    max-height: 200px;  /* Ajusta el canvas para que no se salga del contenedor */
+  }
+  

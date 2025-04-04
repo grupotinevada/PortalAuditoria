@@ -244,26 +244,72 @@ app.post('/proyecto', async (req, res) => {
     const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado } = req.body;
     console.log('[DEBUG] Datos recibidos:', { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado });
 
-
-    // Validación básica
     if (!nombreproyecto || !fecha_inicio || !fecha_termino || habilitado == null) {
         console.warn('[WARN] Datos insuficientes para crear un proyecto.');
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
 
-    try {
-        const sql = `INSERT INTO proyecto (idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado) 
-                    VALUES (?, ?, ?, ?, ?, ?)`;
-        const values = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado];
+    let idproyecto;
 
-        const [result] = await db.promise().query(sql, values);
-        console.log(`[SUCCESS] Proyecto creado con ID: ${result.insertId}`);
-        res.status(201).json({ idproyecto: result.insertId, message: 'Proyecto creado exitosamente' });
+    try {
+        // Insertar el nuevo proyecto
+        const sqlProyecto = `
+            INSERT INTO proyecto (idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        const valuesProyecto = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado];
+
+        console.log('[DEBUG] Ejecutando inserción en tabla "proyecto"');
+        const [result] = await db.promise().query(sqlProyecto, valuesProyecto);
+        idproyecto = result.insertId;
+        console.log(`[SUCCESS] Proyecto creado con ID: ${idproyecto}`);
+
+        // Obtener todas las sociedades del país
+        const [sociedades] = await db.promise().query(
+            `SELECT idsociedad FROM sociedad WHERE idpais = ?`,
+            [idpais]
+        );
+
+        if (sociedades.length === 0) {
+            throw new Error(`No se encontraron sociedades para el país con ID ${idpais}`);
+        }
+
+        console.log(`[DEBUG] Sociedades encontradas para idpais ${idpais}:`, sociedades.map(s => s.idsociedad));
+
+        // Insertar relaciones en proyecto_sociedad
+        const insertRelacion = `INSERT INTO proyecto_sociedad (idproyecto, idsociedad) VALUES ?`;
+
+        const valuesRelacion = sociedades.map(soc => [idproyecto, soc.idsociedad]);
+
+        await db.promise().query(insertRelacion, [valuesRelacion]);
+
+        console.log('[SUCCESS] Todas las relaciones proyecto-sociedad insertadas correctamente.');
+
+        res.status(201).json({
+            idproyecto,
+            message: 'Proyecto creado y vinculado exitosamente con las sociedades del país'
+        });
+
     } catch (error) {
-        console.error('[ERROR] Error al crear el proyecto:', error.sqlMessage || error.message);    
-        res.status(500).json({ error: 'Error en el servidor al crear el proyecto' });
+        console.error('[ERROR] Error al procesar la solicitud:', error.sqlMessage || error.message);
+
+        // Rollback si se creó el proyecto pero falló la vinculación
+        if (idproyecto) {
+            try {
+                console.log('[INFO] Revirtiendo proyecto creado previamente...');
+                await db.promise().query('DELETE FROM proyecto WHERE idproyecto = ?', [idproyecto]);
+                console.log('[SUCCESS] Proyecto eliminado debido a fallo en vinculación.');
+            } catch (rollbackError) {
+                console.error('[FATAL] Error al eliminar el proyecto tras fallo en la relación:', rollbackError.sqlMessage || rollbackError.message);
+            }
+        }
+
+        res.status(500).json({ error: 'Error al crear el proyecto o vincularlo con las sociedades del país' });
     }
 });
+
+
+
 
 // Obtener procesos para una sociedad 
 app.get('/procesos/:idSociedad', async (req, res) => {

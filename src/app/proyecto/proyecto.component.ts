@@ -25,18 +25,20 @@ export class ProyectoComponent implements OnInit{
   }
 
 
-private cargarProyectosPorPais(): void {
-  this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
-  if (this.idPais) {
-    this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
-      this.proyectos = proyectos;
-      console.log('proyecto: ', this.proyectos)
-    });
-    this.proyectos = this.proyectos.filter(p => p.idpais === this.idPais);
-
+  private cargarProyectosPorPais(): void {
+    this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
+    if (this.idPais) {
+      this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
+        // Primero guarda todos los proyectos que vienen del servicio
+        const todosProyectos = proyectos;
+        console.log('proyectos recibidos: ', todosProyectos);
+        
+        // Luego filtra por el idPais
+        this.proyectos = todosProyectos.filter(p => p.idpais === this.idPais);
+        console.log('proyectos filtrados: ', this.proyectos);
+      });
+    }
   }
-
-}
 
 seleccionarProyecto(idProyecto: number | null) {
   this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
@@ -53,11 +55,10 @@ cerrarModal(): void {
   this.mostrarModal = false;
 }
 
-onProyectoCreado(proyecto: any): void {
+onProyectoCreado(proyecto: IProyecto): void {
   console.log('Proyecto creado:', proyecto);
-  // Aquí puedes actualizar tu lista de proyectos
-  this.proyectos.push(proyecto);
+  // Recargar todos los proyectos desde el servicio
+  this.cargarProyectosPorPais();
   this.cerrarModal();
 }
-
 }

@@ -335,6 +335,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   cerrarModalProyecto(): void {
+    this.ngOnInit();
     this.mostrarModalProyecto = false;
   }
 

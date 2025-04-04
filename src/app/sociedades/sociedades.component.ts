@@ -18,47 +18,62 @@ export class SociedadesComponent implements OnInit{
 
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      // Obtener valores de los parámetros de la URL
-      this.idPais = Number(params.get('PaisID'));
-      this.idProyecto = Number(params.get('ProyectoID'));
+    // this.route.paramMap.subscribe(params => {
+
+    //   this.idPais = Number(params.get('PaisID'));
+    //   this.idProyecto = Number(params.get('ProyectoID'));
+
+    //   console.log('🔹 Parámetros obtenidos:', params);
+  
+
+    //   params.keys.forEach(key => {
+    //     console.log(`🔹 ${key}: ${params.get(key)}`);
+    //   });
+  
+
+    //   if (isNaN(this.idProyecto) || !this.idProyecto) {
+    //     console.warn('⚠️ No se proporcionó un ID de proyecto válido.');
+    //     return;
+    //   }
+  
+    //   console.log('🔹 ID del País:', this.idPais);
+    //   console.log('🔹 ID del Proyecto:', this.idProyecto);
+  
+
+    //   this.proyectoService.obtenerSociedades(this.idProyecto).subscribe((sociedades: ISociedad[]) => {
+    //     console.log('✅ Sociedades obtenidas del servicio:', sociedades);
+    //     this.sociedades = sociedades;
+
+    //   }, error => {
+    //     console.error('❌ Error al obtener sociedades:', error);
+    //   });
       
-      // Agregar un console.log para ver los parámetros
-      console.log('🔹 Parámetros obtenidos:', params);
-  
-      // Iterar sobre las claves de los parámetros para ver sus valores
-      params.keys.forEach(key => {
-        console.log(`🔹 ${key}: ${params.get(key)}`);
-      });
-  
-      // Validar si idProyecto es un número válido
-      if (isNaN(this.idProyecto) || !this.idProyecto) {
-        console.warn('⚠️ No se proporcionó un ID de proyecto válido.');
-        return;
-      }
-  
-      console.log('🔹 ID del País:', this.idPais);
-      console.log('🔹 ID del Proyecto:', this.idProyecto);
-  
-      // Llamar al servicio para obtener las sociedades
-      this.proyectoService.obtenerSociedades(this.idProyecto).subscribe((sociedades: ISociedad[]) => {
-        console.log('✅ Sociedades obtenidas del servicio:', sociedades);
-        this.sociedades = sociedades;
-        //console.log('✅ Sociedades filtradas:', this.sociedades);
-      }, error => {
-        console.error('❌ Error al obtener sociedades:', error);
-      });
-      
-    });
+    // });
+
+    this.cargarSociedadPorProyecto();
   }  
+  cargarSociedadPorProyecto(): void {
+    this.idProyecto = Number(this.route.snapshot.paramMap.get('ProyectoID'));
+    if (this.idProyecto) {
+      this.proyectoService.obtenerSociedades(this.idProyecto).subscribe((sociedades: ISociedad[]) => {
+        this.sociedades = sociedades;
+        console.log('sociedades: ', this.sociedades)
+      });
+      this.sociedades = this.sociedades.filter(p => p.ProyectoID === this.idProyecto);
   
-  seleccionarSociedad(idSociedad: number) {
+    }
+  
+  }
+  
+  seleccionarSociedad(SociedadID: number) {
+    this.idPais = Number(this.route.snapshot.paramMap.get('PaisID')); //obtner PaisID desde la url
     console.log('🔹 ID País:', this.idPais);
     console.log('🔹 ID Proyecto:', this.idProyecto);
-    console.log('🔹 ID Sociedad:', idSociedad);
+    console.log('🔹 ID Sociedad:', SociedadID);
   
-    if (this.idPais && this.idProyecto && idSociedad) {
-      this.router.navigate(['/pais', this.idPais, 'proyecto', this.idProyecto, 'sociedad', idSociedad]);
+    if (this.idPais && this.idProyecto && SociedadID) {
+      this.router.navigate(['/pais', this.idPais, 'proyecto', this.idProyecto, 'sociedad', SociedadID]);
+      
     } else {
       console.error('🔴 No se ha proporcionado un parámetro válido para la navegación');
     }

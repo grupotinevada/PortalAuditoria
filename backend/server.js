@@ -232,26 +232,52 @@ WHERE
 app.post('/proyectos', (req, res) => {
     const { SociedadID, NombreProyecto, FechaInicio, FechaFin, idEstado, AuditorID, RevisorID, habilitado } = req.body;
 
-    // Validar que los campos obligatorios estén presentes
+    console.log('📥 Datos recibidos:', req.body);
+
     if (!SociedadID || !NombreProyecto || !idEstado) {
+        console.warn('⚠️ Campos obligatorios faltantes');
         return res.status(400).json({ error: 'SociedadID, NombreProyecto y idEstado son obligatorios' });
     }
 
-    const sql = `
+    const insertProyectoSQL = `
         INSERT INTO proyectos (SociedadID, NombreProyecto, FechaInicio, FechaFin, idEstado, AuditorID, RevisorID, habilitado)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [SociedadID, NombreProyecto, FechaInicio, FechaFin, idEstado, AuditorID, RevisorID, habilitado];
+    const proyectoValues = [SociedadID, NombreProyecto, FechaInicio, FechaFin, idEstado, AuditorID, RevisorID, habilitado];
 
-    db.query(sql, values, (err, result) => {
+    console.log('📝 Ejecutando INSERT en proyectos con:', proyectoValues);
+
+    db.query(insertProyectoSQL, proyectoValues, (err, result) => {
         if (err) {
-            console.error('Error al crear proyecto:', err);
+            console.error('❌ Error al crear proyecto:', err);
             return res.status(500).json({ error: 'Error al crear el proyecto' });
         }
-        res.json({ message: 'Proyecto creado con éxito', ProyectoID: result.insertId });
+
+        const nuevoProyectoID = result.insertId;
+        console.log(`✅ Proyecto creado con ID: ${nuevoProyectoID}`);
+
+        const insertRelacionSQL = `
+            INSERT INTO proyecto_sociedad (ProyectoID, SociedadID)
+            VALUES (?, ?)
+        `;
+        const relacionValues = [nuevoProyectoID, SociedadID];
+
+        console.log('🔗 Insertando relación en proyecto_sociedad con:', relacionValues);
+
+        db.query(insertRelacionSQL, relacionValues, (err2) => {
+            if (err2) {
+                console.error('❌ Error al insertar en proyecto_sociedad:', err2);
+                return res.status(500).json({ error: 'Proyecto creado, pero error al vincular con sociedad' });
+            }
+
+            console.log('🎉 Proyecto vinculado con sociedad correctamente');
+
+            res.json({ message: 'Proyecto creado y vinculado correctamente', ProyectoID: nuevoProyectoID });
+        });
     });
 });
+
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;

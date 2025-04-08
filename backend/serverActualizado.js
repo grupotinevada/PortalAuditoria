@@ -341,6 +341,63 @@ app.post('/proyecto', async (req, res) => {
 });
 
 
+//CREAR PROCESOS
+app.post('/procesos', async (req, res) => {
+    try {
+        const {
+            idsociedad,
+            idproyecto,
+            nombreproceso,
+            fecha_inicio,
+            fecha_fin,
+            responsable,
+            revisor,
+            idestatus,
+            idestado,
+            crear_archivo_ficticio
+        } = req.body;
+
+        // Validar campos obligatorios para el proceso
+        if (!idsociedad || !idproyecto || !nombreproceso || !fecha_inicio || !responsable || !idestatus || !idestado) {
+            return res.status(400).json({ error: 'Faltan campos obligatorios para el proceso.' });
+        }
+
+        const connection = await db.promise().getConnection();
+
+        try {
+            // Insertar datos en la tabla 'proceso'
+            const [procesoResult] = await connection.execute(
+                'INSERT INTO proceso (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestatus, idestado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestatus, idestado]
+            );
+            const idproceso = procesoResult.insertId;
+
+            // Si crear_archivo_ficticio es true, crear e insertar datos en la tabla 'archivo'
+            if (crear_archivo_ficticio) {
+                const randomString = randomBytes(10).toString('hex');
+                const nombrearchivo_ficticio = `archivo_ficticio_${randomString}.txt`;
+                const ruta_sharepoint_ficticia = `\\\\sharepoint.miempresa.com\\sites\\documentos\\${nombrearchivo_ficticio}`;
+
+                await connection.execute(
+                    'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
+                    [idproceso, ruta_sharepoint_ficticia, nombrearchivo_ficticio]
+                );
+                logger.info(`Proceso con ID ${idproceso} creado con archivo ficticio.`);
+                res.status(201).json({ message: `Proceso creado con ID ${idproceso} y archivo ficticio asociado.` });
+            } else {
+                logger.info(`Proceso con ID ${idproceso} creado sin archivo.`);
+                res.status(201).json({ message: `Proceso creado con ID ${idproceso}.` });
+            }
+
+        } finally {
+            connection.release();
+        }
+
+    } catch (error) {
+        logger.error('Error al crear el proceso:', error);
+        res.status(500).json({ error: 'Error al crear el proceso en la base de datos.' });
+    }
+});
 
 
 // Obtener procesos para una sociedad por idSociedad e idproyecto

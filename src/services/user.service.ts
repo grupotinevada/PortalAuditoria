@@ -14,11 +14,12 @@ export class UserService {
   constructor(private http: HttpClient) {}
 
   // Guardar usuario en la base de datos
-  guardarUsuario(usuario: IUsuario): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/usuarios`,usuario);
+  guardarUsuario(usuario: IUsuario): Observable<IUsuario> {
+    return this.http.post<IUsuario>(`${this.apiUrl}/usuarios`,usuario);
   }
 
   obtenerPerfil(usuarioId: string, CorreoElectronico: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.get<any>(`${this.apiUrl}/usuario/${usuarioId}/${CorreoElectronico}/perfil`);
   }
   

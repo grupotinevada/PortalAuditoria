@@ -1,0 +1,22 @@
+<nav>
+    <ng-container *ngFor="let breadcrumb of breadcrumbs; let last = last">
+      <ng-container *ngIf="!last">
+        <a [routerLink]="breadcrumb.url">
+          <ng-container *ngIf="!breadcrumb.label.includes('País ') && !breadcrumb.label.includes('Proyecto ') && !breadcrumb.label.includes('Sociedad ')">
+            {{ breadcrumb.label }}
+          </ng-container>
+          <ng-container *ngIf="breadcrumb.label.includes('País ') || breadcrumb.label.includes('Proyecto ') || breadcrumb.label.includes('Sociedad ')">
+            
+          </ng-container>
+        </a> &gt;
+      </ng-container>
+      <ng-container *ngIf="last">
+        <ng-container *ngIf="!breadcrumb.label.includes('País ') && !breadcrumb.label.includes('Proyecto ') && !breadcrumb.label.includes('Sociedad ')">
+          {{ breadcrumb.label }}
+        </ng-container>
+        <ng-container *ngIf="breadcrumb.label.includes('País ') || breadcrumb.label.includes('Proyecto ') || breadcrumb.label.includes('Sociedad ')">
+          
+        </ng-container>
+      </ng-container>
+    </ng-container>
+  </nav>

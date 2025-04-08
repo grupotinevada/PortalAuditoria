@@ -214,6 +214,23 @@ app.get('/sociedades/por-proyecto/:idproyecto', async (req, res) => {
     }
 });
 
+// Obtener todas las sociedades
+app.get('/sociedades', async (req, res) => {
+    const sql = `
+        SELECT idsociedad, nombresociedad
+        FROM panelAuditoria.sociedad
+        WHERE habilitado = 1;
+    `;
+
+    try {
+        const [results] = await db.promise().query(sql);
+        res.json(results);
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener todas las sociedades', details: err.message });
+    }
+});
+
+
 
 
 //proyecto endpoint

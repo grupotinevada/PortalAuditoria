@@ -52,13 +52,13 @@ export class ProcesosComponent implements OnInit {
     });
   }
 
-  cargarProcesos(): void {
+  cargarProcesos():void {
     this.loading = true;
     this.errorMessage = null;
     
     console.log('🔹 Cargando procesos para sociedad:', this.idSociedad);
     
-    this.proyectoService.obtenerProcesosPorSociedad(this.idSociedad)
+    this.proyectoService.obtenerProcesosPorSociedad(this.idSociedad, this.idProyecto)
       .pipe(
         finalize(() => this.loading = false),
         catchError(error => {

@@ -25,8 +25,8 @@ export class ProyectoService {
     return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/${idProyecto}`);
   }
 
-  obtenerProcesosPorSociedad(idSociedad: number): Observable<IProceso[]> {
-    return this.http.get<IProceso[]>(`${this.apiUrl}/procesos/${idSociedad}`);
+  obtenerProcesosPorSociedad(idSociedad: number,idProyecto: number ): Observable<IProceso[]> {
+    return this.http.get<IProceso[]>(`${this.apiUrl}/procesos/${idSociedad}/${idProyecto}`);
   }
 
   // Nuevo método para crear proyecto

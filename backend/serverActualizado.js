@@ -311,16 +311,16 @@ app.post('/proyecto', async (req, res) => {
 
 
 
-// Obtener procesos para una sociedad 
-app.get('/procesos/:idSociedad', async (req, res) => {
-    const { idSociedad } = req.params;
+// Obtener procesos para una sociedad por idSociedad e idproyecto
+app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
+    const { idSociedad, idProyecto } = req.params;
 
-    console.debug(`[DEBUG] Petición recibida: /procesos/${idSociedad}`);
+    console.debug(`[DEBUG] Petición recibida: /procesos/${idSociedad}${idProyecto ? `/${idProyecto}` : ''}`);
 
-    // Consulta SQL para obtener los procesos de un proyecto
-    const sql = `
+    let sql = `
         SELECT 
             p.idproceso,
+            p.idproyecto,
             p.idsociedad,
             p.nombreproceso,
             p.fecha_inicio,
@@ -333,38 +333,42 @@ app.get('/procesos/:idSociedad', async (req, res) => {
             r1.nombreusuario AS responsable_nombre,
             r2.nombreusuario AS revisor_nombre
         FROM panelAuditoria.proceso p
-        JOIN panelAuditoria.proyecto_sociedad ps ON p.idsociedad = ps.idsociedad
+        JOIN panelAuditoria.proyecto_sociedad ps 
+            ON p.idsociedad = ps.idsociedad AND p.idproyecto = ps.idproyecto
         LEFT JOIN panelAuditoria.sociedad s ON p.idsociedad = s.idsociedad
         LEFT JOIN panelAuditoria.estado e ON p.idestado = e.idestado
         LEFT JOIN panelAuditoria.usuario r1 ON p.responsable = r1.idusuario
         LEFT JOIN panelAuditoria.usuario r2 ON p.revisor = r2.idusuario
-        WHERE ps.idsociedad = ?;
+        WHERE p.idsociedad = ?
     `;
 
+    const params = [idSociedad];
+
+    if (idProyecto) {
+        sql += ' AND p.idproyecto = ?';
+        params.push(idProyecto);
+    }
+
     try {
-        console.debug(`[DEBUG] Ejecutando consulta SQL con idSociedad: ${idSociedad}`);
+        console.debug(`[DEBUG] Ejecutando consulta SQL con params: ${params}`);
 
-        // Ejecutar la consulta SQL
-        const [results] = await db.promise().query(sql, [idSociedad]);
+        const [results] = await db.promise().query(sql, params);
 
-        // Si no se encuentran procesos para el proyecto
         if (results.length === 0) {
-            console.warn(`[WARN] No se encontraron procesos para el idSociedad: ${idSociedad}`);
-            return res.status(404).json({ error: 'No se encontraron procesos para el proyecto especificado' });
+            console.warn(`[WARN] No se encontraron procesos para la sociedad ${idSociedad}${idProyecto ? ` y proyecto ${idProyecto}` : ''}`);
+            return res.status(404).json({ error: 'No se encontraron procesos para los parámetros especificados' });
         }
 
-        // Si la consulta fue exitosa y se encontraron resultados
         console.info(`[INFO] Consulta exitosa. Procesos encontrados: ${results.length}`);
         console.debug(`[SUCCESS] Datos enviados al frontend:`, results);
 
-        // Devolver los resultados en formato JSON
         res.json(results);
     } catch (err) {
-        // Manejo de errores
-        console.error(`[ERROR] Error al obtener procesos para idSociedad: ${idSociedad}`, err);
+        console.error(`[ERROR] Error al obtener procesos`, err);
         res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
     }
 });
+
 
 
 // Iniciar servidor

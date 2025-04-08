@@ -155,9 +155,32 @@ app.get('/pais', async (req, res) => {
     }
 });
  
+// Obtener sociedades por país
+app.get('/sociedades/por-pais/:idPais', async (req, res) => {
+    const idPais = req.params.idPais;
+    console.log(`[INFO] Petición recibida para obtener sociedades del país ID: ${idPais}`);
+
+    try {
+        const sql = `SELECT idsociedad, nombresociedad, habilitado FROM sociedad WHERE idpais = ?`;
+
+        const [results] = await db.promise().query(sql, [idPais]);
+
+        if (results.length === 0) {
+            console.warn(`[WARN] No se encontraron sociedades para el país ID: ${idPais}`);
+            return res.status(404).json({ error: 'No se encontraron sociedades para este país' });
+        }
+
+        console.log(`[SUCCESS] ${results.length} sociedades obtenidas para el país ID: ${idPais}`);
+        res.json(results);
+
+    } catch (error) {
+        console.error('[ERROR] Error al obtener sociedades:', error);
+        res.status(500).json({ error: 'Error en el servidor al obtener sociedades' });
+    }
+});
  
 // Obtener sociedades
-app.get('/sociedades/:idproyecto', async (req, res) => {
+app.get('/sociedades/por-proyecto/:idproyecto', async (req, res) => {
     const { idproyecto } = req.params;
 
     console.debug(`[DEBUG] Petición recibida: /sociedades/${idproyecto}`);
@@ -241,12 +264,17 @@ app.get('/proyectos/:PaisID', async (req, res) => {
 app.post('/proyecto', async (req, res) => {
     console.log('[INFO] Petición recibida para crear un nuevo proyecto.');
     
-    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado } = req.body;
-    console.log('[DEBUG] Datos recibidos:', { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado });
+    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas } = req.body;
+    console.log('[DEBUG] Datos recibidos:', { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas });
 
     if (!nombreproyecto || !fecha_inicio || !fecha_termino || habilitado == null) {
         console.warn('[WARN] Datos insuficientes para crear un proyecto.');
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
+    }
+
+    if (!Array.isArray(sociedadesSeleccionadas) || sociedadesSeleccionadas.length === 0) {
+        console.warn('[WARN] No se han proporcionado sociedades seleccionadas.');
+        return res.status(400).json({ error: 'Debe seleccionar al menos una sociedad para vincular al proyecto.' });
     }
 
     let idproyecto;
@@ -264,22 +292,9 @@ app.post('/proyecto', async (req, res) => {
         idproyecto = result.insertId;
         console.log(`[SUCCESS] Proyecto creado con ID: ${idproyecto}`);
 
-        // Obtener todas las sociedades del país
-        const [sociedades] = await db.promise().query(
-            `SELECT idsociedad FROM sociedad WHERE idpais = ?`,
-            [idpais]
-        );
-
-        if (sociedades.length === 0) {
-            throw new Error(`No se encontraron sociedades para el país con ID ${idpais}`);
-        }
-
-        console.log(`[DEBUG] Sociedades encontradas para idpais ${idpais}:`, sociedades.map(s => s.idsociedad));
-
         // Insertar relaciones en proyecto_sociedad
         const insertRelacion = `INSERT INTO proyecto_sociedad (idproyecto, idsociedad) VALUES ?`;
-
-        const valuesRelacion = sociedades.map(soc => [idproyecto, soc.idsociedad]);
+        const valuesRelacion = sociedadesSeleccionadas.map(idsoc => [idproyecto, idsoc]);
 
         await db.promise().query(insertRelacion, [valuesRelacion]);
 
@@ -287,7 +302,7 @@ app.post('/proyecto', async (req, res) => {
 
         res.status(201).json({
             idproyecto,
-            message: 'Proyecto creado y vinculado exitosamente con las sociedades del país'
+            message: 'Proyecto creado y vinculado exitosamente con las sociedades seleccionadas'
         });
 
     } catch (error) {
@@ -304,7 +319,7 @@ app.post('/proyecto', async (req, res) => {
             }
         }
 
-        res.status(500).json({ error: 'Error al crear el proyecto o vincularlo con las sociedades del país' });
+        res.status(500).json({ error: 'Error al crear el proyecto o vincularlo con las sociedades seleccionadas' });
     }
 });
 

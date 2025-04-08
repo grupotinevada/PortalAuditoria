@@ -22,11 +22,15 @@ export class ProyectoService {
   }
 
   obtenerSociedades(idProyecto: number): Observable<ISociedad[]> {
-    return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/${idProyecto}`);
+    return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/por-proyecto/${idProyecto}`);
   }
 
   obtenerProcesosPorSociedad(idSociedad: number,idProyecto: number ): Observable<IProceso[]> {
     return this.http.get<IProceso[]>(`${this.apiUrl}/procesos/${idSociedad}/${idProyecto}`);
+  }
+
+  ObtenerSociedadesPorPais(PaisID: number): Observable<ISociedad[]> {
+    return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/por-pais/${PaisID}`);
   }
 
   // Nuevo método para crear proyecto

@@ -6,8 +6,9 @@ export interface IProyecto {
     nombreUsuario: string | null;
     correo: string | null;
     idproyecto: number | null;
-    fecha_inicio: Date | null;
-    fecha_termino: Date | null;
+    fecha_inicio: Date | string | null;
+    fecha_termino: Date | string | null;
     habilitado: number | null;
     nombreproyecto: string | null;
+    sociedadesSeleccionadas?: number[] | null; // Cambiado a un array de números
 }

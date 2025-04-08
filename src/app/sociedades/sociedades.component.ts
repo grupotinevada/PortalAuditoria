@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ISociedad  } from 'src/models/sociedad.model';
 import { ProyectoService } from 'src/services/proyecto.service';
 import { CommonModule } from '@angular/common';
+import { BreadcrumbService } from 'src/services/breadcrumb.service';
 @Component({
   selector: 'app-sociedades',
   imports: [CommonModule],
@@ -14,41 +15,15 @@ export class SociedadesComponent implements OnInit{
   idProyecto!: number;
   sociedades: ISociedad[] = [];
 
-  constructor(private route: ActivatedRoute,private router: Router, private proyectoService: ProyectoService){}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router, 
+    private proyectoService: ProyectoService,
+    private breadcrumbService : BreadcrumbService
+  ){}
 
 
   ngOnInit(): void {
-    // this.route.paramMap.subscribe(params => {
-
-    //   this.idPais = Number(params.get('PaisID'));
-    //   this.idProyecto = Number(params.get('ProyectoID'));
-
-    //   console.log('🔹 Parámetros obtenidos:', params);
-  
-
-    //   params.keys.forEach(key => {
-    //     console.log(`🔹 ${key}: ${params.get(key)}`);
-    //   });
-  
-
-    //   if (isNaN(this.idProyecto) || !this.idProyecto) {
-    //     console.warn('⚠️ No se proporcionó un ID de proyecto válido.');
-    //     return;
-    //   }
-  
-    //   console.log('🔹 ID del País:', this.idPais);
-    //   console.log('🔹 ID del Proyecto:', this.idProyecto);
-  
-
-    //   this.proyectoService.obtenerSociedades(this.idProyecto).subscribe((sociedades: ISociedad[]) => {
-    //     console.log('✅ Sociedades obtenidas del servicio:', sociedades);
-    //     this.sociedades = sociedades;
-
-    //   }, error => {
-    //     console.error('❌ Error al obtener sociedades:', error);
-    //   });
-      
-    // });
 
     this.cargarSociedadPorProyecto();
   }  

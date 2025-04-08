@@ -18,7 +18,7 @@ export class ProcesosComponent implements OnInit {
   nombreSociedad: string | null = null;
   PaisID!: number;
   idProyecto!: number;
-  loading: boolean = true;
+  loading = true;
   errorMessage: string | null = null;
 
   constructor(

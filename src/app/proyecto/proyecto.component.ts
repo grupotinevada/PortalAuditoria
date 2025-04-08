@@ -3,6 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectoService } from '../../services/proyecto.service';
 import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
+import { BreadcrumbService } from 'src/services/breadcrumb.service';
+import { IPais } from 'src/models/pais.model';
 
 @Component({
   selector: 'app-proyecto',
@@ -13,11 +15,13 @@ import { IProyecto } from 'src/models/proyecto.model';
 export class ProyectoComponent implements OnInit{
   idPais!: number;
   proyectos: IProyecto[] = [];
+  nombrePais: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private proyectoService: ProyectoService
+    private proyectoService: ProyectoService,
+    private breadcrumbService: BreadcrumbService
   ) {}
 
   ngOnInit(): void {
@@ -38,6 +42,7 @@ export class ProyectoComponent implements OnInit{
         console.log('proyectos filtrados: ', this.proyectos);
       });
     }
+
   }
 
 seleccionarProyecto(idProyecto: number | null) {
@@ -61,4 +66,7 @@ onProyectoCreado(proyecto: IProyecto): void {
   this.cargarProyectosPorPais();
   this.cerrarModal();
 }
+
+
+
 }

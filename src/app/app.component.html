@@ -171,18 +171,9 @@
         <!-- En tu toolbar -->
 
         <!-- Breadcrumb -->
+        <!-- breadcrumb.component.html -->
         <nav aria-label="breadcrumb" class="ms-2 mb-2">
-          <ol class="breadcrumb mb-0">
-            <li
-              class="breadcrumb-item"
-              *ngFor="let breadcrumb of breadcrumbs; let last = last"
-            >
-              <a *ngIf="!last" [routerLink]="breadcrumb.url">{{
-                breadcrumb.label
-              }}</a>
-              <span *ngIf="last">{{ breadcrumb.label }}</span>
-            </li>
-          </ol>
+          <app-breadcrumb></app-breadcrumb>
         </nav>
       </div>
 
@@ -191,7 +182,7 @@
         <!-- Botón para pantallas grandes -->
         <button
           *ngIf="showNewProjectButton"
-          class="btn btn-outline-primary d-none d-md-inline-flex  mb-2"
+          class="btn btn-outline-primary d-none d-md-inline-flex mb-2"
           (click)="abrirModalCrearProyecto()"
         >
           <i class="fas fa-plus"></i> Nuevo Proyecto

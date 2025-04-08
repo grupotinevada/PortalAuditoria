@@ -1,62 +1,220 @@
 import { Injectable } from '@angular/core';
-import { IProyecto } from 'src/models/proyecto.model';
-import { ISociedad } from 'src/models/sociedad.model';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { BehaviorSubject, Observable, forkJoin, of } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ProyectoService } from './proyecto.service';
-import { map, Observable, of, tap } from 'rxjs';
+
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class BreadcrumbService {
-  private proyectosCache = new Map<number, IProyecto>();
-  private sociedadesCache = new Map<number, ISociedad>();
+  private breadcrumbsSubject = new BehaviorSubject<{ label: string, url: string }[]>([]);
+  breadcrumbs$ = this.breadcrumbsSubject.asObservable();
+  private entityNamesCache: Record<string, string> = {};
 
-  constructor(private proyectoService: ProyectoService) { }
+  constructor(
+    private router: Router, 
+    private activatedRoute: ActivatedRoute,
+    private proyectoService: ProyectoService
 
-  obtenerNombrePais(PaisID: number): Observable<string | null>{
-    if (this.proyectosCache.has(PaisID)) {
-      return of(this.proyectosCache.get(PaisID)!.nombrepais);
+  ) {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      switchMap(() => this.buildBreadcrumbsWithData(this.router.url))
+    ).subscribe(breadcrumbs => {
+      this.breadcrumbsSubject.next(breadcrumbs);
+    });
+
+    // Cargar caché si existe
+    const cachedNames = localStorage.getItem('breadcrumbNames');
+    if (cachedNames) {
+      this.entityNamesCache = JSON.parse(cachedNames);
     }
-    return this.proyectoService.obtenerProyectosPorPais(PaisID).pipe(
-      tap(proyectos => {
-        if (proyectos.length > 0) {
-          this.proyectosCache.set(PaisID, proyectos[0]);
+  }
+
+  updateBreadcrumbLabel(url: string, newLabel: string): void {
+    this.entityNamesCache[url] = newLabel;
+    localStorage.setItem('breadcrumbNames', JSON.stringify(this.entityNamesCache));
+    
+    const currentBreadcrumbs = this.breadcrumbsSubject.value;
+    const updatedBreadcrumbs = currentBreadcrumbs.map(breadcrumb => {
+      if (breadcrumb.url === url) {
+        return { ...breadcrumb, label: newLabel };
+      }
+      return breadcrumb;
+    });
+    this.breadcrumbsSubject.next(updatedBreadcrumbs);
+  }
+
+  private buildBreadcrumbsWithData(url: string): Observable<{ label: string, url: string }[]> {
+    // Primero crea los breadcrumbs básicos
+    const breadcrumbs: { label: string, url: string }[] = [];
+    const urlParts = url.split('/').filter(part => part);
+    let currentUrl = '';
+
+    // Siempre añadir Home
+    breadcrumbs.push({ label: 'Inicio', url: '/' });
+
+    // Construir los breadcrumbs base y recopilar los IDs para cargar
+    let paisId: number | null = null;
+    let proyectoId: number | null = null;
+    let sociedadId: number | null = null;
+
+    for (let i = 0; i < urlParts.length; i++) {
+      const part = urlParts[i];
+      currentUrl += `/${part}`;
+      
+      if (part === 'pais') {
+        breadcrumbs.push({ label: 'Países', url: currentUrl });
+      } 
+      else if (i > 0 && urlParts[i-1] === 'pais' && !isNaN(Number(part))) {
+        paisId = Number(part);
+        // Usamos el caché si existe, de lo contrario un placeholder
+        const cachedName = this.entityNamesCache[currentUrl];
+        breadcrumbs.push({ 
+          label: cachedName || `País ${part}`, 
+          url: currentUrl 
+        });
+      }
+      else if (part === 'proyecto') {
+        breadcrumbs.push({ label: 'Proyectos', url: currentUrl });
+      }
+      else if (i > 0 && urlParts[i-1] === 'proyecto' && !isNaN(Number(part))) {
+        proyectoId = Number(part);
+        const proyectoUrl = currentUrl;
+        const cachedName = this.entityNamesCache[proyectoUrl];
+        if (cachedName) {
+          breadcrumbs.push({ label: cachedName, url: proyectoUrl });
+        } else {
+          breadcrumbs.push({ label: `Proyecto ${part}`, url: proyectoUrl });
         }
-      }),
-      map(proyectos => proyectos.length > 0 ? proyectos[0].nombrepais : `País ${PaisID}`)
-    );
-  }
-
-  obtenerNombreProyecto(PaisID: number, ProyectoID: number | string): Observable<string | null> {
-    if (this.proyectosCache.has(PaisID)) {
-      return of(this.proyectosCache.get(PaisID)!.nombreproyecto);
+      }
+      
+      else if (part === 'sociedad' && i < (urlParts.length - 1)) {
+        continue;
+      }
+      else if (i > 0 && urlParts[i-1] === 'sociedad' && !isNaN(Number(part))) {
+        sociedadId = Number(part);
+        const cachedName = this.entityNamesCache[currentUrl];
+        breadcrumbs.push({ 
+          label: cachedName || `Sociedad ${part}`, 
+          url: currentUrl 
+        });
+      }
+      else if (part === 'profile') {
+        breadcrumbs.push({ label: 'Perfil', url: currentUrl });
+      }
+      else if (part === 'login-failed') {
+        breadcrumbs.push({ label: 'Error de Login', url: currentUrl });
+      }
     }
-    return this.proyectoService.obtenerProyectosPorPais(PaisID).pipe(
-      tap(proyectos => {
-        proyectos.forEach(proyecto => this.proyectosCache.set(PaisID, proyecto));
-      }),
-      map(proyectos => {
-        const proyecto = proyectos.find(p => p.cod === ProyectoID);
-        return proyecto ? proyecto.nombreproyecto : `Proyecto ${ProyectoID}`;
-      })
-    );
+
+    console.log('PaisId:', paisId);
+    console.log('ProyectoId:', proyectoId);
+    console.log('SociedadId:', sociedadId);
+    
+   // Ahora cargamos los datos reales según los IDs que encontramos
+const requests: Observable<any>[] = [];
+if (paisId !== null) {
+  this.cargarEntidad(
+    paisId,
+    `/pais/${paisId}`,
+    breadcrumbs,
+    requests,
+    this.proyectoService.obtenerPaisporIdPais.bind(this.proyectoService),
+    (pais) => (typeof pais?.nombrepais === 'number' ? String(pais.nombrepais) : pais?.nombrepais) ?? null,
+    'País'
+  );
+}
+
+if (proyectoId !== null) {     //NO TENGO IDEA PORQUE NO FUNCIONA XD ARREGLARLO DESPUES
+  this.cargarEntidad(
+    proyectoId,
+    `/pais/${paisId}/proyecto/${proyectoId}`,
+    breadcrumbs,
+    requests,
+    this.proyectoService.obtenerProyectoPorIdProyecto.bind(this.proyectoService),
+    (proyecto) => proyecto?.nombreproyecto ?? null,
+    'Proyecto',
+
+  );
+}
+
+if (sociedadId !== null) {
+  this.cargarEntidad(
+    sociedadId,
+    `/pais/${paisId}/proyecto/${proyectoId}/sociedad/${sociedadId}`,
+    breadcrumbs,
+    requests,
+    this.proyectoService.obtenerSociedadesPorIdSociedad.bind(this.proyectoService),
+    (sociedad) => sociedad?.nombresociedad ?? null,
+    'Sociedad'
+  );
+}
+
+
+// Si hay solicitudes pendientes, las ejecutamos
+if (requests.length > 0) {
+  return forkJoin(requests).pipe(
+    catchError(error => {
+      console.error('Error en alguna de las peticiones:', error);
+      return of([]);
+    }),
+    map(() => {
+      localStorage.setItem('breadcrumbNames', JSON.stringify(this.entityNamesCache));
+      return breadcrumbs;
+    })
+  );
+} else {
+  // Si no hay solicitudes, simplemente devolvemos los breadcrumbs con los datos de caché
+  return of(breadcrumbs);
+}
   }
 
-  obtenerNombreSociedad(ProyectoID: number, SociedadID: number): Observable<string> {
-    if (this.sociedadesCache.has(SociedadID)) {
-      return of(this.sociedadesCache.get(SociedadID)!.nombresociedad);
+
+  private cargarEntidad<T>(
+    id: number,
+    url: string,
+    breadcrumbs: any[],
+    requests: Observable<any>[],
+    fetchFn: (id: number) => Observable<T>,
+    nombreExtractor: (entidad: T) => string | null,
+    entidadLabel: string
+  ): void {
+    if (!this.entityNamesCache[url]) {
+      const request = fetchFn(id).pipe(
+        catchError(error => {
+          console.error(`Error al obtener ${entidadLabel.toLowerCase()}:`, error);
+          this.entityNamesCache[url] = `${entidadLabel} ${id}`;
+          return of(null);
+        }),
+        tap(entidad => {
+          if (!entidad) return;
+  
+          const nombre = nombreExtractor(entidad);
+          const nombreValido = nombre && typeof nombre === 'string' && nombre.trim() !== ''
+            ? nombre
+            : `${entidadLabel} ${id}`;
+  
+          this.entityNamesCache[url] = nombreValido;
+  
+          const index = breadcrumbs.findIndex(b => b.url === url);
+          if (index >= 0) {
+            breadcrumbs[index].label = nombreValido;
+          }
+        })
+      );
+  
+      requests.push(request);
+    } else {
+      const index = breadcrumbs.findIndex(b => b.url === url);
+      if (index >= 0) {
+        breadcrumbs[index].label = this.entityNamesCache[url];
+      }
     }
-    return this.proyectoService.obtenerSociedades(ProyectoID).pipe(
-      tap(sociedades => {
-        sociedades.forEach(s => this.sociedadesCache.set(s.idsociedad, s));
-      }),
-      map(sociedades => {
-        const sociedad = sociedades.find(s => s.idsociedad === SociedadID);
-        return sociedad ? sociedad.nombresociedad : `Sociedad ${SociedadID}`;
-      })
-    );
   }
-
-
-  }
-
+  
+}
+  

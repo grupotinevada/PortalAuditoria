@@ -1,44 +1,69 @@
-<div class="modal fade show d-block" [class.show]="true" id="modalProyecto" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px; display: block;">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Crear Nuevo Proyecto</h5>
-          <button type="button" class="close" (click)="onCancel()" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+<div class="modal fade show d-block" id="modalProyecto" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px;">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content p-3">
+      <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex flex-column">
+          <h5 class="modal-title mb-0">Crear Nuevo Proyecto</h5>
+          <small class="text-danger">Debe completar todos los campos</small>
+        </div>
+        <button type="button" class="btn-close ms-2" (click)="onCancel()" aria-label="Close"></button>
+      </div>
+
+      <form [formGroup]="proyectoForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+
+          <!-- Nombre del Proyecto -->
+          <div class="mb-3">
+            <label for="nombreInput" class="form-label">Nombre del Proyecto*</label>
+            <input type="text" id="nombreInput" class="form-control" formControlName="nombre">
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-3">
+            <label for="descripcionInput" class="form-label">Descripción</label>
+            <textarea id="descripcionInput" rows="3" class="form-control" formControlName="descripcion"></textarea>
+          </div>
+
+          <!-- Fecha de Inicio -->
+          <div class="mb-3">
+            <label for="fechaInicio" class="form-label">Fecha de Inicio*</label>
+            <input type="date" id="fechaInicio" class="form-control" formControlName="fechaInicio" required="true">
+          </div>
+
+          <!-- Fecha de Fin -->
+          <div class="mb-3">
+            <label for="fechaFin" class="form-label">Fecha de Fin</label>
+            <input type="date" id="fechaFin" class="form-control" formControlName="fechaFin" required="true">
+          </div>
+
+          <!-- Checkboxes de sociedades -->
+          <div class="mb-3" *ngIf="sociedades.length > 0">
+            <label class="form-label">Sociedades asociadas:</label>
+            <div formArrayName="sociedades">
+              <div class="form-check" *ngFor="let sociedad of sociedades; let i = index">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'sociedad-' + i"
+                  [formControlName]="i"
+                >
+                <label class="form-check-label" [for]="'sociedad-' + i">
+                  {{ sociedad.nombresociedad }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-danger" (click)="onCancel()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="proyectoForm.invalid || isLoading">
+            Guardar
           </button>
         </div>
-        
-        <form [formGroup]="proyectoForm" (ngSubmit)="onSubmit()">
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Nombre del Proyecto*</label>
-              <input type="text" formControlName="nombre" class="form-control" id="nombreInput">
-            </div>
-            
-            <div class="form-group">
-              <label>Descripción</label>
-              <textarea formControlName="descripcion" class="form-control" rows="3"></textarea>
-            </div>
-            
-            <div class="form-group">
-              <label>Fecha de Inicio*</label>
-              <input type="date" formControlName="fechaInicio" class="form-control">
-            </div>
-            
-            <div class="form-group">
-              <label>Fecha de Fin</label>
-              <input type="date" formControlName="fechaFin" class="form-control">
-            </div>
-          </div>
-          
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancelar</button>
-            <button type="submit" class="btn btn-primary" [disabled]="proyectoForm.invalid">
-              Guardar
-            </button>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
   </div>
-  <div class="modal-backdrop fade show"></div>
+</div>
+<div class="modal-backdrop fade show"></div>

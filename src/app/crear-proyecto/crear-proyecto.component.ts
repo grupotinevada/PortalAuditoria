@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, FormControl} from '@angular/forms';
 import { ProyectoService } from 'src/services/proyecto.service';
 import { IProyecto } from 'src/models/proyecto.model';
 import { NgIf, NgFor, CommonModule } from '@angular/common';
@@ -18,7 +18,7 @@ export class CrearProyectoComponent {
 
   proyectoForm!: FormGroup;
   profile: IUsuario | null = null;
-  
+  sociedades: any[] = [];
   isLoading = false;
   errorMessage = '';
   //paisId!: number; // ID del país que se pasa al componente
@@ -30,6 +30,7 @@ export class CrearProyectoComponent {
 
     ngOnInit(): void {
       this.initForm();
+      this.cargarSociedades();
       setTimeout(() => {
         this.setFocus();
       }, 0);
@@ -40,9 +41,43 @@ export class CrearProyectoComponent {
         nombre: ['', Validators.required],
         descripcion: [''],
         fechaInicio: ['', Validators.required],
-        fechaFin: ['']
+        fechaFin: [''],
+        sociedades: this.fb.array([]) // Inicializa el FormArray
       });
     }
+
+    cargarSociedades(): void {
+      if (this.paisId) {
+        this.proyectoService.ObtenerSociedadesPorPais(this.paisId).subscribe({
+          next: (data) => {
+            this.sociedades = data;
+            console.log('Sociedades:', this.sociedades);
+            this.actualizarCheckboxes();
+          },
+          error: (error) => {
+            console.error('Error al cargar sociedades:', error);
+          }
+        });
+      }
+    }
+    
+    actualizarCheckboxes(): void {
+      const sociedadesArray = this.proyectoForm.get('sociedades') as FormArray;
+      sociedadesArray.clear();
+      
+      this.sociedades.forEach(() => {
+        sociedadesArray.push(this.fb.control(false));
+      });
+    }
+
+    get sociedadesFormArray(): FormArray {
+      return this.proyectoForm.get('sociedades') as FormArray;
+    }
+
+    getSociedadControl(index: number): FormControl {
+      return this.sociedadesFormArray.at(index) as FormControl;
+    }
+    
   
     setFocus(): void {
       const element = document.getElementById('nombreInput');
@@ -66,6 +101,13 @@ export class CrearProyectoComponent {
         this.isLoading = true;
         this.errorMessage = '';
         this.getProfile();
+
+        // Obtener IDs de sociedades seleccionadas
+        const sociedadesSeleccionadas = this.proyectoForm.value.sociedades
+        .map((checked: boolean, i: number) => checked ? this.sociedades[i].idsociedad : null)
+        .filter((v: any) => v !== null);
+
+        console.log('Sociedades seleccionadas:', sociedadesSeleccionadas);
   
         const proyectoData: IProyecto = {
           idpais: this.paisId,
@@ -73,7 +115,8 @@ export class CrearProyectoComponent {
           nombreproyecto: this.proyectoForm.get('nombre')?.value,
           fecha_inicio: this.proyectoForm.get('fechaInicio')?.value,
           fecha_termino: this.proyectoForm.get('fechaFin')?.value,
-          habilitado: 1, // Por defecto habilitado
+          habilitado: 1,
+          sociedadesSeleccionadas: sociedadesSeleccionadas, // Añadir sociedades seleccionadas
           // Campos opcionales
           nombrepais: null,
           cod: null,

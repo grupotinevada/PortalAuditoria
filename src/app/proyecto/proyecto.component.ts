@@ -4,6 +4,7 @@ import { ProyectoService } from '../../services/proyecto.service';
 import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
 import { BreadcrumbService } from 'src/services/breadcrumb.service';
+import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 import { IPais } from 'src/models/pais.model';
 
 @Component({
@@ -21,11 +22,17 @@ export class ProyectoComponent implements OnInit{
     private route: ActivatedRoute,
     private router: Router,
     private proyectoService: ProyectoService,
-    private breadcrumbService: BreadcrumbService
+    private breadcrumbService: BreadcrumbService,
+    private proyectoEventoService: ProyectoEventoService
   ) {}
 
   ngOnInit(): void {
     this.cargarProyectosPorPais();
+
+    this.proyectoEventoService.proyectoCreado$.subscribe((nuevoProyecto) => {
+      console.log('Proyecto nuevo detectado en ProyectoComponent:', nuevoProyecto);
+      this.cargarProyectosPorPais(); // Refresca la lista
+    });
   }
 
 
@@ -60,13 +67,13 @@ cerrarModal(): void {
   this.mostrarModal = false;
 }
 
-onProyectoCreado(proyecto: IProyecto): void {
+/*onProyectoCreado(proyecto: IProyecto): void {
   console.log('Proyecto creado:', proyecto);
   // Recargar todos los proyectos desde el servicio
   this.cargarProyectosPorPais();
   this.cerrarModal();
 }
-
+*/
 
 
 }

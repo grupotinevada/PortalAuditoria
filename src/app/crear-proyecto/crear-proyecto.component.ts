@@ -12,7 +12,7 @@ import { IUsuario } from 'src/models/user.model';
   styleUrls: ['./crear-proyecto.component.css'],
   imports: [ReactiveFormsModule,CommonModule]
 })
-export class CrearProyectoComponent {
+export class CrearProyectoComponent implements OnInit {
   @Output() proyectoCreado = new EventEmitter<IProyecto>();
   @Output() cerrarModal = new EventEmitter<void>();
   @Input() paisId!: number; // Asegúrate de tener este decorador

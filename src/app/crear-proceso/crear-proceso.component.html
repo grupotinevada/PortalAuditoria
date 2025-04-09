@@ -1,0 +1,54 @@
+<!-- Modal -->
+<div class="modal fade" id="procesoModal" tabindex="-1" aria-labelledby="procesoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="procesoModalLabel">Formulario de Proceso</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="procesoForm" (ngSubmit)="onSubmit()">
+            <div class="mb-3">
+              <label for="idSociedad" class="form-label">ID Sociedad</label>
+              <input id="idSociedad" class="form-control" formControlName="idSociedad" [readonly]="true">
+            </div>
+            <div class="mb-3">
+              <label for="idProyecto" class="form-label">ID Proyecto</label>
+              <input id="idProyecto" class="form-control" formControlName="idProyecto" [readonly]="true">
+            </div>
+            <div class="mb-3">
+              <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
+              <input id="nombreProceso" class="form-control" formControlName="nombreProceso">
+            </div>
+            <div class="mb-3">
+              <label for="fechaInicio" class="form-label">Fecha de Inicio</label>
+              <input id="fechaInicio" type="date" class="form-control" formControlName="fechaInicio">
+            </div>
+            <div class="mb-3">
+              <label for="fechaFin" class="form-label">Fecha de Fin</label>
+              <input id="fechaFin" type="date" class="form-control" formControlName="fechaFin">
+            </div>
+            <div class="mb-3">
+              <label for="responsable" class="form-label">Responsable</label>
+              <input id="responsable" class="form-control" formControlName="responsable">
+            </div>
+            <div class="mb-3">
+              <label for="idestado" class="form-label">Estado</label>
+              <select id="idestado" class="form-select" formControlName="idestado">
+                <option value="0">Seleccione el Estado</option>
+                <option value="1">Estado 1</option>
+                <option value="2">Estado 2</option>
+                <option value="3">Estado 3</option>
+              </select>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" formControlName="crear_archivo_ficticio" id="crear_archivo_ficticio">
+              <label class="form-check-label" for="crear_archivo_ficticio">Crear archivo ficticio</label>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="!procesoForm.valid">Guardar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  

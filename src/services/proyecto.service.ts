@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
@@ -69,7 +70,17 @@ export class ProyectoService {
       })
     );
   }
-
+  
+  
+  crearProceso(procesoData: any): Observable<any> {
+    const currentUser = this.userService.getCurrentUser();
+    
+    if (!currentUser || !currentUser.idusuario) {
+      throw new Error('Usuario no autenticado o sin ID');
+    }
+    console.log('Enviando datos de proyecto:', procesoData);
+    return this.http.post(`${this.apiUrl}/procesos`, procesoData);
+  }
 
   //SERVICIOS PARA OBTENER DATOS LIMPIOS Y GENERALES SE USAN PARA EL BRADCRUMB
 

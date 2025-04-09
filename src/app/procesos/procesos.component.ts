@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ProyectoService } from 'src/services/proyecto.service';
 import { IProceso } from 'src/models/proceso.model';
 import { CommonModule } from '@angular/common';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 @Component({
@@ -19,7 +19,9 @@ export class ProcesosComponent implements OnInit {
   PaisID!: number;
   idProyecto!: number;
   loading = true;
-  errorMessage: string | null = null;
+  errorMessage: string | null = null;     // Errores del servidor (rojo)
+  infoMessage: string | null = null;      // Mensajes informativos (amarillo)
+  
 
   constructor(
     private route: ActivatedRoute,
@@ -60,26 +62,26 @@ export class ProcesosComponent implements OnInit {
     
     this.proyectoService.obtenerProcesosPorSociedad(this.idSociedad, this.idProyecto)
       .pipe(
-        finalize(() => this.loading = false),
         catchError(error => {
           this.errorMessage = 'Error al cargar los procesos';
           console.error('❌ Error al obtener procesos:', error);
-          return of([]); // Retorna un array vacío para que la suscripción no falle
+          this.loading = false;
+          return of([]); // Continuar flujo aunque haya error
         })
       )
-      .subscribe({
-        next: (data) => {
-          this.procesos = data;
-          console.log('✅ Procesos recibidos:', data);
-              // Asumiendo que el primer elemento tiene el nombre de la sociedad
-            if(data.length > 0) {
-              this.nombreSociedad = data[0].nombresociedad; 
-              //console.log('nombre socieda: ',this.nombreSociedad);
-            }
-          if (data.length === 0) {
-            this.errorMessage = 'No se encontraron procesos para esta sociedad';
-          }
+      .subscribe(data => {
+        this.procesos = data;
+        console.log('✅ Procesos recibidos:', data);
+  
+        if (this.procesos.length > 0) {
+          this.nombreSociedad = this.procesos[0].nombresociedad;
+        } else {
+          this.infoMessage = 'No se encontraron procesos para esta sociedad';
         }
+  
+        this.loading = false;
       });
-  }
+}
+
+
 }

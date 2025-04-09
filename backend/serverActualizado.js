@@ -445,7 +445,7 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
 
         if (results.length === 0) {
             console.warn(`[WARN] No se encontraron procesos para la sociedad ${idSociedad}${idProyecto ? ` y proyecto ${idProyecto}` : ''}`);
-            return res.status(404).json({ error: 'No se encontraron procesos para los parámetros especificados' });
+            return res.status(200).json({ mensaje: 'No hay procesos para los parámetros especificados', data: [] });
         }
 
         console.info(`[INFO] Consulta exitosa. Procesos encontrados: ${results.length}`);

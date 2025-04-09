@@ -36,6 +36,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { CrearProyectoComponent } from "./crear-proyecto/crear-proyecto.component";
 import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
+import { CrearProcesoComponent } from './crear-proceso/crear-proceso.component';
 
 @Component({
   selector: 'app-root',
@@ -55,11 +56,15 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
     RouterLink,
     ReactiveFormsModule,
     CrearProyectoComponent,
-    BreadcrumbComponent
+    BreadcrumbComponent,
+    CrearProcesoComponent
 ],
 })
+
 export class AppComponent implements OnInit, OnDestroy {
+    
   mostrarModalProyecto = false;
+  mostrarModalProceso = false;
   title = 'Portal Auditoria';
   isIframe = false;
   loginDisplay = false;
@@ -67,6 +72,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isDarkMode = false;
   mostrarNavbar = true;
   isSidebarVisible = false;
+  
 
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
@@ -253,6 +259,12 @@ export class AppComponent implements OnInit, OnDestroy {
     return urlRegex.test(this.router.url);
   }
 
+  get showNewProcessButton(): boolean {
+    // Verifica si la ruta actual coincide con /pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID
+    const urlRegex = /^\/pais\/\d+\/proyecto\/\d+\/sociedad\/\d+$/;
+    return urlRegex.test(this.router.url);
+  }
+
   paisId: number | null = null;
 
   abrirModalCrearProyecto(): void {
@@ -280,7 +292,19 @@ export class AppComponent implements OnInit, OnDestroy {
     // Aquí puedes agregar lógica adicional si necesitas
     this.cerrarModalProyecto();
     
-    // Opcional: Recargar la página o actualizar datos
-    // window.location.reload();
+  }
+
+  abrirModalCrearProceso(): void {
+    this.mostrarModalProceso = true;
+  }
+  cerrarModalProceso(): void {
+    this.ngOnInit();
+    this.mostrarModalProyecto = false;
+  }
+
+  onProcesoCreado(proceso: any): void {
+    console.log('Proceso creado:', proceso);
+    this.cerrarModalProceso();
+    
   }
 }

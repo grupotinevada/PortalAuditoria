@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, FormControl} from '@angular/forms';
 import { ProyectoService } from 'src/services/proyecto.service';
 import { IProyecto } from 'src/models/proyecto.model';
-import { NgIf, NgFor, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { IUsuario } from 'src/models/user.model';
 
 @Component({
@@ -11,7 +12,7 @@ import { IUsuario } from 'src/models/user.model';
   styleUrls: ['./crear-proyecto.component.css'],
   imports: [ReactiveFormsModule,CommonModule]
 })
-export class CrearProyectoComponent {
+export class CrearProyectoComponent implements OnInit{
   @Output() proyectoCreado = new EventEmitter<any>();
   @Output() cerrarModal = new EventEmitter<void>();
   @Input() paisId!: number; // Asegúrate de tener este decorador

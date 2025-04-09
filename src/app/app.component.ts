@@ -84,7 +84,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private location: Location,
     private breadcrumbService: BreadcrumbService,
-    private proyectoEventoService: ProyectoEventoService
+    private proyectoEventoService: ProyectoEventoService,
+    private modalService: ProyectoEventoService
   ) {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -94,6 +95,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.isDarkMode = localStorage.getItem('darkMode') === 'true';
     this.updateTheme();
+
+    //modal proceso
+    this.modalService.mostrarModalCrearProceso$.subscribe((mostrar) => this.mostrarModalProceso = mostrar)
   }
 
   ngOnInit(): void {
@@ -298,16 +302,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   abrirModalCrearProceso(): void {
-    this.mostrarModalProceso = true;
-  }
-  cerrarModalProceso(): void {
-    this.ngOnInit();
-    this.mostrarModalProyecto = false;
+    this.modalService.abrirCrearProceso();
   }
 
-  onProcesoCreado(proceso: any): void {
-    console.log('Proceso creado:', proceso);
-    this.cerrarModalProceso();
-    
-  }
 }

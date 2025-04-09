@@ -22,6 +22,10 @@ export class CrearProyectoComponent implements OnInit {
   sociedades: any[] = [];
   isLoading = false;
   errorMessage = '';
+
+
+
+
   //paisId!: number; // ID del país que se pasa al componente
 
   constructor(

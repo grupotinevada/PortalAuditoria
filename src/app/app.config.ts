@@ -13,7 +13,7 @@ import {
   HTTP_INTERCEPTORS,
   withFetch,
 } from '@angular/common/http';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { BrowserAnimationsModule, provideNoopAnimations } from '@angular/platform-browser/animations';
 import {
   IPublicClientApplication,
   PublicClientApplication,
@@ -91,6 +91,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    BrowserAnimationsModule,
     DatePipe,
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
@@ -101,6 +102,7 @@ export const appConfig: ApplicationConfig = {
       MatToolbarModule,
       MatListModule,
       MatMenuModule
+      
     ),
     provideNoopAnimations(),
     provideHttpClient(withInterceptorsFromDi(), withFetch()),

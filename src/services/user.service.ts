@@ -32,4 +32,8 @@ export class UserService {
     const userData = sessionStorage.getItem('userData');
     return userData ? JSON.parse(userData) as IUsuario : null;
   }
+
+  obtenerUsuarios(){
+    return this.http.get<IUsuario[]>(`${this.apiUrl}/usuarios`);
+  }
 }

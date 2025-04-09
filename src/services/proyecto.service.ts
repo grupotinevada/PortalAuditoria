@@ -8,6 +8,7 @@ import { ISociedad } from 'src/models/sociedad.model';
 import { UserService } from './user.service';
 import { IProceso } from 'src/models/proceso.model';
 import { IPais } from 'src/models/pais.model';
+import { IEstado } from 'src/models/estado.model';
 
 
 @Injectable({
@@ -81,6 +82,23 @@ export class ProyectoService {
     console.log('Enviando datos de proyecto:', procesoData);
     return this.http.post(`${this.apiUrl}/procesos`, procesoData);
   }
+
+  obtenerEstados(): Observable<IEstado[]> {
+    return this.http.get<IEstado[]>(`${this.apiUrl}/estados`);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   //SERVICIOS PARA OBTENER DATOS LIMPIOS Y GENERALES SE USAN PARA EL BRADCRUMB
 

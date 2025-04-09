@@ -131,7 +131,50 @@ app.get('/usuario/:idusuario/:correo/perfil', async (req, res) => {
         res.status(500).json({ error: 'Error en el servidor' });
     }
 });
+
+ // Obtener usuarios
+ app.get('/estados', async (req, res) => {
+    console.log('[INFO] Petición recibida para obtener estados.');
  
+    try {
+        const sql = `SELECT * FROM estado`;
+        const [results] = await db.promise().query(sql);
+ 
+        if (results.length === 0) {
+            console.warn('[WARN] No se encontraron estados en la base de datos.');
+            return res.status(404).json({ error: 'No se encontraron estados' });
+        }
+ 
+        console.log(`[SUCCESS] ${results.length} estados obtenidos.`);
+        res.json(results);
+ 
+    } catch (error) {
+        console.error('[ERROR] Error al obtener estados:', error);
+        res.status(500).json({ error: 'Error en el servidor al obtener estados' });
+    }
+});
+
+ // Obtener usuarios
+app.get('/usuarios', async (req, res) => {
+    console.log('[INFO] Petición recibida para obtener usuarios.');
+ 
+    try {
+        const sql = `SELECT * FROM usuario`;
+        const [results] = await db.promise().query(sql);
+ 
+        if (results.length === 0) {
+            console.warn('[WARN] No se encontraron usuarios en la base de datos.');
+            return res.status(404).json({ error: 'No se encontraron usuarios' });
+        }
+ 
+        console.log(`[SUCCESS] ${results.length} usuarios obtenidos.`);
+        res.json(results);
+ 
+    } catch (error) {
+        console.error('[ERROR] Error al obtener usuarios:', error);
+        res.status(500).json({ error: 'Error en el servidor al obtener usuarios' });
+    }
+});
  
 // Obtener países
 app.get('/pais', async (req, res) => {
@@ -341,7 +384,8 @@ app.post('/proyecto', async (req, res) => {
 });
 
 
-//CREAR PROCESOS
+
+// CREAR PROCESOS
 app.post('/procesos', async (req, res) => {
     try {
         const {
@@ -352,27 +396,53 @@ app.post('/procesos', async (req, res) => {
             fecha_fin,
             responsable,
             revisor,
-            idestatus,
             idestado,
             crear_archivo_ficticio
         } = req.body;
 
-        // Validar campos obligatorios para el proceso
-        if (!idsociedad || !idproyecto || !nombreproceso || !fecha_inicio || !responsable || !idestatus || !idestado) {
-            return res.status(400).json({ error: 'Faltan campos obligatorios para el proceso.' });
+        // Validaciones específicas de campos obligatorios
+        const errores = [];
+        if (!idsociedad) errores.push('idsociedad es requerido.');
+        if (!idproyecto) errores.push('idproyecto es requerido.');
+        if (!nombreproceso) errores.push('nombreproceso es requerido.');
+        if (!fecha_inicio) errores.push('fecha_inicio es requerido.');
+        if (!responsable) errores.push('responsable es requerido.');
+        if (!idestado && idestado !== 0) errores.push('idestado es requerido.');
+
+        if (errores.length > 0) {
+            return res.status(400).json({ error: errores.join(' ') });
         }
 
         const connection = await db.promise().getConnection();
-
+        // Validación adicional: fecha_fin no debe ser anterior a fecha_inicio
+        if (fecha_inicio && fecha_fin) {
+            const fechaInicioDate = new Date(fecha_inicio);
+            const fechaFinDate = new Date(fecha_fin);
+        
+            if (fechaFinDate < fechaInicioDate) {
+            return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
+            }
+        }
+  
         try {
-            // Insertar datos en la tabla 'proceso'
             const [procesoResult] = await connection.execute(
-                'INSERT INTO proceso (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestatus, idestado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestatus, idestado]
+                `INSERT INTO proceso 
+                (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    idsociedad,
+                    idproyecto,
+                    nombreproceso,
+                    fecha_inicio,
+                    fecha_fin || null,
+                    responsable,
+                    revisor || null,
+                    idestado
+                ]
             );
+
             const idproceso = procesoResult.insertId;
 
-            // Si crear_archivo_ficticio es true, crear e insertar datos en la tabla 'archivo'
             if (crear_archivo_ficticio) {
                 const randomString = randomBytes(10).toString('hex');
                 const nombrearchivo_ficticio = `archivo_ficticio_${randomString}.txt`;
@@ -382,11 +452,12 @@ app.post('/procesos', async (req, res) => {
                     'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
                     [idproceso, ruta_sharepoint_ficticia, nombrearchivo_ficticio]
                 );
+
                 logger.info(`Proceso con ID ${idproceso} creado con archivo ficticio.`);
-                res.status(201).json({ message: `Proceso creado con ID ${idproceso} y archivo ficticio asociado.` });
+                return res.status(201).json({ message: `Proceso creado con ID ${idproceso} y archivo ficticio asociado.` });
             } else {
                 logger.info(`Proceso con ID ${idproceso} creado sin archivo.`);
-                res.status(201).json({ message: `Proceso creado con ID ${idproceso}.` });
+                return res.status(201).json({ message: `Proceso creado con ID ${idproceso}.` });
             }
 
         } finally {
@@ -398,6 +469,7 @@ app.post('/procesos', async (req, res) => {
         res.status(500).json({ error: 'Error al crear el proceso en la base de datos.' });
     }
 });
+
 
 
 // Obtener procesos para una sociedad por idSociedad e idproyecto
@@ -457,8 +529,6 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
     }
 });
-
-
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;

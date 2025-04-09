@@ -1,54 +1,78 @@
-<!-- Modal -->
-<div class="modal fade" id="procesoModal" tabindex="-1" aria-labelledby="procesoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="procesoModalLabel">Formulario de Proceso</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div [@fadeInOut] class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px; background-color: rgba(0, 0, 0, 0.5);">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content p-3" style="max-width: 100%; overflow: hidden;">
+
+      <!-- Header -->
+      <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex flex-column">
+          <h5 class="modal-title mb-0">Crear Nuevo Proceso</h5>
+          <small class="text-danger">Debe completar todos los campos</small>
         </div>
+        <button type="button" class="btn-close ms-2" (click)="cerrarModalProceso()" aria-label="Close"></button>
+      </div>
+
+      <!-- Formulario -->
+      <form [formGroup]="procesoForm" (ngSubmit)="onSubmit()">
         <div class="modal-body">
-          <form [formGroup]="procesoForm" (ngSubmit)="onSubmit()">
-            <div class="mb-3">
-              <label for="idSociedad" class="form-label">ID Sociedad</label>
-              <input id="idSociedad" class="form-control" formControlName="idSociedad" [readonly]="true">
-            </div>
-            <div class="mb-3">
-              <label for="idProyecto" class="form-label">ID Proyecto</label>
-              <input id="idProyecto" class="form-control" formControlName="idProyecto" [readonly]="true">
-            </div>
-            <div class="mb-3">
-              <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
-              <input id="nombreProceso" class="form-control" formControlName="nombreProceso">
-            </div>
-            <div class="mb-3">
+
+          <!-- Nombre del Proceso -->
+          <div class="mb-3">
+            <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
+            <input id="nombreProceso" class="form-control" formControlName="nombreProceso">
+          </div>
+
+          <!-- Fechas -->
+          <div class="row">
+            <div class="mb-3 col-md-6">
               <label for="fechaInicio" class="form-label">Fecha de Inicio</label>
               <input id="fechaInicio" type="date" class="form-control" formControlName="fechaInicio">
             </div>
-            <div class="mb-3">
+
+            <div class="mb-3 col-md-6">
               <label for="fechaFin" class="form-label">Fecha de Fin</label>
               <input id="fechaFin" type="date" class="form-control" formControlName="fechaFin">
             </div>
+          </div>
+
+          <!-- Responsable -->
+          <div class="mb-3">
+            <label for="responsable" class="form-label">Responsable</label>
+            <select id="responsable" class="form-select" formControlName="responsable" style="width: 100%; max-width: 100%;">
+              <option *ngFor="let usuario of usuarios" [value]="usuario.idusuario">
+                {{ usuario.nombreUsuario }}
+              </option>
+            </select>
+          </div>
+
+            <!-- Estado -->
             <div class="mb-3">
-              <label for="responsable" class="form-label">Responsable</label>
-              <input id="responsable" class="form-control" formControlName="responsable">
+            <label for="idestado" class="form-label">Estado</label>
+            <select id="idestado" class="form-select" formControlName="idestado">
+              <option [value]="null">Seleccione el Estado</option>
+              <option *ngFor="let estado of estados" [value]="estado.idestado">
+              {{ estado.descestado }}
+              </option>
+            </select>
             </div>
-            <div class="mb-3">
-              <label for="idestado" class="form-label">Estado</label>
-              <select id="idestado" class="form-select" formControlName="idestado">
-                <option value="0">Seleccione el Estado</option>
-                <option value="1">Estado 1</option>
-                <option value="2">Estado 2</option>
-                <option value="3">Estado 3</option>
-              </select>
-            </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" formControlName="crear_archivo_ficticio" id="crear_archivo_ficticio">
-              <label class="form-check-label" for="crear_archivo_ficticio">Crear archivo ficticio</label>
-            </div>
-            <button type="submit" class="btn btn-primary" [disabled]="!procesoForm.valid">Guardar</button>
-          </form>
+
+          <!-- Checkbox -->
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" formControlName="crear_archivo_ficticio" id="crear_archivo_ficticio">
+            <label class="form-check-label" for="crear_archivo_ficticio">Crear archivo ficticio</label>
+          </div>
+
         </div>
-      </div>
+
+        <!-- Footer con botones -->
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-danger" (click)="cerrarModalProceso()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="procesoForm.invalid">Guardar</button>
+        </div>
+
+      </form>
     </div>
   </div>
-  
+</div>
+
+<!-- Fondo semitransparente adicional -->
+<div class="modal-backdrop fade show"></div>

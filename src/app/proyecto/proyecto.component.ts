@@ -3,8 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectoService } from '../../services/proyecto.service';
 import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
-
-
+import { BreadcrumbService } from 'src/services/breadcrumb.service';
+import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
+import { IPais } from 'src/models/pais.model';
 
 @Component({
   selector: 'app-proyecto',
@@ -20,11 +21,17 @@ export class ProyectoComponent implements OnInit{
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private proyectoService: ProyectoService
+    private proyectoService: ProyectoService,
+    private proyectoEventoService: ProyectoEventoService
   ) {}
 
   ngOnInit(): void {
     this.cargarProyectosPorPais();
+
+    this.proyectoEventoService.proyectoCreado$.subscribe((nuevoProyecto) => {
+      console.log('Proyecto nuevo detectado en ProyectoComponent:', nuevoProyecto);
+      this.cargarProyectosPorPais(); // Refresca la lista
+    });
   }
 
 
@@ -49,7 +56,23 @@ seleccionarProyecto(idProyecto: number | null) {
 }
 
 
+mostrarModal = false;
 
+abrirModal(): void {
+  this.mostrarModal = true;
+}
+
+cerrarModal(): void {
+  this.mostrarModal = false;
+}
+
+/*onProyectoCreado(proyecto: IProyecto): void {
+  console.log('Proyecto creado:', proyecto);
+  // Recargar todos los proyectos desde el servicio
+  this.cargarProyectosPorPais();
+  this.cerrarModal();
+}
+*/
 
 
 }

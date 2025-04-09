@@ -37,6 +37,7 @@ import { CrearProyectoComponent } from "./crear-proyecto/crear-proyecto.componen
 import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { CrearProcesoComponent } from './crear-proceso/crear-proceso.component';
+import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 
 @Component({
   selector: 'app-root',
@@ -82,7 +83,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private location: Location,
-    private breadcrumbService: BreadcrumbService
+    private breadcrumbService: BreadcrumbService,
+    private proyectoEventoService: ProyectoEventoService
   ) {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -290,6 +292,7 @@ export class AppComponent implements OnInit, OnDestroy {
   onProyectoCreado(proyecto: any): void {
     console.log('Proyecto creado:', proyecto);
     // Aquí puedes agregar lógica adicional si necesitas
+    this.proyectoEventoService.emitirProyectoCreado(proyecto);
     this.cerrarModalProyecto();
     
   }

@@ -12,8 +12,8 @@ import { IUsuario } from 'src/models/user.model';
   styleUrls: ['./crear-proyecto.component.css'],
   imports: [ReactiveFormsModule,CommonModule]
 })
-export class CrearProyectoComponent implements OnInit{
-  @Output() proyectoCreado = new EventEmitter<any>();
+export class CrearProyectoComponent {
+  @Output() proyectoCreado = new EventEmitter<IProyecto>();
   @Output() cerrarModal = new EventEmitter<void>();
   @Input() paisId!: number; // Asegúrate de tener este decorador
 
@@ -40,7 +40,7 @@ export class CrearProyectoComponent implements OnInit{
     initForm(): void {
       this.proyectoForm = this.fb.group({
         nombre: ['', Validators.required],
-        descripcion: [''],
+        //descripcion: [''],
         fechaInicio: ['', Validators.required],
         fechaFin: [''],
         sociedades: this.fb.array([]) // Inicializa el FormArray

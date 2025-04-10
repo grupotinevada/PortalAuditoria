@@ -432,7 +432,6 @@ app.put('/proyecto/:idproyecto', async (req, res) => {
             }
         }
 
-
         // Confirmar la transacción
         await connection.commit();
         console.log('[SUCCESS] Transacción completada con éxito.');

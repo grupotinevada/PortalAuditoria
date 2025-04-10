@@ -404,7 +404,7 @@ body::before {
 
 /* Botones Outline */
 .btn-outline-primary, .btn-outline-secondary, .btn-outline-dark, .btn-outline-light {
-  background-color: transparent;
+  background-color: #c9defc;
   box-shadow: none;
 }
 

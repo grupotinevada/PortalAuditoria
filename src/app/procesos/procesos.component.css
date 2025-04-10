@@ -1,5 +1,5 @@
 .procesos-th {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: var(--bs-primary) !important;
   }
@@ -9,4 +9,8 @@
     font-weight: 400;
     color: var(--bs-primary) !important;
   
+}
+
+.container-fluid{
+  zoom: 0.88;
 }

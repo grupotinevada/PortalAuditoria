@@ -7,6 +7,9 @@ const fs = require('fs');
 const logger = require('./logger');
 const { randomBytes } = require('crypto');
 const axios = require('axios');
+const multer = require('multer');
+const ExcelJS = require('exceljs');
+
 
 const app = express();
 app.use(cors());
@@ -385,105 +388,251 @@ app.post('/proyecto', async (req, res) => {
     }
 });
 
-
-
-app.post('/procesos', async (req, res) => {
-    const connection = await db.promise().getConnection();
-
+// FUNCIONES PARA EL SHAREPOINT
+async function subirArchivoASharepoint(accessToken, idproceso, archivo) {
+    const siteName = process.env.SITE_NAME;
+    const driveName = process.env.DRIVE_NAME;
+    const carpetaNombre = `proceso_${idproceso}`;
+    const archivoNombre = archivo.originalname;
+  
     try {
-        const {
-            idsociedad,
-            idproyecto,
-            nombreproceso,
-            fecha_inicio,
-            fecha_fin,
-            responsable,
-            revisor,
-            idestado,
-            crear_archivo_ficticio
-        } = req.body;
-
-        // Validaciones específicas de campos obligatorios
-        const errores = [];
-        if (!idsociedad) errores.push('idsociedad es requerido.');
-        if (!idproyecto) errores.push('idproyecto es requerido.');
-        if (!nombreproceso) errores.push('nombreproceso es requerido.');
-        if (!fecha_inicio) errores.push('fecha_inicio es requerido.');
-        if (!responsable) errores.push('responsable es requerido.');
-        if (!idestado && idestado !== 0) errores.push('idestado es requerido.');
-
-        if (errores.length > 0) {
-            return res.status(400).json({ error: errores.join(' ') });
-        }
-
-        // Iniciar la transacción
-        await connection.beginTransaction();
-
-        // Validación adicional: fecha_fin no debe ser anterior a fecha_inicio
-        if (fecha_inicio && fecha_fin) {
-            const fechaInicioDate = new Date(fecha_inicio);
-            const fechaFinDate = new Date(fecha_fin);
-        
-            if (fechaFinDate < fechaInicioDate) {
-                await connection.rollback();  // Hacer rollback en caso de error
-                return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
-            }
-        }
-
-        const [procesoResult] = await connection.execute(
-            `INSERT INTO proceso 
-            (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                idsociedad,
-                idproyecto,
-                nombreproceso,
-                fecha_inicio,
-                fecha_fin || null,
-                responsable,
-                revisor || null,
-                idestado
-            ]
+      // 1. Obtener siteId
+      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const siteId = siteResp.data.id;
+  
+      // 2. Obtener driveId
+      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
+      if (!driveId) throw new Error("No se encontró el drive");
+  
+      // 3. Obtener folderId (verificar si la carpeta existe)
+      let folderId;
+      const folderList = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const folder = folderList.data.value[0];
+  
+      if (folder) {
+        // Si la carpeta existe, obtener su ID
+        folderId = folder.id;
+      } else {
+        // Si no existe, crear la carpeta
+        const createFolderResp = await axios.post(
+          `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
+          {
+            name: carpetaNombre,
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "fail"
+          },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-
-        const idproceso = procesoResult.insertId;
-
-        if (crear_archivo_ficticio) {
-            try {
-              const { rutaArchivo, nombreArchivo } = await crearCarpetaYArchivoEnSharepoint(req.body.accessToken, idproceso);
-          
-              await connection.execute(
-                'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
-                [idproceso, rutaArchivo, nombreArchivo]
-              );
-          
-              await connection.commit();
-              return res.status(201).json({ message: `Proceso creado con archivo real en SharePoint`, idproceso });
-          
-            } catch (err) {
-              await connection.rollback();
-              return res.status(500).json({ error: 'Error al subir archivo a SharePoint: ' + err.message });
-            }
+        folderId = createFolderResp.data.id;
+      }
+  
+      // 4. Verificar si archivo ya existe
+      const archivoCheck = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}/children?$filter=name eq '${archivoNombre}'`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (archivoCheck.data.value.length > 0) throw new Error('El archivo ya existe en SharePoint');
+  
+      // 5. Subir archivo
+      const uploadResp = await axios.put(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${archivoNombre}:/content`,
+        archivo.buffer,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': archivo.mimetype
           }
-
-    } catch (error) {
-        // Si ocurre un error en cualquier parte, hacer rollback
-        await connection.rollback();
-        logger.error('Error al crear el proceso:', error);
-        res.status(500).json({ error: 'Error al crear el proceso en la base de datos.' });
-    } finally {
-        connection.release();  // Liberar la conexión
+        }
+      );
+  
+      return {
+        carpeta: carpetaNombre,
+        rutaArchivo: uploadResp.data.webUrl,
+        nombreArchivo: archivoNombre
+      };
+  
+    } catch (err) {
+      console.error('Error al subir archivo a SharePoint:', err.response?.data || err.message);
+      throw new Error('Error al subir archivo a SharePoint');
     }
-});
+  }
+  
+  
+  async function crearCarpetaYArchivoEnBlancoSharepoint(accessToken, idproceso) {
+    const siteName = process.env.SITE_NAME;
+    const driveName = process.env.DRIVE_NAME;
+    const carpetaNombre = `proceso_${idproceso}`;
+    const nombreArchivo = `archivo_proceso_${idproceso}.xlsx`;
+  
+    try {
+      // 1. Obtener siteId
+      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const siteId = siteResp.data.id;
+  
+      // 2. Obtener driveId
+      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
+      if (!driveId) throw new Error("No se encontró el drive");
+  
+      // 3. Verificar si carpeta ya existe
+      const folderCheck = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+  
+      if (folderCheck.data.value.length > 0) throw new Error('La carpeta del proceso ya existe');
+  
+      // 4. Crear carpeta
+      const folderResp = await axios.post(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
+        {
+          name: carpetaNombre,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "fail"
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const folderId = folderResp.data.id;
+  
+      // 5. Crear archivo Excel en memoria
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Datos');
+      sheet.addRow(['ID', 'Nombre', 'Estado']); // ejemplo
+      const buffer = await workbook.xlsx.writeBuffer();
+  
+      // 6. Subir archivo
+      const uploadResp = await axios.put(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${nombreArchivo}:/content`,
+        buffer,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }
+        }
+      );
+  
+      return {
+        carpeta: carpetaNombre,
+        rutaArchivo: uploadResp.data.webUrl,
+        nombreArchivo
+      };
+  
+    } catch (err) {
+      console.error('Error creando carpeta y archivo Excel en blanco:', err.response?.data || err.message);
+      throw new Error('Error al crear carpeta y archivo en blanco en SharePoint');
+    }
+  }
 
 
+  //PROCESOS
+  const upload = multer();
+  app.post('/procesos', upload.single('archivo'), async (req, res) => {
+    const connection = await db.promise().getConnection();
+  
+    try {
+      const {
+        idsociedad,
+        idproyecto,
+        nombreproceso,
+        fecha_inicio,
+        fecha_fin,
+        responsable,
+        revisor,
+        idestado,
+        crear_archivo_en_blanco,
+      } = req.body;
+  
+      const accessToken = req.headers.authorization?.split(' ')[1];  // Extraer el token del encabezado Authorization
+      if (!accessToken) {
+        return res.status(400).json({ error: 'Access token es requerido' });
+      }
+  
+      const archivoSubido = req.file;
+  
+      // Validaciones
+      const errores = [];
+      if (!idsociedad) errores.push('idsociedad es requerido.');
+      if (!idproyecto) errores.push('idproyecto es requerido.');
+      if (!nombreproceso) errores.push('nombreproceso es requerido.');
+      if (!fecha_inicio) errores.push('fecha_inicio es requerido.');
+      if (!responsable) errores.push('responsable es requerido.');
+      if (idestado === undefined) errores.push('idestado es requerido.');
+      if (errores.length > 0) return res.status(400).json({ error: errores.join(' ') });
+  
+      if (fecha_inicio && fecha_fin && new Date(fecha_fin) < new Date(fecha_inicio)) {
+        return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
+      }
+  
+      // Iniciar transacción
+      await connection.beginTransaction();
+  
+      const [procesoResult] = await connection.execute(`
+        INSERT INTO proceso 
+        (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          idsociedad,
+          idproyecto,
+          nombreproceso,
+          fecha_inicio,
+          fecha_fin || null,
+          responsable,
+          revisor || null,
+          idestado
+        ]
+      );
+  
+      const idproceso = procesoResult.insertId;
+  
+      // Archivos
+      let archivoResult;
+      if (crear_archivo_en_blanco === 'true') {
+        archivoResult = await crearCarpetaYArchivoEnBlancoSharepoint(accessToken, idproceso);
+      } else if (archivoSubido) {
+        archivoResult = await subirArchivoASharepoint(accessToken, idproceso, archivoSubido);
+      }
+  
+      if (archivoResult) {
+        const { rutaArchivo, nombreArchivo } = archivoResult;
+        await connection.execute('INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)', [
+          idproceso,
+          rutaArchivo,
+          nombreArchivo
+        ]);
+      }
+  
+      await connection.commit();
+      res.status(201).json({ message: 'Proceso creado exitosamente', idproceso });
+  
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error al crear el proceso:', error);
+      res.status(500).json({ error: 'Error al crear el proceso.' });
+    } finally {
+      connection.release();
+    }
+  });
+  
 
 
 // Obtener procesos para una sociedad por idSociedad e idproyecto
 app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
     const { idSociedad, idProyecto } = req.params;
 
-    console.debug(`[DEBUG] Petición recibida: /procesos/${idSociedad}${idProyecto ? `/${idProyecto}` : ''}`);
+    console.debug(`[DEBUG] Petición recibida: /procesos/${idSociedad}${idProyecto ? '/' + idProyecto : ''}`);
 
     let sql = `
         SELECT 
@@ -499,14 +648,16 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
             s.nombresociedad,
             e.descestado,
             r1.nombreusuario AS responsable_nombre,
-            r2.nombreusuario AS revisor_nombre
-        FROM panelAuditoria.proceso p
-        JOIN panelAuditoria.proyecto_sociedad ps 
+            r2.nombreusuario AS revisor_nombre,
+            a.ruta AS link
+        FROM proceso p
+        JOIN proyecto_sociedad ps 
             ON p.idsociedad = ps.idsociedad AND p.idproyecto = ps.idproyecto
-        LEFT JOIN panelAuditoria.sociedad s ON p.idsociedad = s.idsociedad
-        LEFT JOIN panelAuditoria.estado e ON p.idestado = e.idestado
-        LEFT JOIN panelAuditoria.usuario r1 ON p.responsable = r1.idusuario
-        LEFT JOIN panelAuditoria.usuario r2 ON p.revisor = r2.idusuario
+        LEFT JOIN sociedad s ON p.idsociedad = s.idsociedad
+        LEFT JOIN estado e ON p.idestado = e.idestado
+        LEFT JOIN usuario r1 ON p.responsable = r1.idusuario
+        LEFT JOIN usuario r2 ON p.revisor = r2.idusuario
+        LEFT JOIN archivo a ON p.idproceso = a.idproceso
         WHERE p.idsociedad = ?
     `;
 
@@ -523,7 +674,7 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
         const [results] = await db.promise().query(sql, params);
 
         if (results.length === 0) {
-            console.warn(`[WARN] No se encontraron procesos para la sociedad ${idSociedad}${idProyecto ? ` y proyecto ${idProyecto}` : ''}`);
+            console.warn(`[WARN] No se encontraron procesos para la sociedad ${idSociedad}${idProyecto ? ' y proyecto ' + idProyecto : ''}`);
             return res.status(200).json({ mensaje: 'No hay procesos para los parámetros especificados', data: [] });
         }
 
@@ -532,7 +683,7 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
 
         res.json(results);
     } catch (err) {
-        console.error(`[ERROR] Error al obtener procesos`, err);
+        console.error(`[ERROR] Error al obtener procesos, ${err}`);
         res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
     }
 });
@@ -540,64 +691,6 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
 
 
 
-//FUNCIONES PARA EL SHAREPOINT
-async function crearCarpetaYArchivoEnSharepoint(accessToken, idproceso) {
-    const siteName = process.env.SITE_NAME; // nombre visible en la URL de SharePoint
-    const driveName = 'Biblioteca Prueba Auditoria'; // suele ser así, puedes verificarlo
-    const carpetaNombre = `proceso_${idproceso}`;
-  
-    try {
-      // 1. Obtener siteId
-      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const siteId = siteResp.data.id;
-  
-      // 2. Obtener driveId del sitio
-      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-  
-      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
-      if (!driveId) throw new Error("No se encontró el drive");
-  
-      // 3. Crear la carpeta con el nombre del proceso
-      const folderResp = await axios.post(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
-        {
-          name: carpetaNombre,
-          folder: {},
-          "@microsoft.graph.conflictBehavior": "rename"
-        },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-  
-      const folderId = folderResp.data.id;
-  
-      // 4. Crear archivo Excel en blanco dentro de la carpeta
-      const archivoNombre = `proceso_${idproceso}.xlsx`;
-  
-      const archivoResp = await axios.put(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${archivoNombre}:/content`,
-        '', // contenido vacío para crear archivo
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          }
-        }
-      );
-  
-      return {
-        carpeta: carpetaNombre,
-        rutaArchivo: archivoResp.data.webUrl,
-        nombreArchivo: archivoNombre
-      };
-    } catch (err) {
-      console.error('Error en SharePoint:', err.response?.data || err.message);
-      throw new Error('Error al interactuar con SharePoint');
-    }
-  }
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;

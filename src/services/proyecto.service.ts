@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -73,19 +73,20 @@ export class ProyectoService {
   }
   
   
-  crearProceso(procesoData: any, accessToken: string): Observable<any> {
+  crearProceso(procesoData: FormData, accessToken: string): Observable<any> {
     const currentUser = this.userService.getCurrentUser();
-    
+  
     if (!currentUser || !currentUser.idusuario) {
       throw new Error('Usuario no autenticado o sin ID');
     }
-    console.log('Enviando datos de proyecto:', procesoData);
-    return this.http.post(`${this.apiUrl}/procesos`, {
-      ...procesoData,
-      accessToken
+  
+    const headers = new HttpHeaders({
+      Authorization: `Bearer: ${accessToken}`
     });
+  
+    return this.http.post(`${this.apiUrl}/procesos`, procesoData, { headers });
   }
-
+  
 
 
 

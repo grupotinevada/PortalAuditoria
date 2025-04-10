@@ -44,7 +44,9 @@
       <tbody>
         <tr *ngFor="let proceso of procesos">
           <td class="procesos-td text-center fw-bold">{{ proceso.idproceso }}</td>
-          <td class="procesos-td">{{ proceso.nombreproceso }}</td>
+            <td class="procesos-td">
+            <a [href]="proceso.link" target="_blank" title="Abrir Documento Adjunto">{{ proceso.nombreproceso }}</a>
+            </td>
           <td class="procesos-td">{{ proceso.fecha_inicio | date:'shortDate' }}</td>
           <td class="procesos-td">{{ proceso.fecha_fin | date:'shortDate' }}</td>
           <td class="procesos-td">

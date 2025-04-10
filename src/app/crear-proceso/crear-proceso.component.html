@@ -1,78 +1,190 @@
-<div [@fadeInOut] class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px; background-color: rgba(0, 0, 0, 0.5);">
+<div
+  [@fadeInOut]
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
+  style="padding-right: 15px; background-color: rgba(0, 0, 0, 0.5)"
+>
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-    <div class="modal-content p-3" style="max-width: 100%; overflow: hidden;">
-
-      <!-- Header -->
-      <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
+    <div class="modal-content p-3" style="max-width: 100%; overflow: hidden">
+      <div
+        class="modal-header d-flex justify-content-between align-items-center flex-wrap"
+      >
         <div class="d-flex flex-column">
           <h5 class="modal-title mb-0">Crear Nuevo Proceso</h5>
           <small class="text-danger">Debe completar todos los campos</small>
         </div>
-        <button type="button" class="btn-close ms-2" (click)="cerrarModalProceso()" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close ms-2"
+          (click)="cerrarModalProceso()"
+          aria-label="Close"
+        ></button>
       </div>
 
-      <!-- Formulario -->
       <form [formGroup]="procesoForm" (ngSubmit)="onSubmit()">
         <div class="modal-body">
-
-          <!-- Nombre del Proceso -->
           <div class="mb-3">
-            <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
-            <input id="nombreProceso" class="form-control" formControlName="nombreProceso">
+            <label for="nombreProceso" class="form-label"
+              >Nombre del Proceso</label
+            >
+            <input
+              id="nombreProceso"
+              class="form-control"
+              formControlName="nombreProceso"
+            />
+            <div
+              *ngIf="
+                procesoForm.get('nombreProceso')?.invalid &&
+                (procesoForm.get('nombreProceso')?.dirty ||
+                  procesoForm.get('nombreProceso')?.touched)
+              "
+              class="text-danger"
+            >
+              El nombre del proceso es requerido.
+            </div>
           </div>
 
-          <!-- Fechas -->
           <div class="row">
             <div class="mb-3 col-md-6">
               <label for="fechaInicio" class="form-label">Fecha de Inicio</label>
-              <input id="fechaInicio" type="date" class="form-control" formControlName="fechaInicio">
+              <input
+                id="fechaInicio"
+                type="date"
+                class="form-control"
+                formControlName="fechaInicio"
+              />
+              <div
+                *ngIf="
+                  procesoForm.get('fechaInicio')?.invalid &&
+                  (procesoForm.get('fechaInicio')?.dirty ||
+                    procesoForm.get('fechaInicio')?.touched)
+                "
+                class="text-danger"
+              >
+                La fecha de inicio es requerida.
+              </div>
             </div>
 
             <div class="mb-3 col-md-6">
               <label for="fechaFin" class="form-label">Fecha de Fin</label>
-              <input id="fechaFin" type="date" class="form-control" formControlName="fechaFin">
+              <input
+                id="fechaFin"
+                type="date"
+                class="form-control"
+                formControlName="fechaFin"
+              />
+              <div
+                *ngIf="
+                  procesoForm.errors?.['fechaFinAnterior'] &&
+                  (procesoForm.get('fechaFin')?.dirty ||
+                    procesoForm.get('fechaFin')?.touched ||
+                    procesoForm.get('fechaInicio')?.dirty ||
+                    procesoForm.get('fechaInicio')?.touched)
+                "
+                class="text-danger"
+              >
+                La fecha de fin debe ser mayor o igual a la fecha de inicio.
+              </div>
             </div>
           </div>
 
-          <!-- Responsable -->
           <div class="mb-3">
             <label for="responsable" class="form-label">Responsable</label>
-            <select id="responsable" class="form-select" formControlName="responsable" style="width: 100%; max-width: 100%;">
-              <option *ngFor="let usuario of usuarios" [value]="usuario.idusuario">
+            <select
+              id="responsable"
+              class="form-select"
+              formControlName="responsable"
+              style="width: 100%; max-width: 100%"
+            >
+              <option
+                *ngFor="let usuario of usuarios"
+                [value]="usuario.idusuario"
+              >
                 {{ usuario.nombreUsuario }}
               </option>
             </select>
+            <div
+              *ngIf="
+                procesoForm.get('responsable')?.invalid &&
+                (procesoForm.get('responsable')?.dirty ||
+                  procesoForm.get('responsable')?.touched)
+              "
+              class="text-danger"
+            >
+              El responsable es requerido.
+            </div>
           </div>
 
-            <!-- Estado -->
-            <div class="mb-3">
+          <div class="mb-3">
             <label for="idestado" class="form-label">Estado</label>
-            <select id="idestado" class="form-select" formControlName="idestado">
+            <select
+              id="idestado"
+              class="form-select"
+              formControlName="idestado"
+            >
               <option [value]="null">Seleccione el Estado</option>
               <option *ngFor="let estado of estados" [value]="estado.idestado">
-              {{ estado.descestado }}
+                {{ estado.descestado }}
               </option>
             </select>
+            <div
+              *ngIf="
+                procesoForm.get('idestado')?.invalid &&
+                (procesoForm.get('idestado')?.dirty ||
+                  procesoForm.get('idestado')?.touched)
+              "
+              class="text-danger"
+            >
+              El estado es requerido.
             </div>
-
-          <!-- Checkbox -->
-          <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" formControlName="crear_archivo_ficticio" id="crear_archivo_ficticio">
-            <label class="form-check-label" for="crear_archivo_ficticio">Crear archivo ficticio</label>
+          </div>
+          <div class="mb-3">
+            <label for="archivoProceso" class="form-label"
+              >Seleccionar Archivo</label
+            >
+            <input
+              id="archivoProceso"
+              type="file"
+              class="form-control"
+              (change)="onFileSelected($event)"
+              [disabled]="procesoForm.get('crear_archivo_en_blanco')?.value"
+            />
           </div>
 
+          <div class="mb-3 form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              formControlName="crear_archivo_en_blanco"
+              id="crear_archivo_en_blanco"
+            />
+            <label class="form-check-label" for="crear_archivo_en_blanco"
+              >Crear archivo XLSX en blanco</label
+            >
+          </div>
         </div>
 
-        <!-- Footer con botones -->
         <div class="modal-footer justify-content-between">
-          <button type="button" class="btn btn-danger" (click)="cerrarModalProceso()">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="procesoForm.invalid">Guardar</button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            (click)="cerrarModalProceso()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="procesoForm.invalid"
+          >
+            Guardar
+          </button>
         </div>
-
       </form>
     </div>
   </div>
 </div>
 
-<!-- Fondo semitransparente adicional -->
 <div class="modal-backdrop fade show"></div>

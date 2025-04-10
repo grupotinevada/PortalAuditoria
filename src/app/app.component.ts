@@ -174,18 +174,6 @@ export class AppComponent implements OnInit, OnDestroy {
           );
         });
     }
-    const request = {
-      scopes: environment.apiConfig.scopes
-    };
-    this.authService.acquireTokenSilent(request).subscribe((result: AuthenticationResult)=>{
-      const accessToken = result.accessToken;
-      const idToken = result.idToken;
-
-      this.userService.enviarTokensAlBackend(accessToken, idToken ).subscribe({
-        next:(resp) => console.log('Tokens enviados correctamente al backend', resp),
-        error: (err) => console.error('Error al enviar tokens al backend', err)
-      });
-    });
 
   }
 

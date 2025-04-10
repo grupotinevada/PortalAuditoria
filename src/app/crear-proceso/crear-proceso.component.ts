@@ -50,7 +50,8 @@ export class CrearProcesoComponent implements OnInit{
   ProyectoID!: number;
   SociedadID!: number;
   
-  crearArchivoFicticio = false; //eliminar esto
+  crearArchivo = false; 
+  archivoSeleccionado: File | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -128,41 +129,60 @@ export class CrearProcesoComponent implements OnInit{
       responsable: ['', Validators.required],
       revisor: [''],
       idestado: [0, Validators.required],
-      crear_archivo_ficticio: [false]
+      crear_archivo_en_blanco: [false]
     }, { validators: this.fechaFinMayorQueInicioValidator });
   }
+  
 
   onSubmit(): void {
     if (this.procesoForm.valid) {
       const form = this.procesoForm.value;
-
-      const procesoData = {
-        idsociedad: form.idSociedad,
-        idproyecto: form.idProyecto,
-        nombreproceso: form.nombreProceso,
-        fecha_inicio: form.fechaInicio,
-        fecha_fin: form.fechaFin || null,
-        responsable: form.responsable,
-        revisor: form.revisor || null, // si no existe, se envía como null
-        idestado: form.idestado,
-        crear_archivo_ficticio: form.crear_archivo_ficticio
-      };
-
+  
+      // Validaciones cruzadas
+      if (form.crear_archivo_en_blanco && this.archivoSeleccionado) {
+        Swal.fire('Error', 'No puede subir un archivo y seleccionar "Crear archivo en blanco"', 'warning');
+        return;
+      }
+  
+      if (!form.crear_archivo_en_blanco && !this.archivoSeleccionado) {
+        Swal.fire('Error', 'Debe subir un archivo si no selecciona "Crear archivo en blanco"', 'warning');
+        return;
+      }
+  
       if (this.procesoForm.hasError('fechaFinAnterior')) {
         Swal.fire('Error', 'La fecha de fin no puede ser anterior a la fecha de inicio', 'warning');
         return;
       }
-
+  
+      // Obtener accessToken
       this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe((result) => {
-        const accessToken = result.accessToken;  //se obtiene el accessToken se manda junto a la solicitud de creacion del proceso y saber quien crea la carpeta en el sharepoint
-
-        this.proyectoService.crearProceso(procesoData, accessToken).subscribe(
+        const accessToken = result.accessToken;
+        console.log('Access Token:', accessToken);
+        // Armar FormData
+        const formData = new FormData();
+        formData.append('idsociedad', form.idSociedad);
+        formData.append('idproyecto', form.idProyecto);
+        formData.append('nombreproceso', form.nombreProceso);
+        formData.append('fecha_inicio', form.fechaInicio);
+        formData.append('fecha_fin', form.fechaFin || '');
+        formData.append('responsable', form.responsable);
+        formData.append('revisor', form.revisor || '');
+        formData.append('idestado', form.idestado);
+        formData.append('crear_archivo_en_blanco', form.crear_archivo_en_blanco.toString());
+  
+        if (this.archivoSeleccionado && !form.crear_archivo_en_blanco) {
+          formData.append('archivo', this.archivoSeleccionado);
+        }
+  
+        // Llamar servicio con token en header
+        this.proyectoService.crearProceso(formData, accessToken).subscribe(
           (res) => {
-            console.log('Proceso creado exitosamente', res, 'accessToken:', accessToken);
+            console.log('Proceso creado exitosamente', res);
             Swal.fire('Éxito', res.message, 'success').then(() => {
               this.ProcesoCreado.emit(res.data);
               this.cerrarModalProceso();
-              this.procesoForm.reset(); // Reiniciar el formulario después de crear el proceso
+              this.procesoForm.reset();
+              this.archivoSeleccionado = null;
             });
           },
           (error) => {
@@ -180,8 +200,8 @@ export class CrearProcesoComponent implements OnInit{
   
 
   onCheckboxChange(event: any): void {
-    this.crearArchivoFicticio = event.target.checked;
-    this.procesoForm.patchValue({ crear_archivo_ficticio: this.crearArchivoFicticio });
+    this.crearArchivo = event.target.checked;
+    this.procesoForm.patchValue({ crear_archivo_en_blanco: this.crearArchivo });
   }
   
   cerrarModalProceso(){
@@ -198,5 +218,16 @@ fechaFinMayorQueInicioValidator(formGroup: FormGroup): Record<string, boolean> |
 
   return null;
 }
+
+onFileSelected(event: any): void {
+  const file: File = event.target.files[0];
+  if (file) {
+    this.archivoSeleccionado = file;
+    console.log('Archivo seleccionado:', file.name);
+  } else {
+    this.archivoSeleccionado = null;
+  }
+}
+
 }
 

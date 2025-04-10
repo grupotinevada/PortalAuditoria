@@ -10,5 +10,6 @@ export interface IProceso{
     revisor: string | null,
     revisor_nombre: string | null,
     idestado: number | null,
-    descestado: string | null
+    descestado: string | null,
+    link: string | null,
 }

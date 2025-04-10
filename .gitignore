@@ -41,6 +41,7 @@ testem.log
 .DS_Store
 Thumbs.db
 /backend/logs_server/
+/backend/.env
 package-lock.json
 
 DigiCertGlobalRootCA.crt.pem

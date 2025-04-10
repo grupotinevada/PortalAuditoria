@@ -385,7 +385,7 @@ body::before {
 }
 
 .btn-primary {
-  background: linear-gradient(90deg, var(--nevada-dark-blue) 0%, #2a6ca8 100%);
+  background: var(--nevada-dark-blue);
   color: var(--bs-primary-text);
 }
 

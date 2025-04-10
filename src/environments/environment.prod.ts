@@ -7,7 +7,7 @@ export const environment = {
     },
   },
   apiConfig: {
-    scopes: ['user.read'],
+    scopes: ['user.read', 'mail.read', 'openid', 'profile'],
     uri: 'https://graph.microsoft.com/v1.0/me',
   },
   apiUrl: {

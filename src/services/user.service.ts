@@ -36,4 +36,12 @@ export class UserService {
   obtenerUsuarios(){
     return this.http.get<IUsuario[]>(`${this.apiUrl}/usuarios`);
   }
+
+  enviarTokensAlBackend(accessToken: string, idToken: string): Observable<any> {
+    return this.http.post(`${environment.apiUrl.api}/auth/tokens`, {
+      accessToken,
+      idToken
+    });
+  }
+  
 }

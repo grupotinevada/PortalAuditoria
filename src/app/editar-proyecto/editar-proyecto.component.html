@@ -1,0 +1,61 @@
+<!-- editar-proyecto.component.html -->
+<form [formGroup]="proyectoForm" (ngSubmit)="guardar()">
+    <div class="mb-3">
+      <label for="nombreproyecto" class="form-label">Nombre del Proyecto</label>
+      <input type="text" class="form-control" id="nombreproyecto" formControlName="nombreproyecto">
+      <div *ngIf="proyectoForm.get('nombreproyecto')?.invalid && proyectoForm.get('nombreproyecto')?.touched" class="text-danger">
+        El nombre del proyecto es obligatorio.
+      </div>
+    </div>
+    
+    <div class="mb-3">
+      <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
+      <input type="date" class="form-control" id="fecha_inicio" formControlName="fecha_inicio">
+      <div *ngIf="proyectoForm.get('fecha_inicio')?.invalid && proyectoForm.get('fecha_inicio')?.touched" class="text-danger">
+        La fecha de inicio es obligatoria.
+      </div>
+    </div>
+    
+    <div class="mb-3">
+      <label for="fecha_termino" class="form-label">Fecha de Término</label>
+      <input type="date" class="form-control" id="fecha_termino" formControlName="fecha_termino">
+      <div *ngIf="proyectoForm.get('fecha_termino')?.invalid && proyectoForm.get('fecha_termino')?.touched" class="text-danger">
+        La fecha de término es obligatoria.
+      </div>
+    </div>
+    
+    <!-- Checkboxes de sociedades -->
+    <div class="mb-3">
+      <label class="form-label">Sociedades asociadas:</label>
+      <div *ngIf="cargandoSociedades" class="text-center py-2">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <span class="ms-2">Cargando sociedades...</span>
+      </div>
+      
+      <div *ngIf="!cargandoSociedades && sociedades.length === 0" class="alert alert-info">
+        No hay sociedades disponibles para este país.
+      </div>
+      
+      <div *ngIf="!cargandoSociedades && sociedades.length > 0" formArrayName="sociedades">
+        <div class="form-check" *ngFor="let sociedad of sociedades; let i = index">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            [id]="'sociedad-edit-' + i"
+            [formControlName]="i"
+            (change)="onCheckboxChange(i, $event)"
+          >
+          <label class="form-check-label" [for]="'sociedad-edit-' + i">
+            {{ sociedad.nombresociedad }}
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer justify-content-between">
+      <button type="button" class="btn btn-danger" (click)="onCancelar()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="proyectoForm.invalid">Guardar</button>
+    </div>
+  </form>

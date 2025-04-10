@@ -73,15 +73,44 @@ export class ProyectoService {
   }
   
   
-  crearProceso(procesoData: any): Observable<any> {
+  crearProceso(procesoData: any, accessToken: string): Observable<any> {
     const currentUser = this.userService.getCurrentUser();
     
     if (!currentUser || !currentUser.idusuario) {
       throw new Error('Usuario no autenticado o sin ID');
     }
     console.log('Enviando datos de proyecto:', procesoData);
-    return this.http.post(`${this.apiUrl}/procesos`, procesoData);
+    return this.http.post(`${this.apiUrl}/procesos`, {
+      ...procesoData,
+      accessToken
+    });
   }
+
+  // Método para actualizar un proyecto (basado en tu endpoint PUT)
+  actualizarProyecto(idProyecto: number, proyectoData: any): Observable<any> {
+    const currentUser = this.userService.getCurrentUser();
+    
+    if (!currentUser || !currentUser.idusuario) {
+      throw new Error('Usuario no autenticado o sin ID');
+    }
+
+    // Estructura los datos según lo esperado por el backend
+    const body = {
+      idpais: proyectoData.idpais,
+      idusuario: proyectoData.idusuario,
+      nombreproyecto: proyectoData.nombreproyecto,
+      fecha_inicio: proyectoData.fecha_inicio,
+      fecha_termino: proyectoData.fecha_termino,
+      habilitado: proyectoData.habilitado || 1,
+      sociedadesSeleccionadas: proyectoData.sociedadesSeleccionadas || []
+    };
+
+    console.log('Enviando datos para actualizar proyecto:', body);
+    return this.http.put(`${this.apiUrl}/proyecto/${idProyecto}`, body);
+  }
+
+
+
 
   obtenerEstados(): Observable<IEstado[]> {
     return this.http.get<IEstado[]>(`${this.apiUrl}/estados`);

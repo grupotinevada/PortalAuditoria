@@ -8,10 +8,12 @@ import { IProyecto } from 'src/models/proyecto.model';
 })
 export class ProyectoEventoService {
   private proyectoCreadoSource = new Subject<IProyecto>();
+  private proyectoActualizadoSource = new Subject<void>();
   proyectoCreado$ = this.proyectoCreadoSource.asObservable();
   //varibales para el modal crear proyecto
   private mostrarModalCrearProcesoSubject = new BehaviorSubject<boolean>(false);
   mostrarModalCrearProceso$ = this.mostrarModalCrearProcesoSubject.asObservable();
+  proyectoActualizado$ = this.proyectoActualizadoSource.asObservable();
 
   emitirProyectoCreado(proyecto: IProyecto) {
     this.proyectoCreadoSource.next(proyecto);
@@ -25,6 +27,16 @@ export class ProyectoEventoService {
   cerrarCrearProceso() {
     this.mostrarModalCrearProcesoSubject.next(false);
   }
+
+  notificarProyectoCreado(proyecto: IProyecto) {
+    this.proyectoCreadoSource.next(proyecto);
+  }
+
+  notificarProyectoActualizado() {
+    this.proyectoActualizadoSource.next();
+  }
+
+
 }
 
 

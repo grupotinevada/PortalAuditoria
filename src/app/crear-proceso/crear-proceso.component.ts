@@ -17,6 +17,8 @@ import {
 import { IUsuario } from 'src/models/user.model';
 import { IEstado } from 'src/models/estado.model';
 import { UserService } from 'src/services/user.service';
+import { MsalService } from '@azure/msal-angular';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-crear-proceso',
@@ -56,7 +58,8 @@ export class CrearProcesoComponent implements OnInit{
     private route: ActivatedRoute,
     private router : Router,
     private modalService: ProyectoEventoService,
-    private userService: UserService){}
+    private userService: UserService,
+    private authService: MsalService){}
   
     
   
@@ -132,7 +135,7 @@ export class CrearProcesoComponent implements OnInit{
   onSubmit(): void {
     if (this.procesoForm.valid) {
       const form = this.procesoForm.value;
-  
+
       const procesoData = {
         idsociedad: form.idSociedad,
         idproyecto: form.idProyecto,
@@ -144,25 +147,31 @@ export class CrearProcesoComponent implements OnInit{
         idestado: form.idestado,
         crear_archivo_ficticio: form.crear_archivo_ficticio
       };
+
       if (this.procesoForm.hasError('fechaFinAnterior')) {
         Swal.fire('Error', 'La fecha de fin no puede ser anterior a la fecha de inicio', 'warning');
         return;
       }
-      this.proyectoService.crearProceso(procesoData).subscribe(
-        (response) => {
-          console.log('Proceso creado exitosamente', response);
-          Swal.fire('Éxito', response.message, 'success').then(() => {
-            this.ProcesoCreado.emit(response.data);
-            this.cerrarModalProceso();
-            this.procesoForm.reset(); // Reiniciar el formulario después de crear el proceso
-          });
-        },
-        (error) => {
-          const errorMsg = error.error?.error || 'Error al crear el proceso';
-          console.error('Error al crear el proceso', error);
-          Swal.fire('Error', errorMsg, 'error');
-        }
-      );
+
+      this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe((result) => {
+        const accessToken = result.accessToken;  //se obtiene el accessToken se manda junto a la solicitud de creacion del proceso y saber quien crea la carpeta en el sharepoint
+
+        this.proyectoService.crearProceso(procesoData, accessToken).subscribe(
+          (res) => {
+            console.log('Proceso creado exitosamente', res, 'accessToken:', accessToken);
+            Swal.fire('Éxito', res.message, 'success').then(() => {
+              this.ProcesoCreado.emit(res.data);
+              this.cerrarModalProceso();
+              this.procesoForm.reset(); // Reiniciar el formulario después de crear el proceso
+            });
+          },
+          (error) => {
+            const errorMsg = error.error?.error || 'Error al crear el proceso';
+            console.error('Error al crear el proceso', error);
+            Swal.fire('Error', errorMsg, 'error');
+          }
+        );
+      });
     } else {
       Swal.fire('Error', 'Por favor, completa todos los campos requeridos', 'warning');
     }

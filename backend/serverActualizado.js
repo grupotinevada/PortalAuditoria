@@ -5,6 +5,8 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const logger = require('./logger');
+const { randomBytes } = require('crypto');
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
@@ -383,10 +385,128 @@ app.post('/proyecto', async (req, res) => {
     }
 });
 
+app.put('/proyecto/:idproyecto', async (req, res) => {
+    console.log('[INFO] Petición recibida para modificar un proyecto existente.');
+    
+    const { idproyecto } = req.params;
+    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas } = req.body;
+    
+    console.log('[DEBUG] Datos recibidos:', { 
+        idproyecto, 
+        idpais, 
+        idusuario, 
+        nombreproyecto, 
+        fecha_inicio, 
+        fecha_termino, 
+        habilitado, 
+        sociedadesSeleccionadas 
+    });
 
+    // Validaciones básicas
+    if (!idproyecto || isNaN(idproyecto)) {
+        console.warn('[WARN] ID de proyecto no válido');
+        return res.status(400).json({ error: 'ID de proyecto no válido' });
+    }
 
-// CREAR PROCESOS
+    if (!nombreproyecto || !fecha_inicio || !fecha_termino || habilitado == null) {
+        console.warn('[WARN] Datos insuficientes para modificar el proyecto.');
+        return res.status(400).json({ error: 'Faltan datos obligatorios' });
+    }
+
+    if (!Array.isArray(sociedadesSeleccionadas)) {
+        console.warn('[WARN] El campo sociedadesSeleccionadas debe ser un array');
+        return res.status(400).json({ error: 'El campo sociedadesSeleccionadas debe ser un array' });
+    }
+
+    // Iniciamos transacción para asegurar la integridad de los datos
+    const connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+
+    try {
+        console.log('[DEBUG] Iniciando actualización del proyecto...');
+        
+        // 1. Actualizar los datos básicos del proyecto
+        const sqlUpdateProyecto = `
+            UPDATE proyecto 
+            SET idpais = ?, 
+                idusuario = ?, 
+                nombreproyecto = ?, 
+                fecha_inicio = ?, 
+                fecha_termino = ?, 
+                habilitado = ? 
+            WHERE idproyecto = ?
+        `;
+        const valuesProyecto = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, idproyecto];
+        
+        await connection.query(sqlUpdateProyecto, valuesProyecto);
+        console.log('[SUCCESS] Proyecto actualizado correctamente.');
+
+        // 2. Gestionar las sociedades relacionadas
+        if (sociedadesSeleccionadas.length > 0) {
+            console.log('[DEBUG] Procesando sociedades seleccionadas...');
+            
+            // 2.1. Obtener las sociedades actuales del proyecto
+            const [currentSocieties] = await connection.query(
+                'SELECT idsociedad FROM proyecto_sociedad WHERE idproyecto = ?', 
+                [idproyecto]
+            );
+            const currentIds = currentSocieties.map(s => s.idsociedad);
+            
+            // 2.2. Identificar sociedades a añadir y eliminar
+            const sociedadesToAdd = sociedadesSeleccionadas.filter(id => !currentIds.includes(id));
+            const sociedadesToRemove = currentIds.filter(id => !sociedadesSeleccionadas.includes(id));
+            
+            console.log('[DEBUG] Sociedades a añadir:', sociedadesToAdd);
+            console.log('[DEBUG] Sociedades a eliminar:', sociedadesToRemove);
+
+            // 2.3. Eliminar relaciones que ya no existen
+            if (sociedadesToRemove.length > 0) {
+                await connection.query(
+                    'DELETE FROM proyecto_sociedad WHERE idproyecto = ? AND idsociedad IN (?)',
+                    [idproyecto, [sociedadesToRemove]]
+                );
+                console.log(`[SUCCESS] ${sociedadesToRemove.length} relaciones eliminadas.`);
+            }
+
+            // 2.4. Añadir nuevas relaciones
+            if (sociedadesToAdd.length > 0) {
+                const insertValues = sociedadesToAdd.map(idsoc => [idproyecto, idsoc]);
+                await connection.query(
+                    'INSERT INTO proyecto_sociedad (idproyecto, idsociedad) VALUES ?',
+                    [insertValues]
+                );
+                console.log(`[SUCCESS] ${sociedadesToAdd.length} relaciones añadidas.`);
+            }
+        } else {
+            console.warn('[WARN] No se proporcionaron sociedades seleccionadas. Se mantendrán las existentes.');
+        }
+
+        // Confirmar la transacción
+        await connection.commit();
+        console.log('[SUCCESS] Transacción completada con éxito.');
+
+        res.status(200).json({
+            idproyecto,
+            message: 'Proyecto actualizado exitosamente'
+        });
+
+    } catch (error) {
+        // Rollback en caso de error
+        await connection.rollback();
+        console.error('[ERROR] Error al procesar la solicitud:', error.sqlMessage || error.message);
+        
+        res.status(500).json({ 
+            error: 'Error al actualizar el proyecto',
+            details: error.sqlMessage || error.message
+        });
+    } finally {
+        connection.release();
+    }
+});
+
 app.post('/procesos', async (req, res) => {
+    const connection = await db.promise().getConnection();
+
     try {
         const {
             idsociedad,
@@ -413,62 +533,66 @@ app.post('/procesos', async (req, res) => {
             return res.status(400).json({ error: errores.join(' ') });
         }
 
-        const connection = await db.promise().getConnection();
+        // Iniciar la transacción
+        await connection.beginTransaction();
+
         // Validación adicional: fecha_fin no debe ser anterior a fecha_inicio
         if (fecha_inicio && fecha_fin) {
             const fechaInicioDate = new Date(fecha_inicio);
             const fechaFinDate = new Date(fecha_fin);
         
             if (fechaFinDate < fechaInicioDate) {
-            return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
+                await connection.rollback();  // Hacer rollback en caso de error
+                return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
             }
         }
-  
-        try {
-            const [procesoResult] = await connection.execute(
-                `INSERT INTO proceso 
-                (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    idsociedad,
-                    idproyecto,
-                    nombreproceso,
-                    fecha_inicio,
-                    fecha_fin || null,
-                    responsable,
-                    revisor || null,
-                    idestado
-                ]
-            );
 
-            const idproceso = procesoResult.insertId;
+        const [procesoResult] = await connection.execute(
+            `INSERT INTO proceso 
+            (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                idsociedad,
+                idproyecto,
+                nombreproceso,
+                fecha_inicio,
+                fecha_fin || null,
+                responsable,
+                revisor || null,
+                idestado
+            ]
+        );
 
-            if (crear_archivo_ficticio) {
-                const randomString = randomBytes(10).toString('hex');
-                const nombrearchivo_ficticio = `archivo_ficticio_${randomString}.txt`;
-                const ruta_sharepoint_ficticia = `\\\\sharepoint.miempresa.com\\sites\\documentos\\${nombrearchivo_ficticio}`;
+        const idproceso = procesoResult.insertId;
 
-                await connection.execute(
-                    'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
-                    [idproceso, ruta_sharepoint_ficticia, nombrearchivo_ficticio]
-                );
-
-                logger.info(`Proceso con ID ${idproceso} creado con archivo ficticio.`);
-                return res.status(201).json({ message: `Proceso creado con ID ${idproceso} y archivo ficticio asociado.` });
-            } else {
-                logger.info(`Proceso con ID ${idproceso} creado sin archivo.`);
-                return res.status(201).json({ message: `Proceso creado con ID ${idproceso}.` });
+        if (crear_archivo_ficticio) {
+            try {
+              const { rutaArchivo, nombreArchivo } = await crearCarpetaYArchivoEnSharepoint(req.body.accessToken, idproceso);
+          
+              await connection.execute(
+                'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
+                [idproceso, rutaArchivo, nombreArchivo]
+              );
+          
+              await connection.commit();
+              return res.status(201).json({ message: `Proceso creado con archivo real en SharePoint`, idproceso });
+          
+            } catch (err) {
+              await connection.rollback();
+              return res.status(500).json({ error: 'Error al subir archivo a SharePoint: ' + err.message });
             }
-
-        } finally {
-            connection.release();
-        }
+          }
 
     } catch (error) {
+        // Si ocurre un error en cualquier parte, hacer rollback
+        await connection.rollback();
         logger.error('Error al crear el proceso:', error);
         res.status(500).json({ error: 'Error al crear el proceso en la base de datos.' });
+    } finally {
+        connection.release();  // Liberar la conexión
     }
 });
+
 
 
 
@@ -529,6 +653,68 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
     }
 });
+
+
+
+
+//FUNCIONES PARA EL SHAREPOINT
+async function crearCarpetaYArchivoEnSharepoint(accessToken, idproceso) {
+    const siteName = process.env.SITE_NAME; // nombre visible en la URL de SharePoint
+    const driveName = 'Biblioteca Prueba Auditoria'; // suele ser así, puedes verificarlo
+    const carpetaNombre = `proceso_${idproceso}`;
+  
+    try {
+      // 1. Obtener siteId
+      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const siteId = siteResp.data.id;
+  
+      // 2. Obtener driveId del sitio
+      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+  
+      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
+      if (!driveId) throw new Error("No se encontró el drive");
+  
+      // 3. Crear la carpeta con el nombre del proceso
+      const folderResp = await axios.post(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
+        {
+          name: carpetaNombre,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "rename"
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+  
+      const folderId = folderResp.data.id;
+  
+      // 4. Crear archivo Excel en blanco dentro de la carpeta
+      const archivoNombre = `proceso_${idproceso}.xlsx`;
+  
+      const archivoResp = await axios.put(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${archivoNombre}:/content`,
+        '', // contenido vacío para crear archivo
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }
+        }
+      );
+  
+      return {
+        carpeta: carpetaNombre,
+        rutaArchivo: archivoResp.data.webUrl,
+        nombreArchivo: archivoNombre
+      };
+    } catch (err) {
+      console.error('Error en SharePoint:', err.response?.data || err.message);
+      throw new Error('Error al interactuar con SharePoint');
+    }
+  }
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;

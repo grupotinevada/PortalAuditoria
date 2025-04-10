@@ -6,17 +6,20 @@ import { IProyecto } from 'src/models/proyecto.model';
 import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 import { IPais } from 'src/models/pais.model';
+import { EditarProyectoComponent } from "../editar-proyecto/editar-proyecto.component";
 
 @Component({
   selector: 'app-proyecto',
-  imports: [CommonModule],
+  imports: [CommonModule, EditarProyectoComponent],
   templateUrl: './proyecto.component.html',
   styleUrl: './proyecto.component.css'
 })
-export class ProyectoComponent implements OnInit{
+export class ProyectoComponent implements OnInit {
   idPais!: number;
   proyectos: IProyecto[] = [];
   nombrePais: string | null = null;
+  proyectoSeleccionado: IProyecto | null = null;
+  mostrarModalEdicion = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -30,49 +33,61 @@ export class ProyectoComponent implements OnInit{
 
     this.proyectoEventoService.proyectoCreado$.subscribe((nuevoProyecto) => {
       console.log('Proyecto nuevo detectado en ProyectoComponent:', nuevoProyecto);
-      this.cargarProyectosPorPais(); // Refresca la lista
+      this.cargarProyectosPorPais();
+    });
+
+    // Escuchar eventos de actualización
+    this.proyectoEventoService.proyectoActualizado$.subscribe(() => {
+      this.cargarProyectosPorPais();
     });
   }
-
 
   private cargarProyectosPorPais(): void {
     this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
     if (this.idPais) {
       this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
-        // Primero guarda todos los proyectos que vienen del servicio
-        const todosProyectos = proyectos;
-        console.log('proyectos recibidos: ', todosProyectos);
-        
-        // Luego filtra por el idPais
-        this.proyectos = todosProyectos.filter(p => p.idpais === this.idPais);
+        this.proyectos = proyectos.filter(p => p.idpais === this.idPais);
         console.log('proyectos filtrados: ', this.proyectos);
       });
     }
-
   }
 
-seleccionarProyecto(idProyecto: number | null) {
-  this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
-}
+  seleccionarProyecto(idProyecto: number | null) {
+    this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
+  }
 
+  abrirModalEdicion(proyecto: IProyecto): void {
+    this.proyectoSeleccionado = {...proyecto}; // Clonar el objeto para evitar mutaciones
+    this.mostrarModalEdicion = true;
+  }
 
-mostrarModal = false;
+  editarProyecto(idProyecto: number): void {
+    // Buscar el proyecto con el ID correspondiente
+    const proyecto = this.proyectos.find(p => p.idproyecto === idProyecto);
+    if (proyecto) {
+      console.log('Proyecto encontrado:', proyecto);
+      this.abrirModalEdicion(proyecto);
+    } else {
+      console.error('Proyecto no encontrado con ID:', idProyecto);
+    }
+  }
+  cerrarModalEdicion(): void {
+    this.mostrarModalEdicion = false;
+    this.proyectoSeleccionado = null;
+  }
 
-abrirModal(): void {
-  this.mostrarModal = true;
-}
-
-cerrarModal(): void {
-  this.mostrarModal = false;
-}
-
-/*onProyectoCreado(proyecto: IProyecto): void {
-  console.log('Proyecto creado:', proyecto);
-  // Recargar todos los proyectos desde el servicio
-  this.cargarProyectosPorPais();
-  this.cerrarModal();
-}
-*/
-
-
+  actualizarProyecto(proyectoActualizado: IProyecto): void {
+    if (this.proyectoSeleccionado && this.proyectoSeleccionado.idproyecto) {
+      this.proyectoService.actualizarProyecto(
+        this.proyectoSeleccionado.idproyecto,
+        proyectoActualizado
+      ).subscribe({
+        next: () => {
+          this.proyectoEventoService.notificarProyectoActualizado();
+          this.cerrarModalEdicion();
+        },
+        error: (err) => console.error('Error al actualizar proyecto:', err)
+      });
+    }
+  }
 }

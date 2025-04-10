@@ -249,9 +249,9 @@ app.get('/sociedades/por-proyecto/:idproyecto', async (req, res) => {
 
         if (results.length === 0) {
             console.warn(`[WARN] No se encontraron sociedades para el idproyecto: ${idproyecto}`);
-            return res.status(404).json({ error: 'No se encontraron sociedades para el proyecto especificado' });
+            return res.json([]); // <-- Retorna un arreglo vacío en vez de error
         }
-
+        
         console.info(`[INFO] Consulta exitosa. Sociedades encontradas: ${results.length}`);
         console.debug(`[SUCCESS] Datos enviados al frontend:`, results);
 
@@ -326,6 +326,138 @@ app.get('/proyectos/:PaisID', async (req, res) => {
     }
 });
 
+//Modificar un proyecto existente
+app.put('/proyecto/:idproyecto', async (req, res) => {
+    console.log('[INFO] Petición recibida para modificar un proyecto existente.');
+    
+    const { idproyecto } = req.params;
+    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas } = req.body;
+    
+    console.log('[DEBUG] Datos recibidos:', { 
+        idproyecto, 
+        idpais, 
+        idusuario, 
+        nombreproyecto, 
+        fecha_inicio, 
+        fecha_termino, 
+        habilitado, 
+        sociedadesSeleccionadas 
+    });
+
+    // Validaciones básicas
+    if (!idproyecto || isNaN(idproyecto)) {
+        console.warn('[WARN] ID de proyecto no válido');
+        return res.status(400).json({ error: 'ID de proyecto no válido' });
+    }
+
+    if (!nombreproyecto || !fecha_inicio || !fecha_termino || habilitado == null) {
+        console.warn('[WARN] Datos insuficientes para modificar el proyecto.');
+        return res.status(400).json({ error: 'Faltan datos obligatorios' });
+    }
+
+    if (!Array.isArray(sociedadesSeleccionadas)) {
+        console.warn('[WARN] El campo sociedadesSeleccionadas debe ser un array');
+        return res.status(400).json({ error: 'El campo sociedadesSeleccionadas debe ser un array' });
+    }
+
+    // Iniciamos transacción para asegurar la integridad de los datos
+    const connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+
+    try {
+        console.log('[DEBUG] Iniciando actualización del proyecto...');
+        
+        // 1. Actualizar los datos básicos del proyecto
+        const sqlUpdateProyecto = `
+            UPDATE proyecto 
+            SET idpais = ?, 
+                nombreproyecto = ?, 
+                fecha_inicio = ?, 
+                fecha_termino = ?, 
+                habilitado = ? 
+            WHERE idproyecto = ?
+        `;
+        const valuesProyecto = [idpais, nombreproyecto, fecha_inicio, fecha_termino, habilitado, idproyecto];
+        
+        await connection.query(sqlUpdateProyecto, valuesProyecto);
+        console.log('[SUCCESS] Proyecto actualizado correctamente.');
+
+        // 2. Gestionar las sociedades relacionadas
+        console.log('[DEBUG] Procesando sociedades relacionadas...');
+
+        // 2.1. Obtener las sociedades actuales del proyecto
+        const [currentSocieties] = await connection.query(
+            'SELECT idsociedad FROM proyecto_sociedad WHERE idproyecto = ?', 
+            [idproyecto]
+        );
+        const currentIds = currentSocieties.map(s => s.idsociedad);
+
+        // 2.2. Si hay sociedades seleccionadas, calcular diferencias
+        if (sociedadesSeleccionadas.length > 0) {
+            const sociedadesToAdd = sociedadesSeleccionadas.filter(id => !currentIds.includes(id));
+            const sociedadesToRemove = currentIds.filter(id => !sociedadesSeleccionadas.includes(id));
+
+            console.log('[DEBUG] Sociedades a añadir:', sociedadesToAdd);
+            console.log('[DEBUG] Sociedades a eliminar:', sociedadesToRemove);
+
+            // 2.3. Eliminar relaciones que ya no existen
+            if (sociedadesToRemove.length > 0) {
+                await connection.query(
+                    'DELETE FROM proyecto_sociedad WHERE idproyecto = ? AND idsociedad IN (?)',
+                    [idproyecto, [sociedadesToRemove]]
+                );
+                console.log(`[SUCCESS] ${sociedadesToRemove.length} relaciones eliminadas.`);
+            }
+
+            // 2.4. Añadir nuevas relaciones
+            if (sociedadesToAdd.length > 0) {
+                const insertValues = sociedadesToAdd.map(idsoc => [idproyecto, idsoc]);
+                await connection.query(
+                    'INSERT INTO proyecto_sociedad (idproyecto, idsociedad) VALUES ?',
+                    [insertValues]
+                );
+                console.log(`[SUCCESS] ${sociedadesToAdd.length} relaciones añadidas.`);
+            }
+
+        } else {
+            // Si no se seleccionaron sociedades, eliminar todas las existentes
+            if (currentIds.length > 0) {
+                await connection.query(
+                    'DELETE FROM proyecto_sociedad WHERE idproyecto = ?',
+                    [idproyecto]
+                );
+                console.log(`[SUCCESS] Todas las relaciones eliminadas (no se seleccionaron sociedades).`);
+            } else {
+                console.warn('[WARN] No se seleccionaron sociedades y no existían relaciones previas.');
+            }
+        }
+
+
+        // Confirmar la transacción
+        await connection.commit();
+        console.log('[SUCCESS] Transacción completada con éxito.');
+
+        res.status(200).json({
+            idproyecto,
+            message: 'Proyecto actualizado exitosamente'
+        });
+
+    } catch (error) {
+        // Rollback en caso de error
+        await connection.rollback();
+        console.error('[ERROR] Error al procesar la solicitud:', error.sqlMessage || error.message);
+        
+        res.status(500).json({ 
+            error: 'Error al actualizar el proyecto',
+            details: error.sqlMessage || error.message
+        });
+    } finally {
+        connection.release();
+    }
+});
+
+
+//Crear un nuevo proyecto
 app.post('/proyecto', async (req, res) => {
     console.log('[INFO] Petición recibida para crear un nuevo proyecto.');
     

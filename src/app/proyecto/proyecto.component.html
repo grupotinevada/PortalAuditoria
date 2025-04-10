@@ -1,29 +1,50 @@
-<!-- proyectos.component.html o donde llames al modal
-<button (click)="abrirModal()" class="btn btn-primary mb-3">
-  <i class="fas fa-plus"></i> Nuevo Proyecto
-</button>
-
- Modal para crear proyecto 
-<app-crear-proyecto 
-  *ngIf="mostrarModalProyecto"
-  (proyectoCreado)="onProyectoCreado($event)"
-  (cerrarModal)="cerrarModalProyecto()">
-</app-crear-proyecto> -->
-
 <h2>Proyectos</h2>
 <div class="containerProyectos">
   <div class="card project-card" *ngFor="let proyecto of proyectos">
     <div class="card-body">
-      <h3 class="project-name">{{ proyecto.nombreproyecto }}</h3>
+      <div class="d-flex justify-content-between align-items-start">
+        <h3 class="project-name">{{ proyecto.nombreproyecto }}</h3>
+        <button class="btn btn-sm btn-outline-primary" (click)="proyecto.idproyecto !== null && editarProyecto(proyecto.idproyecto)" title="Editar proyecto">
+          <i class="bi bi-pencil"></i>
+        </button>
+      </div>
       
       <p>Inicio: {{ proyecto.fecha_inicio| date }}</p>
       <p>Fin: {{ proyecto.fecha_termino| date }}</p>
       <p>Creado por: {{proyecto.nombreUsuario}}</p>
       <p class="project-code">Pais: {{proyecto.cod}}</p>
-      <a (click)="seleccionarProyecto(proyecto.idproyecto)" class="btn btn-outline-primary view-link" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0">
+      <a (click)="seleccionarProyecto(proyecto.idproyecto)" class="btn btn-outline-primary view-link" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0" title="Seleccionar Proyecto">
         Ver proyectos
         <i class="bi bi-chevron-right"></i>
       </a>
     </div>
   </div>
 </div>
+
+<!-- Modal de Edición de Proyecto -->
+<div *ngIf="mostrarModalEdicion" class="modal fade show d-block" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Proyecto</h5>
+        <button type="button" class="btn-close" (click)="cerrarModalEdicion()"></button>
+      </div>
+      <div class="modal-body">
+        <app-editar-proyecto 
+          *ngIf="proyectoSeleccionado" 
+          [proyecto]="proyectoSeleccionado" 
+          (guardarCambios)="actualizarProyecto($event)"
+          (cancelar)="cerrarModalEdicion()">
+        </app-editar-proyecto>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de edición (componente externo) 
+<app-editar-proyecto 
+  *ngIf="mostrarModalEdicion && proyectoSeleccionado"
+  [proyecto]="proyectoSeleccionado"
+  (cerrar)="cerrarModalEdicion()"
+  (guardar)="actualizarProyecto($event)">
+</app-editar-proyecto>-->

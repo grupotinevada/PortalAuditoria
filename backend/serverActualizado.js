@@ -246,9 +246,9 @@ app.get('/sociedades/por-proyecto/:idproyecto', async (req, res) => {
 
         if (results.length === 0) {
             console.warn(`[WARN] No se encontraron sociedades para el idproyecto: ${idproyecto}`);
-            return res.status(404).json({ error: 'No se encontraron sociedades para el proyecto especificado' });
+            return res.json([]); // <-- Retorna un arreglo vacío en vez de error
         }
-
+        
         console.info(`[INFO] Consulta exitosa. Sociedades encontradas: ${results.length}`);
         console.debug(`[SUCCESS] Datos enviados al frontend:`, results);
 
@@ -323,6 +323,7 @@ app.get('/proyectos/:PaisID', async (req, res) => {
     }
 });
 
+//Crear un nuevo proyecto
 app.post('/proyecto', async (req, res) => {
     console.log('[INFO] Petición recibida para crear un nuevo proyecto.');
     
@@ -385,6 +386,7 @@ app.post('/proyecto', async (req, res) => {
     }
 });
 
+//Modificar un proyecto existente
 app.put('/proyecto/:idproyecto', async (req, res) => {
     console.log('[INFO] Petición recibida para modificar un proyecto existente.');
     
@@ -429,33 +431,32 @@ app.put('/proyecto/:idproyecto', async (req, res) => {
         const sqlUpdateProyecto = `
             UPDATE proyecto 
             SET idpais = ?, 
-                idusuario = ?, 
                 nombreproyecto = ?, 
                 fecha_inicio = ?, 
                 fecha_termino = ?, 
                 habilitado = ? 
             WHERE idproyecto = ?
         `;
-        const valuesProyecto = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, idproyecto];
+        const valuesProyecto = [idpais, nombreproyecto, fecha_inicio, fecha_termino, habilitado, idproyecto];
         
         await connection.query(sqlUpdateProyecto, valuesProyecto);
         console.log('[SUCCESS] Proyecto actualizado correctamente.');
 
         // 2. Gestionar las sociedades relacionadas
+        console.log('[DEBUG] Procesando sociedades relacionadas...');
+
+        // 2.1. Obtener las sociedades actuales del proyecto
+        const [currentSocieties] = await connection.query(
+            'SELECT idsociedad FROM proyecto_sociedad WHERE idproyecto = ?', 
+            [idproyecto]
+        );
+        const currentIds = currentSocieties.map(s => s.idsociedad);
+
+        // 2.2. Si hay sociedades seleccionadas, calcular diferencias
         if (sociedadesSeleccionadas.length > 0) {
-            console.log('[DEBUG] Procesando sociedades seleccionadas...');
-            
-            // 2.1. Obtener las sociedades actuales del proyecto
-            const [currentSocieties] = await connection.query(
-                'SELECT idsociedad FROM proyecto_sociedad WHERE idproyecto = ?', 
-                [idproyecto]
-            );
-            const currentIds = currentSocieties.map(s => s.idsociedad);
-            
-            // 2.2. Identificar sociedades a añadir y eliminar
             const sociedadesToAdd = sociedadesSeleccionadas.filter(id => !currentIds.includes(id));
             const sociedadesToRemove = currentIds.filter(id => !sociedadesSeleccionadas.includes(id));
-            
+
             console.log('[DEBUG] Sociedades a añadir:', sociedadesToAdd);
             console.log('[DEBUG] Sociedades a eliminar:', sociedadesToRemove);
 
@@ -477,9 +478,20 @@ app.put('/proyecto/:idproyecto', async (req, res) => {
                 );
                 console.log(`[SUCCESS] ${sociedadesToAdd.length} relaciones añadidas.`);
             }
+
         } else {
-            console.warn('[WARN] No se proporcionaron sociedades seleccionadas. Se mantendrán las existentes.');
+            // Si no se seleccionaron sociedades, eliminar todas las existentes
+            if (currentIds.length > 0) {
+                await connection.query(
+                    'DELETE FROM proyecto_sociedad WHERE idproyecto = ?',
+                    [idproyecto]
+                );
+                console.log(`[SUCCESS] Todas las relaciones eliminadas (no se seleccionaron sociedades).`);
+            } else {
+                console.warn('[WARN] No se seleccionaron sociedades y no existían relaciones previas.');
+            }
         }
+
 
         // Confirmar la transacción
         await connection.commit();

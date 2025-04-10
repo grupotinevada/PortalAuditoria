@@ -31,7 +31,8 @@ export class EditarProyectoComponent implements OnInit {
       nombreproyecto: ['', Validators.required],
       fecha_inicio: ['', Validators.required],
       fecha_termino: ['', Validators.required],
-      sociedades: this.fb.array([])
+      sociedades: this.fb.array([]),
+      habilitado: ['', Validators.required]
     });
   }
 
@@ -59,7 +60,8 @@ export class EditarProyectoComponent implements OnInit {
     this.proyectoForm.patchValue({
       nombreproyecto: this.proyecto.nombreproyecto,
       fecha_inicio: fechaInicio,
-      fecha_termino: fechaTermino
+      fecha_termino: fechaTermino,
+      habilitado: this.proyecto.habilitado === 1
     });
   }
 
@@ -75,7 +77,7 @@ export class EditarProyectoComponent implements OnInit {
           // Luego, cargar las sociedades asociadas al proyecto
           this.proyectoService.obtenerSociedades(Number(this.proyecto.idproyecto)).subscribe({
             next: (sociedadesProyecto) => {
-              this.sociedadesSeleccionadas = sociedadesProyecto;
+              this.sociedadesSeleccionadas = Array.isArray(sociedadesProyecto) ? sociedadesProyecto : [];
               this.actualizarCheckboxes();
               this.cargandoSociedades = false;
             },
@@ -130,19 +132,23 @@ export class EditarProyectoComponent implements OnInit {
       
       console.log('Estado actual de checkboxes:', this.sociedadesFormArray.value);
       console.log('Sociedades seleccionadas actuales:', sociedadesSeleccionadasActuales);
+
+      console.log('Valores del formulario:', formValues);
       
       const proyectoActualizado: IProyecto = {
         ...this.proyecto,
         nombreproyecto: formValues.nombreproyecto,
         fecha_inicio: formValues.fecha_inicio,
-        fecha_termino: formValues.fecha_termino
+        fecha_termino: formValues.fecha_termino,
+        habilitado: formValues.habilitado ? 1 : 0,
         // No incluimos el formArray de sociedades directamente
       };
   
       // Crear el objeto final con los IDs de sociedades actualizados
       const datosCompletos = {
         ...proyectoActualizado,
-        sociedadesIds: sociedadesSeleccionadasActuales
+        idusuario: this.proyecto.idusuario,
+        sociedadesSeleccionadas: sociedadesSeleccionadasActuales
       };
   
       console.log('Proyecto actualizado final:', proyectoActualizado);

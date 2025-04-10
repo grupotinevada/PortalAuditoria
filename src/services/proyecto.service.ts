@@ -97,11 +97,11 @@ export class ProyectoService {
     // Estructura los datos según lo esperado por el backend
     const body = {
       idpais: proyectoData.idpais,
-      idusuario: proyectoData.idusuario,
+      idusuario: currentUser.idusuario, // Usamos el ID real del usuario
       nombreproyecto: proyectoData.nombreproyecto,
       fecha_inicio: proyectoData.fecha_inicio,
       fecha_termino: proyectoData.fecha_termino,
-      habilitado: proyectoData.habilitado || 1,
+      habilitado: proyectoData.habilitado !== undefined ? proyectoData.habilitado : 1,
       sociedadesSeleccionadas: proyectoData.sociedadesSeleccionadas || []
     };
 

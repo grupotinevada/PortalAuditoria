@@ -26,7 +26,7 @@ import {
   EventMessage,
   EventType,
 } from '@azure/msal-browser';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { UserService } from '../services/user.service';
 import { IUsuario } from '../models/user.model';
@@ -38,6 +38,7 @@ import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { CrearProcesoComponent } from './crear-proceso/crear-proceso.component';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -173,6 +174,19 @@ export class AppComponent implements OnInit, OnDestroy {
           );
         });
     }
+    const request = {
+      scopes: environment.apiConfig.scopes
+    };
+    this.authService.acquireTokenSilent(request).subscribe((result: AuthenticationResult)=>{
+      const accessToken = result.accessToken;
+      const idToken = result.idToken;
+
+      this.userService.enviarTokensAlBackend(accessToken, idToken ).subscribe({
+        next:(resp) => console.log('Tokens enviados correctamente al backend', resp),
+        error: (err) => console.error('Error al enviar tokens al backend', err)
+      });
+    });
+
   }
 
   checkAndSetActiveAccount() {

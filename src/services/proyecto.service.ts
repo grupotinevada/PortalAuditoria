@@ -73,15 +73,22 @@ export class ProyectoService {
   }
   
   
-  crearProceso(procesoData: any): Observable<any> {
+  crearProceso(procesoData: any, accessToken: string): Observable<any> {
     const currentUser = this.userService.getCurrentUser();
     
     if (!currentUser || !currentUser.idusuario) {
       throw new Error('Usuario no autenticado o sin ID');
     }
     console.log('Enviando datos de proyecto:', procesoData);
-    return this.http.post(`${this.apiUrl}/procesos`, procesoData);
+    return this.http.post(`${this.apiUrl}/procesos`, {
+      ...procesoData,
+      accessToken
+    });
   }
+
+
+
+
 
   obtenerEstados(): Observable<IEstado[]> {
     return this.http.get<IEstado[]>(`${this.apiUrl}/estados`);

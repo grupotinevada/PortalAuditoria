@@ -43,7 +43,7 @@
       <ng-container *ngIf="loginDisplay">
         <div class="dropdown">
           <button
-            class="btn btn-outline-primary dropdown-toggle d-flex align-items-center"
+            class="btn btn-primary dropdown-toggle d-flex align-items-center"
             type="button"
             id="userDropdown"
             data-bs-toggle="dropdown"
@@ -70,7 +70,7 @@
       </ng-container>
 
       <!-- Botón de Modo Oscuro -->
-      <button class="btn btn-outline-primary ms-2" (click)="toggleDarkMode()">
+      <button class="btn btn-primary ms-2" (click)="toggleDarkMode()">
         <i
           class="bi"
           [ngClass]="{ 'bi-moon': isDarkMode, 'bi-sun': !isDarkMode }"
@@ -191,7 +191,7 @@
         <!-- Botón para móviles -->
         <button
           *ngIf="showNewProjectButton"
-          class="btn btn-outline-primary d-md-none"
+          class="btn btn-outline-primary d-none d-md-inline-flex mb-2"
           (click)="abrirModalCrearProyecto()"
         >
           <i class="bi bi-plus"></i>

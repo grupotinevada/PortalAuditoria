@@ -5,6 +5,8 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const logger = require('./logger');
+const { randomBytes } = require('crypto');
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
@@ -385,8 +387,9 @@ app.post('/proyecto', async (req, res) => {
 
 
 
-// CREAR PROCESOS
 app.post('/procesos', async (req, res) => {
+    const connection = await db.promise().getConnection();
+
     try {
         const {
             idsociedad,
@@ -413,62 +416,66 @@ app.post('/procesos', async (req, res) => {
             return res.status(400).json({ error: errores.join(' ') });
         }
 
-        const connection = await db.promise().getConnection();
+        // Iniciar la transacción
+        await connection.beginTransaction();
+
         // Validación adicional: fecha_fin no debe ser anterior a fecha_inicio
         if (fecha_inicio && fecha_fin) {
             const fechaInicioDate = new Date(fecha_inicio);
             const fechaFinDate = new Date(fecha_fin);
         
             if (fechaFinDate < fechaInicioDate) {
-            return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
+                await connection.rollback();  // Hacer rollback en caso de error
+                return res.status(400).json({ error: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
             }
         }
-  
-        try {
-            const [procesoResult] = await connection.execute(
-                `INSERT INTO proceso 
-                (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    idsociedad,
-                    idproyecto,
-                    nombreproceso,
-                    fecha_inicio,
-                    fecha_fin || null,
-                    responsable,
-                    revisor || null,
-                    idestado
-                ]
-            );
 
-            const idproceso = procesoResult.insertId;
+        const [procesoResult] = await connection.execute(
+            `INSERT INTO proceso 
+            (idsociedad, idproyecto, nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                idsociedad,
+                idproyecto,
+                nombreproceso,
+                fecha_inicio,
+                fecha_fin || null,
+                responsable,
+                revisor || null,
+                idestado
+            ]
+        );
 
-            if (crear_archivo_ficticio) {
-                const randomString = randomBytes(10).toString('hex');
-                const nombrearchivo_ficticio = `archivo_ficticio_${randomString}.txt`;
-                const ruta_sharepoint_ficticia = `\\\\sharepoint.miempresa.com\\sites\\documentos\\${nombrearchivo_ficticio}`;
+        const idproceso = procesoResult.insertId;
 
-                await connection.execute(
-                    'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
-                    [idproceso, ruta_sharepoint_ficticia, nombrearchivo_ficticio]
-                );
-
-                logger.info(`Proceso con ID ${idproceso} creado con archivo ficticio.`);
-                return res.status(201).json({ message: `Proceso creado con ID ${idproceso} y archivo ficticio asociado.` });
-            } else {
-                logger.info(`Proceso con ID ${idproceso} creado sin archivo.`);
-                return res.status(201).json({ message: `Proceso creado con ID ${idproceso}.` });
+        if (crear_archivo_ficticio) {
+            try {
+              const { rutaArchivo, nombreArchivo } = await crearCarpetaYArchivoEnSharepoint(req.body.accessToken, idproceso);
+          
+              await connection.execute(
+                'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
+                [idproceso, rutaArchivo, nombreArchivo]
+              );
+          
+              await connection.commit();
+              return res.status(201).json({ message: `Proceso creado con archivo real en SharePoint`, idproceso });
+          
+            } catch (err) {
+              await connection.rollback();
+              return res.status(500).json({ error: 'Error al subir archivo a SharePoint: ' + err.message });
             }
-
-        } finally {
-            connection.release();
-        }
+          }
 
     } catch (error) {
+        // Si ocurre un error en cualquier parte, hacer rollback
+        await connection.rollback();
         logger.error('Error al crear el proceso:', error);
         res.status(500).json({ error: 'Error al crear el proceso en la base de datos.' });
+    } finally {
+        connection.release();  // Liberar la conexión
     }
 });
+
 
 
 
@@ -529,6 +536,68 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
     }
 });
+
+
+
+
+//FUNCIONES PARA EL SHAREPOINT
+async function crearCarpetaYArchivoEnSharepoint(accessToken, idproceso) {
+    const siteName = process.env.SITE_NAME; // nombre visible en la URL de SharePoint
+    const driveName = 'Biblioteca Prueba Auditoria'; // suele ser así, puedes verificarlo
+    const carpetaNombre = `proceso_${idproceso}`;
+  
+    try {
+      // 1. Obtener siteId
+      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const siteId = siteResp.data.id;
+  
+      // 2. Obtener driveId del sitio
+      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+  
+      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
+      if (!driveId) throw new Error("No se encontró el drive");
+  
+      // 3. Crear la carpeta con el nombre del proceso
+      const folderResp = await axios.post(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
+        {
+          name: carpetaNombre,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "rename"
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+  
+      const folderId = folderResp.data.id;
+  
+      // 4. Crear archivo Excel en blanco dentro de la carpeta
+      const archivoNombre = `proceso_${idproceso}.xlsx`;
+  
+      const archivoResp = await axios.put(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${archivoNombre}:/content`,
+        '', // contenido vacío para crear archivo
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }
+        }
+      );
+  
+      return {
+        carpeta: carpetaNombre,
+        rutaArchivo: archivoResp.data.webUrl,
+        nombreArchivo: archivoNombre
+      };
+    } catch (err) {
+      console.error('Error en SharePoint:', err.response?.data || err.message);
+      throw new Error('Error al interactuar con SharePoint');
+    }
+  }
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;

@@ -57,3 +57,6 @@
   font-size: 1.1rem;
 }
 
+.card{
+  box-shadow: 0px 4px 12px rgba(42, 79, 180, 0.712) !important; 
+}

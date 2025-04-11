@@ -1,3 +1,8 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 2000; background-color: rgba(255,255,255,0.5)">
+  <app-spinner [loading]="true" />
+</div>
+
 <h2>Proyectos</h2>
 <div class="containerProyectos">
   <div class="card project-card" *ngFor="let proyecto of proyectos">

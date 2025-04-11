@@ -294,9 +294,10 @@ export class AppComponent implements OnInit, OnDestroy {
     this.cerrarModalProyecto();
   }
 
+  //procesos
+
+
   abrirModalCrearProceso(): void {
     this.modalService.abrirCrearProceso();
   }
-
-  
 }

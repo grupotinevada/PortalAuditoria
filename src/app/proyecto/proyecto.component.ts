@@ -5,10 +5,15 @@ import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 import { EditarProyectoComponent } from "../editar-proyecto/editar-proyecto.component";
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-proyecto',
-  imports: [CommonModule, EditarProyectoComponent],
+  imports: [
+    CommonModule, 
+    EditarProyectoComponent,
+    SpinnerComponent
+  ],
   templateUrl: './proyecto.component.html',
   styleUrl: './proyecto.component.css'
 })
@@ -18,7 +23,7 @@ export class ProyectoComponent implements OnInit {
   nombrePais: string | null = null;
   proyectoSeleccionado: IProyecto | null = null;
   mostrarModalEdicion = false;
-
+  isLoading = false; ;
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -28,7 +33,6 @@ export class ProyectoComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarProyectosPorPais();
-
     this.proyectoEventoService.proyectoCreado$.subscribe((nuevoProyecto) => {
       console.log('Proyecto nuevo detectado en ProyectoComponent:', nuevoProyecto);
       this.cargarProyectosPorPais();
@@ -41,12 +45,15 @@ export class ProyectoComponent implements OnInit {
   }
 
   private cargarProyectosPorPais(): void {
+
     this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
     if (this.idPais) {
+      this.isLoading=true;
       this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
         this.proyectos = proyectos.filter(p => p.idpais === this.idPais);
         console.log('proyectos filtrados: ', this.proyectos);
       });
+      this.isLoading=false;
     }
   }
 
@@ -62,10 +69,13 @@ export class ProyectoComponent implements OnInit {
   editarProyecto(idProyecto: number): void {
     // Buscar el proyecto con el ID correspondiente
     const proyecto = this.proyectos.find(p => p.idproyecto === idProyecto);
-    if (proyecto) {
+    if (proyecto) {    
+      this.isLoading=true;
       console.log('Proyecto encontrado:', proyecto);
+      this.isLoading=false;
       this.abrirModalEdicion(proyecto);
     } else {
+      this.isLoading=false;
       console.error('Proyecto no encontrado con ID:', idProyecto);
     }
   }

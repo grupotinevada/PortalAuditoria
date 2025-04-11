@@ -19,10 +19,11 @@ import { IEstado } from 'src/models/estado.model';
 import { UserService } from 'src/services/user.service';
 import { MsalService } from '@azure/msal-angular';
 import { environment } from 'src/environments/environment';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 @Component({
   selector: 'app-crear-proceso',
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, SpinnerComponent],
   templateUrl: './crear-proceso.component.html',
   styleUrl: './crear-proceso.component.css',
   animations: [
@@ -53,6 +54,7 @@ export class CrearProcesoComponent implements OnInit{
   crearArchivo = false; 
   archivoSeleccionado: File | null = null;
 
+  isLoading = false;
   constructor(
     private fb: FormBuilder,
     private proyectoService: ProyectoService,
@@ -95,12 +97,15 @@ export class CrearProcesoComponent implements OnInit{
   }
 
   cargarUsuarios(): void {
+    this.isLoading = true;
     this.userService.obtenerUsuarios().subscribe(
       (data) => {
         this.usuarios = data;
         console.log('Usuarios:', this.usuarios);
+        this.isLoading = false;
       },
       (error) => {
+        this.isLoading = false;
         console.error('Error al cargar usuarios:', error);
       }
     )
@@ -108,12 +113,15 @@ export class CrearProcesoComponent implements OnInit{
   }
 
   cargarEstados(): void {
+    this.isLoading = true;
     this.proyectoService.obtenerEstados().subscribe(
       (data) => {
         this.estados = data;
         console.log('Usuarios:', this.estados);
+        this.isLoading = false;
       },
       (error) => {
+        this.isLoading = false;
         console.error('Error al cargar usuarios:', error);
       }
     )
@@ -137,19 +145,22 @@ export class CrearProcesoComponent implements OnInit{
   onSubmit(): void {
     if (this.procesoForm.valid) {
       const form = this.procesoForm.value;
-  
+      this.isLoading=true;
       // Validaciones cruzadas
       if (form.crear_archivo_en_blanco && this.archivoSeleccionado) {
+        this.isLoading = false;
         Swal.fire('Error', 'No puede subir un archivo y seleccionar "Crear archivo en blanco"', 'warning');
         return;
       }
   
       if (!form.crear_archivo_en_blanco && !this.archivoSeleccionado) {
+        this.isLoading = false;
         Swal.fire('Error', 'Debe subir un archivo si no selecciona "Crear archivo en blanco"', 'warning');
         return;
       }
   
       if (this.procesoForm.hasError('fechaFinAnterior')) {
+        this.isLoading = false;
         Swal.fire('Error', 'La fecha de fin no puede ser anterior a la fecha de inicio', 'warning');
         return;
       }
@@ -180,12 +191,15 @@ export class CrearProcesoComponent implements OnInit{
             console.log('Proceso creado exitosamente', res);
             Swal.fire('Éxito', res.message, 'success').then(() => {
               this.ProcesoCreado.emit(res.data);
+              this.modalService.notificarProcesoCreado(); // envio la notificacion al servicio
               this.cerrarModalProceso();
               this.procesoForm.reset();
               this.archivoSeleccionado = null;
             });
+            this.isLoading = false;
           },
           (error) => {
+            this.isLoading = false;
             const errorMsg = error.error?.error || 'Error al crear el proceso';
             console.error('Error al crear el proceso', error);
             Swal.fire('Error', errorMsg, 'error');
@@ -193,6 +207,7 @@ export class CrearProcesoComponent implements OnInit{
         );
       });
     } else {
+      this.isLoading = false;
       Swal.fire('Error', 'Por favor, completa todos los campos requeridos', 'warning');
     }
   }

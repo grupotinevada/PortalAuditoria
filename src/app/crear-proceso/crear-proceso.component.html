@@ -8,6 +8,7 @@
 >
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content p-3" style="max-width: 100%; overflow: hidden">
+
       <div
         class="modal-header d-flex justify-content-between align-items-center flex-wrap"
       >
@@ -188,3 +189,6 @@
 </div>
 
 <div class="modal-backdrop fade show"></div>
+<div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 2000; background-color: rgba(255,255,255,0.5)">
+  <app-spinner [loading]="true" />
+</div>

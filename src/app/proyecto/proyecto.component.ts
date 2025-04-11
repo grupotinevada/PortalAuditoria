@@ -23,7 +23,7 @@ export class ProyectoComponent implements OnInit {
   nombrePais: string | null = null;
   proyectoSeleccionado: IProyecto | null = null;
   mostrarModalEdicion = false;
-  mostrarActivos: boolean = true; // Valor inicial
+  mostrarActivos = true; // Valor inicial
 
 
   isLoading = false; ;

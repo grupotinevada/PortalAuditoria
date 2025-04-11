@@ -1,3 +1,4 @@
+<!-- Botones para alternar entre Activos y Deshabilitados -->
 <div class="d-flex mb-4">
   <button 
     class="btn me-2"
@@ -13,14 +14,22 @@
   </button>
 </div>
 
+<!-- Spinner de carga -->
+<div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 2000; background-color: rgba(255,255,255,0.5)">
+  <app-spinner [loading]="true"></app-spinner>
+</div>
 
+<!-- Título -->
+<h2 *ngIf="proyectos.length > 0">Proyectos en {{ proyectos[0].nombrepais }}</h2>
+
+<!-- Contenedor de proyectos -->
 <div class="containerProyectos d-flex flex-wrap gap-3">
   <div class="card shadow-sm border-0 rounded-3" style="width: 18rem;" *ngFor="let proyecto of proyectos">
     
-    <!-- Header con color personalizado -->
+    <!-- Header con nombre y botón editar -->
     <div class="text-white d-flex justify-content-between align-items-center p-3 rounded-top"
          style="background: linear-gradient(90deg, var(--nevada-dark-blue) 0%, #2a6ca8 100%);">
-      <h5 class="mb-0 text-white text-truncate">{{ proyecto.nombreproyecto }}</h5>
+      <h5 class="mb-0 text-white text-truncate" title="{{ proyecto.nombreproyecto }}">{{ proyecto.nombreproyecto }}</h5>
       <button class="btn btn-sm btn-light" 
               (click)="proyecto.idproyecto !== null && editarProyecto(proyecto.idproyecto)" 
               title="Editar proyecto">
@@ -28,63 +37,32 @@
       </button>
     </div>
 
-    <!-- Contenido centrado -->
-    <div class="card-body" style="text-align: left;">
-      <p class="mb-2">
-        <i class="bi bi-calendar-event me-2"></i>Inicio: {{ proyecto.fecha_inicio | date: 'MMM d, y' }}
-      </p>
-      <p class="mb-2">
-        <i class="bi bi-calendar-check me-2"></i>Fin: {{ proyecto.fecha_termino | date: 'MMM d, y' }}
-      </p>
-      <!--<p class="mb-2">
-        <i class="bi bi-person me-2"></i>Creado por: {{ proyecto.nombreUsuario }}
-      </p>-->
-      <p class="mb-3">
-        <i class="bi bi-flag me-2"></i>País: {{ proyecto.cod }}
-      </p>
+    <!-- Cuerpo del proyecto -->
+    <div class="card-body text-start">
+      <p class="mb-2"><i class="bi bi-calendar-event me-2"></i>Inicio: {{ proyecto.fecha_inicio | date:'MMM d, y' }}</p>
+      <p class="mb-2"><i class="bi bi-calendar-check me-2"></i>Fin: {{ proyecto.fecha_termino | date:'MMM d, y' }}</p>
+      <p class="mb-3"><i class="bi bi-flag me-2"></i>País: {{ proyecto.cod }}</p>
 
-      <!-- Botón centrado -->
+      <!-- Botón para seleccionar proyecto -->
       <button class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2"
               (click)="seleccionarProyecto(proyecto.idproyecto)"
               (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)"
               tabindex="0"
               title="Seleccionar Proyecto">
-<!-- eslint-disable @angular-eslint/template/elements-content -->
-<div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 2000; background-color: rgba(255,255,255,0.5)">
-  <app-spinner [loading]="true" />
-</div>
-
-<h2>Proyectos</h2>
-<div class="containerProyectos">
-  <div class="card project-card" *ngFor="let proyecto of proyectos">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-start">
-        <h3 class="project-name">{{ proyecto.nombreproyecto }}</h3>
-        <button class="btn btn-sm btn-outline-primary" (click)="proyecto.idproyecto !== null && editarProyecto(proyecto.idproyecto)" title="Editar proyecto">
-          <i class="bi bi-pencil"></i>
-        </button>
-      </div>
-      
-      <p>Inicio: {{ proyecto.fecha_inicio| date }}</p>
-      <p>Fin: {{ proyecto.fecha_termino| date }}</p>
-      <p>Creado por: {{proyecto.nombreUsuario}}</p>
-      <p class="project-code">Pais: {{proyecto.cod}}</p>
-      <a (click)="seleccionarProyecto(proyecto.idproyecto)" class="btn btn-outline-primary view-link" (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)" tabindex="0" title="Seleccionar Proyecto">
-        Ver proyectos
+        Ver proyecto
         <i class="bi bi-chevron-right"></i>
-      </a>
+      </button>
     </div>
   </div>
 </div>
 
-
-<!-- Modal de Edición de Proyecto -->
-<div *ngIf="mostrarModalEdicion" class="modal fade show d-block" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+<!-- Modal de edición de proyecto -->
+<div *ngIf="mostrarModalEdicion" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Editar Proyecto</h5>
-        <button type="button" class="btn-close" (click)="cerrarModalEdicion()"> </button>
+        <button type="button" class="btn-close" (click)="cerrarModalEdicion()"></button>
       </div>
       <div class="modal-body">
         <app-editar-proyecto 
@@ -97,11 +75,3 @@
     </div>
   </div>
 </div>
-
-<!-- Modal de edición (componente externo) 
-<app-editar-proyecto 
-  *ngIf="mostrarModalEdicion && proyectoSeleccionado"
-  [proyecto]="proyectoSeleccionado"
-  (cerrar)="cerrarModalEdicion()"
-  (guardar)="actualizarProyecto($event)">
-</app-editar-proyecto>-->

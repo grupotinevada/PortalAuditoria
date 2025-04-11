@@ -1,12 +1,20 @@
 <div class="containerProyectos">
   <div class="card country-card" *ngFor="let pais of paises">
     <div class="card-body">
-    <h3 class="country-name">{{ pais.nombrepais }}</h3>
-    <p class="country-code">Código: {{ pais.cod }}</p>
-    <a (click)="seleccionarPais(pais.idpais)" class="btn btn-outline-primary view-link" (keydown.enter)="seleccionarPais(pais.idpais)" tabindex="0">
-      Ver proyectos
-      <i class="bi bi-chevron-right"></i>
-    </a>
+      <div class="header">
+        <i class="bi bi-globe"></i>
+        <div class="country-name">{{ pais.nombrepais }}</div>
+        <span class="badge">{{ pais.cod }}</span>
+      </div>
+      <hr />
+      <div class="project-info">
+        <i class="bi bi-geo-alt-fill"></i>
+        <span>Proyectos disponibles</span>
+      </div>
+      <button (click)="seleccionarPais(pais.idpais)" (keydown.enter)="seleccionarPais(pais.idpais)" class="project-btn" tabindex="0">
+        Ver proyectos
+        <i class="bi bi-chevron-right"></i>
+      </button>
     </div>
   </div>
 </div>

@@ -1,92 +1,161 @@
+<!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
 @if (!loginDisplay) {
-  <div class="containerLogin">
-    <!-- Left Section: Login -->
-    <div class="left-section">
-        <div class="login-content">
-            <div class="logo">
-                <mat-icon>bar_chart</mat-icon>
-                <span>Portal de Auditoría</span>
-            </div>
-            <h2>Bienvenido</h2>
-            <p>Inicie sesión con su cuenta de Microsoft para acceder al portal</p>
-            <div class="login-button">
-                <button (click)="loginMicrosoft()">
-                    <svg class="icon" viewBox="0 0 291.346 291.346" >
-                        <path style="fill:#26A6D1;" d="M117.547,266.156L0,249.141v-94.296h117.547V266.156z"></path>
-                        <path style="fill:#3DB39E;" d="M291.346,136.51H136.31l0.055-114.06L291.346,0.009V136.51z"></path>
-                        <path style="fill:#F4B459;" d="M291.346,291.337l-155.091-22.459l0.182-114.015h154.909V291.337z"></path>
-                        <path style="fill:#E2574C;" d="M117.547,136.51H0V42.205l117.547-17.024V136.51z"></path>
-                    </svg>
-                    Iniciar sesión con Microsoft
-                </button>
-            </div>
-            <p class="subtext">Sistema de auditoría corporativa</p>
-        </div>
+<div class="containerLogin">
+  <!-- Left Section: Login -->
+  <div class="left-section">
+    <div class="login-content">
+      <div class="logo">
+        <mat-icon>bar_chart</mat-icon>
+        <span>Portal de Auditoría</span>
+      </div>
+      <h2>Bienvenido</h2>
+      <p>Inicie sesión con su cuenta de Microsoft para acceder al portal</p>
+      <div class="login-button">
+        <button (click)="loginMicrosoft()">
+          <svg class="icon" viewBox="0 0 291.346 291.346">
+            <path
+              style="fill: #26a6d1"
+              d="M117.547,266.156L0,249.141v-94.296h117.547V266.156z"
+            ></path>
+            <path
+              style="fill: #3db39e"
+              d="M291.346,136.51H136.31l0.055-114.06L291.346,0.009V136.51z"
+            ></path>
+            <path
+              style="fill: #f4b459"
+              d="M291.346,291.337l-155.091-22.459l0.182-114.015h154.909V291.337z"
+            ></path>
+            <path
+              style="fill: #e2574c"
+              d="M117.547,136.51H0V42.205l117.547-17.024V136.51z"
+            ></path>
+          </svg>
+          Iniciar sesión con Microsoft
+        </button>
+      </div>
+      <p class="subtext">Sistema de auditoría corporativa</p>
     </div>
+  </div>
 
-    <!-- Right Section: Description -->
-    <div class="right-section">
-        <h2>Plataforma de Gestión de Auditorías</h2>
-        <p>
-            Gestione de manera eficiente los procesos de auditoría en diferentes países, 
-            proyectos y sociedades desde una única plataforma centralizada.
-        </p>
-    </div>
+  <!-- Right Section: Description -->
+  <div class="right-section">
+    <h2>Plataforma de Gestión de Auditorías</h2>
+    <p>
+      Gestione de manera eficiente los procesos de auditoría en diferentes
+      países, proyectos y sociedades desde una única plataforma centralizada.
+    </p>
+  </div>
 </div>
-}
+} @if (loginDisplay) {
 
-@if (loginDisplay) {
-
-  <div class="container mt-4">
-    <!-- Welcome Section -->
-    <div class="row text-center mb-4">
-      <div class="col-12">
-        <h1>Bienvenido al Dashboard</h1>
-        <p>Visualice los informes y métricas clave de auditoría.</p>
-      </div>
+<div class="container mt-4">
+  <!-- Welcome -->
+  <div class="row text-center mb-4">
+    <div class="col-12">
+      <h1>Bienvenido al Portal de Auditoría</h1>
     </div>
-    
-    <!-- Metrics Cards -->
-    <div class="row g-4">
-      <div class="col-12 col-sm-6 col-md-4">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title">Auditorías Completadas</h5>
-            <p class="card-text display-4 text-primary">45</p>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="row justify-content-center">
+    <div class="col-12">
+      <h6 class="text-primary mb-3 border-bottom border-secondary">
+        Accesos rápidos
+      </h6>
+    </div>
+
+    <!-- Países -->
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card-custom p-3" routerLink="/pais">
+        <div class="text-center">
+          <div class="mb-3">
+            <i
+              class="bi bi-geo-alt-fill text-primary"
+              style="font-size: 2rem"
+            ></i>
           </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title">Auditorías Pendientes</h5>
-            <p class="card-text display-4 text-warning">12</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 mx-auto">
-        <div class="card h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title">Auditorías en Progreso</h5>
-            <p class="card-text display-4 text-success">8</p>
-          </div>
+          <h5 class="card-title">Países</h5>
+          <p class="card-value text-primary">
+            {{ totalPaises || 0 }} países registrados
+          </p>
+          <small class="text-muted">Ver lista completa</small>
         </div>
       </div>
     </div>
-    
-    <!-- Chart Section -->
-    <div class="row mt-4">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-body text-center">
-            <h5 class="card-title">Distribución de Auditorías</h5>
-            <canvas id="auditChart"></canvas>
+
+    <!-- Informes -->
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card-custom p-3" [routerLink]="'informes'">
+        <div class="text-center">
+          <div class="mb-3">
+            <i
+              class="bi bi-bar-chart-line-fill text-warning"
+              style="font-size: 2rem"
+            ></i>
           </div>
+          <h5 class="card-title">Informes</h5>
+          <p class="card-value text-warning">Dashboard disponible</p>
+          <small class="text-muted">Ir al panel</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proyectos -->
+    <!-- Tarjeta que abre el modal -->
+    <div class="col-12 col-sm-6 col-md-4">
+      <div class="card-custom p-3" (click)="abrirModal()">
+        <div class="text-center">
+          <div class="mb-3">
+            <i
+              class="bi bi-folder2-open text-success"
+              style="font-size: 2rem"
+            ></i>
+          </div>
+          <h5 class="card-title">Proyectos</h5>
+          <p class="card-value text-success">
+            {{ totalProyectos || 0 }} proyectos activos
+          </p>
+          <small class="text-muted">Gestionar proyectos</small>
         </div>
       </div>
     </div>
   </div>
-  
+</div>
 
-   
+<!-- Modal pequeño -->
+<div
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+  *ngIf="mostrarModal"
+  style="background-color: rgba(0, 0, 0, 0.4)"
+>
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecciona un país</h5>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="cerrarModal()"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group">
+          <li
+            *ngFor="let pais of paises"
+            class="list-group-item list-group-item-action"
+            (click)="seleccionarPais(pais)"
+            style="cursor: pointer !important;"
+          >
+            {{ pais.nombrepais }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 }

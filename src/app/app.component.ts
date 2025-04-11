@@ -26,19 +26,18 @@ import {
   EventMessage,
   EventType,
 } from '@azure/msal-browser';
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { UserService } from '../services/user.service';
 import { IUsuario } from '../models/user.model';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { ReactiveFormsModule } from '@angular/forms';
-import { CrearProyectoComponent } from "./crear-proyecto/crear-proyecto.component";
+import { CrearProyectoComponent } from './crear-proyecto/crear-proyecto.component';
 import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { CrearProcesoComponent } from './crear-proceso/crear-proceso.component';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
-import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -59,12 +58,10 @@ import { environment } from 'src/environments/environment';
     ReactiveFormsModule,
     CrearProyectoComponent,
     BreadcrumbComponent,
-    CrearProcesoComponent
-],
+    CrearProcesoComponent,
+  ],
 })
-
 export class AppComponent implements OnInit, OnDestroy {
-    
   mostrarModalProyecto = false;
   mostrarModalProceso = false;
   title = 'Portal Auditoria';
@@ -74,7 +71,6 @@ export class AppComponent implements OnInit, OnDestroy {
   isDarkMode = false;
   mostrarNavbar = true;
   isSidebarVisible = false;
-  
 
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
@@ -98,7 +94,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.updateTheme();
 
     //modal proceso
-    this.modalService.mostrarModalCrearProceso$.subscribe((mostrar) => this.mostrarModalProceso = mostrar)
+    this.modalService.mostrarModalCrearProceso$.subscribe(
+      (mostrar) => (this.mostrarModalProceso = mostrar)
+    );
   }
 
   ngOnInit(): void {
@@ -116,7 +114,6 @@ export class AppComponent implements OnInit, OnDestroy {
         )
       )
       .subscribe((result: EventMessage) => {
-        
         if (this.authService.instance.getAllAccounts().length === 0) {
           window.location.pathname = '/';
         } else {
@@ -143,8 +140,6 @@ export class AppComponent implements OnInit, OnDestroy {
           document.startViewTransition(() => {});
         }
       });
-
-   
   }
 
   setLoginDisplay() {
@@ -157,7 +152,7 @@ export class AppComponent implements OnInit, OnDestroy {
         nombreUsuario: account.name || '',
         correo: account.username || '',
         idrol: 1,
-        habilitado: 1
+        habilitado: 1,
       };
       this.userService.guardarUsuario(usuario).subscribe((response) => {
         console.log('Usuario Guardado: ', response);
@@ -174,7 +169,6 @@ export class AppComponent implements OnInit, OnDestroy {
           );
         });
     }
-
   }
 
   checkAndSetActiveAccount() {
@@ -255,8 +249,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.location.back();
   }
 
-
-  
   get isHomePage(): boolean {
     return this.router.url === '/';
   }
@@ -279,7 +271,7 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('Función abrirModalCrearProyecto ejecutada');
     const match = this.router.url.match(/^\/pais\/(\d+)$/);
     console.log('Match de URL:', match);
-    
+
     if (match && match[1]) {
       this.paisId = parseInt(match[1], 10);
       console.log('ID de país obtenido:', this.paisId);
@@ -300,11 +292,11 @@ export class AppComponent implements OnInit, OnDestroy {
     // Aquí puedes agregar lógica adicional si necesitas
     this.proyectoEventoService.emitirProyectoCreado(proyecto);
     this.cerrarModalProyecto();
-    
   }
 
   abrirModalCrearProceso(): void {
     this.modalService.abrirCrearProceso();
   }
 
+  
 }

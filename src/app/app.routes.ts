@@ -7,6 +7,7 @@ import { ProyectoComponent } from './proyecto/proyecto.component';
 import { SociedadesComponent } from './sociedades/sociedades.component';
 import { ProcesosComponent } from './procesos/procesos.component';
 import { PaisComponent } from './pais/pais.component';
+import { InformesComponent } from './informes/informes.component';
 
 export const routes: Routes = [
   {
@@ -18,6 +19,12 @@ export const routes: Routes = [
     component: ProfileComponent,
     canActivate: [MsalGuard],
     data: { breadcrumb: 'Perfil' }
+  },
+  {
+    path: 'informes',
+    component: InformesComponent,
+    canActivate: [MsalGuard],
+    data: { breadcrumb: 'informes' }
   },
   {
     path: 'login-failed',

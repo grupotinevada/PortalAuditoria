@@ -394,12 +394,12 @@ body::before {
 }
 
 .btn-secondary {
-  background: linear-gradient(90deg, var(--nevada-light-blue) 0%, #1e9bc4 100%);
+  background: var(--nevada-light-blue);
   color: var(--bs-secondary-text);
 }
 
 .btn-secondary:hover {
-  background: linear-gradient(90deg, #1e9bc4 0%, #1889ae 100%);
+  background: linear-gradient(90deg,var(--nevada-light-blue) 0%, #6ec1dd 100%);
 }
 
 /* Botones Outline */

@@ -111,7 +111,9 @@ export class ProyectoService {
   }
 
 
-
+  obtenerTotalDeProyectos(): Observable<[]> {
+    return this.http.get<[]>(`${this.apiUrl}/proyectos`);
+  }
 
   obtenerEstados(): Observable<IEstado[]> {
     return this.http.get<IEstado[]>(`${this.apiUrl}/estados`);

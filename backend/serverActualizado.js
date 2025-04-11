@@ -278,7 +278,21 @@ app.get('/sociedades', async (req, res) => {
     }
 });
 
+// Obtener todas el numero de proyectos
+app.get('/proyectos', async (req, res) => {
+    const sql = `
+        SELECT idproyecto
+        FROM proyecto
+        WHERE habilitado = 1;
+    `;
 
+    try {
+        const [results] = await db.promise().query(sql);
+        res.json(results);
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener todos los proyectos', details: err.message });
+    }
+});
 
 
 //proyecto endpoint

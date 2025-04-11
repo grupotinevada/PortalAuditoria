@@ -1,4 +1,5 @@
-import { Component, OnInit, AfterViewInit  } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import {
@@ -16,88 +17,113 @@ import { MatIcon } from '@angular/material/icon';
 import { AppComponent } from '../app.component';
 import { IPais } from 'src/models/pais.model';
 import { UserService } from '../../services/user.service';
-import { Router } from '@angular/router';
-import Chart from 'chart.js/auto';
+import { Router, RouterLink } from '@angular/router';
+import { ProyectoService } from 'src/services/proyecto.service';
 
 @Component({
-    selector: 'app-home',
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.css'],
-    imports: [CommonModule, MatCardModule, MatTabsModule, MatButtonModule, MatIcon ]
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css'],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatTabsModule,
+    MatButtonModule,
+    MatIcon,
+    RouterLink
+  ],
 })
-export class HomeComponent implements OnInit, AfterViewInit{
+export class HomeComponent implements OnInit {
   loginDisplay = false;
   tabs: { label: string; content: '' }[] = [];
-  paises: IPais[] = []
+  paises: IPais[] = [];
+  totalProyectos = 0;
+  totalPaises = 0;
+  mostrarModal = false;
+  paisSeleccionado: any = null;
+
   constructor(
     private router: Router,
     private authService: MsalService,
-    private msalBroadcastService: MsalBroadcastService, 
+    private msalBroadcastService: MsalBroadcastService,
     private appComponent: AppComponent,
-    private userService: UserService
+    private userService: UserService,
+    private proyectoService: ProyectoService
   ) {}
 
   ngOnInit(): void {
-    this.cargaEstadoSuccessUsuario()
-    
+    this.cargaEstadoSuccessUsuario();
+    this.contadorProyectos();
   }
 
-  ngAfterViewInit(): void {
-    this.loadChart();
-  }
-
-  cargaEstadoSuccessUsuario(){
+  cargaEstadoSuccessUsuario() {
     this.msalBroadcastService.msalSubject$
-    .pipe(
-      filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS)
-    )
-    .subscribe((result: EventMessage) => {
-      console.log(result);
-      const payload = result.payload as AuthenticationResult;
-      this.authService.instance.setActiveAccount(payload.account);
-    });
+      .pipe(
+        filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS)
+      )
+      .subscribe((result: EventMessage) => {
+        console.log(result);
+        const payload = result.payload as AuthenticationResult;
+        this.authService.instance.setActiveAccount(payload.account);
+      });
 
-  this.msalBroadcastService.inProgress$
-    .pipe(
-      filter((status: InteractionStatus) => status === InteractionStatus.None)
-    )
-    .subscribe(() => {
-      this.setLoginDisplay();
-    });
+    this.msalBroadcastService.inProgress$
+      .pipe(
+        filter((status: InteractionStatus) => status === InteractionStatus.None)
+      )
+      .subscribe(() => {
+        this.setLoginDisplay();
+      });
   }
 
   setLoginDisplay() {
     this.loginDisplay = this.authService.instance.getAllAccounts().length > 0;
   }
 
-
-  loginMicrosoft(){
+  loginMicrosoft() {
     this.appComponent.loginRedirect();
   }
 
-  loadChart() {
-    const canvas = document.getElementById('auditChart') as HTMLCanvasElement;
-    if (!canvas) return;
-    console.log('hola')
-    new Chart(canvas.getContext('2d')!, {
-      type: 'pie',
-      data: {
-        labels: ['Completadas', 'Pendientes', 'En Progreso'],
-        datasets: [{
-          data: [45, 12, 8],
-          backgroundColor: ['#007bff', '#ffc107', '#28a745']
-        }]
+  contadorProyectos() {
+    this.proyectoService.obtenerTotalDeProyectos().subscribe({
+      next: (response: any[]) => {
+        console.log('Total de proyectos:', response.length);
+        this.totalProyectos = response.length;
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 2,
-        plugins: {
-          legend: {
-            position: 'top'
-          }
-        }
-      }
+      error: (err) => {
+        console.error('Error al obtener todos los proyectos', err);
+        this.totalProyectos = 0;
+      },
+    });
+    this.contadorPaises();
+  }
+
+  contadorPaises() {
+    this.userService.obtenerPaises().subscribe({
+      next: (response: any[]) => {
+        console.log('Total de Paises:', response.length);
+        this.totalPaises = response.length;
+        this.paises = response;
+      },
+      error: (err) => {
+        console.error('Error al obtener todos los Paises', err);
+        this.totalPaises = 0;
+      },
     });
   }
+  abrirModal() {
+    this.mostrarModal = true;
+  }
+  
+  cerrarModal() {
+    this.mostrarModal = false;
+  }
+
+  seleccionarPais(pais: any) {
+    this.paisSeleccionado = pais;
+    console.log('País seleccionado:', pais);
+    this.cerrarModal();
+    this.router.navigate(['/pais', pais.idpais]);
+  }
+
 }

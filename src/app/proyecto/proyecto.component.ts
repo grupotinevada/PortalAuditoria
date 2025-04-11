@@ -3,9 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectoService } from '../../services/proyecto.service';
 import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
-import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
-import { IPais } from 'src/models/pais.model';
 import { EditarProyectoComponent } from "../editar-proyecto/editar-proyecto.component";
 
 @Component({

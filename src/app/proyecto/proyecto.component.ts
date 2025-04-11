@@ -18,6 +18,8 @@ export class ProyectoComponent implements OnInit {
   nombrePais: string | null = null;
   proyectoSeleccionado: IProyecto | null = null;
   mostrarModalEdicion = false;
+  mostrarActivos: boolean = true; // Valor inicial
+
 
   constructor(
     private route: ActivatedRoute,
@@ -40,11 +42,23 @@ export class ProyectoComponent implements OnInit {
     });
   }
 
+  alternarVistaProyectos(): void {
+    this.mostrarActivos = !this.mostrarActivos;
+    this.cargarProyectosPorPais();
+  } 
+
+  alternarVista(activos: boolean): void {
+    if (this.mostrarActivos !== activos) {
+      this.mostrarActivos = activos;
+      this.cargarProyectosPorPais();
+    }
+  }  
+
   private cargarProyectosPorPais(): void {
     this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
     if (this.idPais) {
       this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
-        this.proyectos = proyectos.filter(p => p.idpais === this.idPais);
+        this.proyectos = proyectos.filter(p => p.idpais === this.idPais && p.habilitado === (this.mostrarActivos ? 1 : 0));
         console.log('proyectos filtrados: ', this.proyectos);
       });
     }

@@ -5,6 +5,7 @@ import { IProceso } from 'src/models/proceso.model';
 import { CommonModule } from '@angular/common';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 
 @Component({
   selector: 'app-procesos',
@@ -25,7 +26,8 @@ export class ProcesosComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private proyectoService: ProyectoService
+    private proyectoService: ProyectoService,
+    private eventoService: ProyectoEventoService
   ) {}
 
   ngOnInit(): void {
@@ -51,6 +53,10 @@ export class ProcesosComponent implements OnInit {
 
       // Llamar a cargar procesos solo si tenemos un ID válido
       this.cargarProcesos();
+    });
+
+    this.eventoService.procesoCreado$.subscribe(() => {
+      this.cargarProcesos(); // 👈 recargar procesos al crear uno nuevo
     });
   }
 

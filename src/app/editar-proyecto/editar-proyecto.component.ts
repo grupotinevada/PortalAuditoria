@@ -1,5 +1,5 @@
 // editar-proyecto.component.ts
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
@@ -13,7 +13,7 @@ import { ProyectoService } from 'src/services/proyecto.service';
   templateUrl: './editar-proyecto.component.html',
   styleUrls: ['./editar-proyecto.component.css']
 })
-export class EditarProyectoComponent implements OnInit {
+export class EditarProyectoComponent implements OnInit, OnChanges {
   @Input() proyecto!: IProyecto;
   @Output() guardarCambios = new EventEmitter<IProyecto>();
   @Output() cancelar = new EventEmitter<void>();

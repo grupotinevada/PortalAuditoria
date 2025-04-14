@@ -4,8 +4,6 @@ import { BehaviorSubject, Observable, forkJoin, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ProyectoService } from './proyecto.service';
 
-
-
 @Injectable({
   providedIn: 'root'
 })
@@ -18,7 +16,6 @@ export class BreadcrumbService {
     private router: Router, 
     private activatedRoute: ActivatedRoute,
     private proyectoService: ProyectoService
-
   ) {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
@@ -27,7 +24,6 @@ export class BreadcrumbService {
       this.breadcrumbsSubject.next(breadcrumbs);
     });
 
-    // Cargar caché si existe
     const cachedNames = localStorage.getItem('breadcrumbNames');
     if (cachedNames) {
       this.entityNamesCache = JSON.parse(cachedNames);
@@ -37,7 +33,7 @@ export class BreadcrumbService {
   updateBreadcrumbLabel(url: string, newLabel: string): void {
     this.entityNamesCache[url] = newLabel;
     localStorage.setItem('breadcrumbNames', JSON.stringify(this.entityNamesCache));
-    
+
     const currentBreadcrumbs = this.breadcrumbsSubject.value;
     const updatedBreadcrumbs = currentBreadcrumbs.map(breadcrumb => {
       if (breadcrumb.url === url) {
@@ -49,130 +45,110 @@ export class BreadcrumbService {
   }
 
   private buildBreadcrumbsWithData(url: string): Observable<{ label: string, url: string }[]> {
-    // Primero crea los breadcrumbs básicos
     const breadcrumbs: { label: string, url: string }[] = [];
     const urlParts = url.split('/').filter(part => part);
     let currentUrl = '';
 
-    // Siempre añadir Home
     breadcrumbs.push({ label: 'Inicio', url: '/' });
 
-    // Construir los breadcrumbs base y recopilar los IDs para cargar
     let paisId: number | null = null;
     let proyectoId: number | null = null;
     let sociedadId: number | null = null;
 
     for (let i = 0; i < urlParts.length; i++) {
       const part = urlParts[i];
-      currentUrl += `/${part}`;
-      
+      currentUrl += '/' + part;
+
       if (part === 'pais') {
         breadcrumbs.push({ label: 'Países', url: currentUrl });
-      } 
-      else if (i > 0 && urlParts[i-1] === 'pais' && !isNaN(Number(part))) {
+      } else if (i > 0 && urlParts[i - 1] === 'pais' && !isNaN(Number(part))) {
         paisId = Number(part);
-        // Usamos el caché si existe, de lo contrario un placeholder
+        
         const cachedName = this.entityNamesCache[currentUrl];
-        breadcrumbs.push({ 
-          label: cachedName || `País ${part}`, 
-          url: currentUrl 
+        breadcrumbs.push({
+          label: cachedName || `País ${part}`,
+          url: currentUrl
         });
-      }
-      else if (part === 'proyecto') {
+      } else if (part === 'proyecto') {
         breadcrumbs.push({ label: 'Proyectos', url: currentUrl });
-      }
-      else if (i > 0 && urlParts[i-1] === 'proyecto' && !isNaN(Number(part))) {
+      } else if (i > 0 && urlParts[i - 1] === 'proyecto' && !isNaN(Number(part))) {
         proyectoId = Number(part);
-        const proyectoUrl = currentUrl;
-        const cachedName = this.entityNamesCache[proyectoUrl];
-        if (cachedName) {
-          breadcrumbs.push({ label: cachedName, url: proyectoUrl });
-        } else {
-          breadcrumbs.push({ label: `Proyecto ${part}`, url: proyectoUrl });
-        }
-      }
-      
-      else if (part === 'sociedad' && i < (urlParts.length - 1)) {
+        const cachedName = this.entityNamesCache[currentUrl];
+        breadcrumbs.push({
+          label: cachedName || `Proyecto ${part}`,
+          url: currentUrl
+        });
+      } else if (part === 'sociedad') {
         continue;
-      }
-      else if (i > 0 && urlParts[i-1] === 'sociedad' && !isNaN(Number(part))) {
+      } else if (i > 0 && urlParts[i - 1] === 'sociedad' && !isNaN(Number(part))) {
         sociedadId = Number(part);
         const cachedName = this.entityNamesCache[currentUrl];
-        breadcrumbs.push({ 
-          label: cachedName || `Sociedad ${part}`, 
-          url: currentUrl 
+        breadcrumbs.push({
+          label: cachedName || `Sociedad ${part}`,
+          url: currentUrl
         });
-      }
-      else if (part === 'profile') {
+      } else if (part === 'profile') {
         breadcrumbs.push({ label: 'Perfil', url: currentUrl });
-      }
-      else if (part === 'login-failed') {
+      } else if (part === 'login-failed') {
         breadcrumbs.push({ label: 'Error de Login', url: currentUrl });
       }
     }
 
-    console.log('PaisId:', paisId);
-    console.log('ProyectoId:', proyectoId);
-    console.log('SociedadId:', sociedadId);
+    const requests: Observable<any>[] = [];
+
+    if (paisId !== null) {
+      this.cargarEntidad(
+        paisId,
+        `/pais/${paisId}`,
+        breadcrumbs,
+        requests,
+        (id: number) => this.proyectoService.obtenerPaisporIdPais(id), // Llamar directamente a la función con el parámetro
+        pais => pais?.cod ?? null, // Mostrar cod en lugar de nombrepais
+        'País'
+      );
+    }
     
-   // Ahora cargamos los datos reales según los IDs que encontramos
-const requests: Observable<any>[] = [];
-if (paisId !== null) {
-  this.cargarEntidad(
-    paisId,
-    `/pais/${paisId}`,
-    breadcrumbs,
-    requests,
-    this.proyectoService.obtenerPaisporIdPais.bind(this.proyectoService),
-    (pais) => (typeof pais?.nombrepais === 'number' ? String(pais.nombrepais) : pais?.nombrepais) ?? null,
-    'País'
-  );
-}
+    
 
-if (proyectoId !== null) {     //NO TENGO IDEA PORQUE NO FUNCIONA XD ARREGLARLO DESPUES
-  this.cargarEntidad(
-    proyectoId,
-    `/pais/${paisId}/proyecto/${proyectoId}`,
-    breadcrumbs,
-    requests,
-    this.proyectoService.obtenerProyectoPorIdProyecto.bind(this.proyectoService),
-    (proyecto) => proyecto?.nombreproyecto ?? null,
-    'Proyecto',
+    if (proyectoId !== null) {
+      this.cargarEntidad(
+        proyectoId,
+        `/pais/${paisId}/proyecto/${proyectoId}`,
+        breadcrumbs,
+        requests,
+        this.proyectoService.obtenerProyectoPorIdProyecto.bind(this.proyectoService),
+        proyecto => proyecto?.nombreproyecto ?? null,
+        'Proyecto'
+      );
+    }
 
-  );
-}
+    if (sociedadId !== null) {
+      this.cargarEntidad(
+        sociedadId,
+        `/pais/${paisId}/proyecto/${proyectoId}/sociedad/${sociedadId}`,
+        breadcrumbs,
+        requests,
+        this.proyectoService.obtenerSociedadesPorIdSociedad.bind(this.proyectoService),
+        sociedad => sociedad?.nombresociedad ?? null,
+        'Sociedad'
+      );
+    }
 
-if (sociedadId !== null) {
-  this.cargarEntidad(
-    sociedadId,
-    `/pais/${paisId}/proyecto/${proyectoId}/sociedad/${sociedadId}`,
-    breadcrumbs,
-    requests,
-    this.proyectoService.obtenerSociedadesPorIdSociedad.bind(this.proyectoService),
-    (sociedad) => sociedad?.nombresociedad ?? null,
-    'Sociedad'
-  );
-}
-
-
-// Si hay solicitudes pendientes, las ejecutamos
-if (requests.length > 0) {
-  return forkJoin(requests).pipe(
-    catchError(error => {
-      console.error('Error en alguna de las peticiones:', error);
-      return of([]);
-    }),
-    map(() => {
-      localStorage.setItem('breadcrumbNames', JSON.stringify(this.entityNamesCache));
-      return breadcrumbs;
-    })
-  );
-} else {
-  // Si no hay solicitudes, simplemente devolvemos los breadcrumbs con los datos de caché
-  return of(breadcrumbs);
-}
+    if (requests.length > 0) {
+      return forkJoin(requests).pipe(
+        catchError(error => {
+          console.error('Error en alguna de las peticiones:', error);
+          return of([]);
+        }),
+        map(() => {
+          localStorage.setItem('breadcrumbNames', JSON.stringify(this.entityNamesCache));
+          return breadcrumbs;
+        })
+      );
+    } else {
+      return of(breadcrumbs);
+    }
   }
-
 
   private cargarEntidad<T>(
     id: number,
@@ -192,21 +168,21 @@ if (requests.length > 0) {
         }),
         tap(entidad => {
           if (!entidad) return;
-  
+          console.log('entidad',entidad);
           const nombre = nombreExtractor(entidad);
-          const nombreValido = nombre && typeof nombre === 'string' && nombre.trim() !== ''
+          const nombreValido = nombre && nombre.trim() !== ''
             ? nombre
             : `${entidadLabel} ${id}`;
-  
+
           this.entityNamesCache[url] = nombreValido;
-  
+
           const index = breadcrumbs.findIndex(b => b.url === url);
           if (index >= 0) {
             breadcrumbs[index].label = nombreValido;
           }
         })
       );
-  
+
       requests.push(request);
     } else {
       const index = breadcrumbs.findIndex(b => b.url === url);
@@ -215,6 +191,4 @@ if (requests.length > 0) {
       }
     }
   }
-  
 }
-  

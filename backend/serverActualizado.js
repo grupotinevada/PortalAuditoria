@@ -833,7 +833,28 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
     }
 });
 
+//endpoints para los breadcrumbs:
+// Obtener un país por ID
+app.get('/pais/:idPais', async (req, res) => {
+    const { idPais } = req.params;
+    console.log(`[INFO] Petición recibida para obtener el país con ID: ${idPais}`);
 
+    try {
+        const sql = `SELECT * FROM pais WHERE idpais = ?`;
+        const [results] = await db.promise().query(sql, [idPais]);
+
+        if (results.length === 0) {
+            console.warn(`[WARN] No se encontró un país con el ID: ${idPais}`);
+            return res.status(404).json({ error: 'No se encontró un país con el ID especificado' });
+        }
+
+        console.log(`[SUCCESS] País obtenido con éxito:`, results[0]);
+        res.json(results[0]);
+    } catch (error) {
+        console.error('[ERROR] Error al obtener el país:', error);
+        res.status(500).json({ error: 'Error en el servidor al obtener el país' });
+    }
+});
 
 
 

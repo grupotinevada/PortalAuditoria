@@ -416,12 +416,13 @@ app.put('/proyecto/:idproyecto', async (req, res) => {
 
             // 2.3. Eliminar relaciones que ya no existen
             if (sociedadesToRemove.length > 0) {
+                const placeholders = sociedadesToRemove.map(() => '?').join(', ');
                 await connection.query(
-                    'DELETE FROM proyecto_sociedad WHERE idproyecto = ? AND idsociedad IN (?)',
-                    [idproyecto, [sociedadesToRemove]]
+                    `DELETE FROM proyecto_sociedad WHERE idproyecto = ? AND idsociedad IN (${placeholders})`,
+                    [idproyecto, ...sociedadesToRemove]
                 );
                 console.log(`[SUCCESS] ${sociedadesToRemove.length} relaciones eliminadas.`);
-            }
+            }            
 
             // 2.4. Añadir nuevas relaciones
             if (sociedadesToAdd.length > 0) {

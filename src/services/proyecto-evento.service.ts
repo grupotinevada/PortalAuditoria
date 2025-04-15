@@ -48,6 +48,9 @@ export class ProyectoEventoService {
   }
 
 // variables para el modal de editar proceso
+private procesoEditadoSubject = new Subject<void>(); //refresh
+procesoEditado$ = this.procesoEditadoSubject.asObservable(); //refresh
+
 private mostrarModalEditarProcesoSubject = new BehaviorSubject<boolean>(false);
 mostrarModalEditarProceso$ = this.mostrarModalEditarProcesoSubject.asObservable();
 
@@ -57,6 +60,9 @@ idProcesoEditar$ = this.idProcesoEditarSubject.asObservable();
 abrirEditarProceso(id: number) {
   this.idProcesoEditarSubject.next(id);
   this.mostrarModalEditarProcesoSubject.next(true);
+}
+notificarProcesoEditado() {
+  this.procesoEditadoSubject.next();
 }
 
 cerrarEditarProceso() {

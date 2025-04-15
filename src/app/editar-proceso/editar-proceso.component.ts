@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { IEstado } from 'src/models/estado.model';
 import { IProceso } from 'src/models/proceso.model';
@@ -30,6 +30,8 @@ import Swal from 'sweetalert2';
 })
 export class EditarProcesoComponent implements OnInit {
   @Input() idProceso: IProceso | number | null = null ;
+  @Output() procesoEditado = new EventEmitter<IProceso>();
+
   editarProcesoForm!: FormGroup;
   procesoSeleccionado!: IProceso;
   isLoading = false;
@@ -84,18 +86,21 @@ export class EditarProcesoComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
+        this.isLoading = true;
         const datosActualizados: IProceso = this.editarProcesoForm.value;
-  
         this.procesoService.actualizarProceso(this.idProceso, datosActualizados).subscribe({
           next: (res) => {
+            this.modalService.notificarProcesoEditado();
             Swal.fire({
               icon: 'success',
               title: 'Proceso actualizado',
               text: res.mensaje || 'El proceso se actualizó correctamente.',
             });
             this.cerrarModalEditar();
+            this.isLoading = false;
           },
           error: (err) => {
+            this.isLoading = false;
             console.error('❌ Error al actualizar el proceso:', err);
             Swal.fire({
               icon: 'error',

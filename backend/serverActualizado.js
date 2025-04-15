@@ -964,6 +964,97 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
     }
 });
 
+//eliminar proceso
+async function eliminarCarpetaSharePoint(accessToken, idproceso) {
+    const nombreCarpeta = `proceso_${idproceso}`;
+    const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
+    const DRIVE_NAME = process.env.DRIVE_NAME;
+    try {
+      // Paso 1: Obtener ID del drive por nombre
+      const driveResponse = await axios.get(`https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_SITE_ID}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+  
+      const drive = driveResponse.data.value.find(d => d.name === DRIVE_NAME);
+  
+      if (!drive) {
+        console.error(`[ERROR] No se encontró el drive con nombre: ${DRIVE_NAME}`);
+        return { exito: false, mensaje: 'Drive no encontrado' };
+      }
+  
+      const driveId = drive.id;
+  
+      // Paso 2: Obtener el ID del item (carpeta) a eliminar
+      const carpetaResponse = await axios.get(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombreCarpeta}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+  
+      const itemId = carpetaResponse.data.id;
+  
+      // Paso 3: Eliminar la carpeta por su ID
+      await axios.delete(`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+  
+      console.info(`[INFO] Carpeta SharePoint '${nombreCarpeta}' eliminada correctamente`);
+      return { exito: true };
+  
+    } catch (error) {
+      console.error(`[ERROR] al eliminar carpeta proceso_${idproceso}:`, error.response?.data || error.message);
+      return { exito: false, mensaje: 'Error al eliminar la carpeta en SharePoint', error: error.message };
+    }
+  }
+
+  app.delete('/proceso/:idproceso', async (req, res) => {
+    const { idproceso } = req.params;
+    const accessToken = req.headers['authorization']?.replace('Bearer ', '');
+  
+    if (!accessToken) {
+      return res.status(401).json({ mensaje: 'Access token no proporcionado' });
+    }
+  
+    console.debug(`[DEBUG] Petición DELETE recibida: /proceso/${idproceso}`);
+  
+    // Paso 1: Eliminar carpeta en SharePoint
+    const resultadoCarpeta = await eliminarCarpetaSharePoint(accessToken, idproceso);
+  
+    if (!resultadoCarpeta.exito) {
+      return res.status(500).json({
+        mensaje: 'Error al eliminar carpeta en SharePoint',
+        error: resultadoCarpeta.error
+      });
+    }
+  
+    // Paso 2: Eliminar proceso en base de datos
+    const sql = 'DELETE FROM proceso WHERE idproceso = ?';
+  
+    try {
+      const [result] = await db.promise().query(sql, [idproceso]);
+  
+      if (result.affectedRows === 0) {
+        console.warn(`[WARN] No se encontró ningún proceso con idproceso: ${idproceso}`);
+        return res.status(404).json({ mensaje: 'Proceso no encontrado o ya eliminado' });
+      }
+  
+      console.info(`[INFO] Proceso y carpeta eliminados. idproceso: ${idproceso}`);
+      res.json({ mensaje: 'Proceso y carpeta eliminados correctamente' });
+    } catch (err) {
+      console.error(`[ERROR] Error al eliminar proceso de la base de datos: ${err}`);
+      res.status(500).json({ mensaje: 'Error al eliminar proceso', error: err.message });
+    }
+  });
+
+
+
+
+
+
+
+
+
+
+
+
 //endpoints para los breadcrumbs:
 // Obtener un país por ID
 app.get('/pais/:idPais', async (req, res) => {

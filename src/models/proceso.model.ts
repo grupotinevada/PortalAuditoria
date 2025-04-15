@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IProceso {
     idproceso: number | null | string;
     idproyecto: number | null;           // <-- agregado
@@ -14,5 +15,6 @@ export interface IProceso {
     descestado: string | null;
     link: string | null;
     nombrearchivo?: string | null;       
+    [key: string]: any ;
   }
   

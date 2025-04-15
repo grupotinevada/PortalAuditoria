@@ -46,6 +46,16 @@ export class ProcesoService {
    actualizarProceso(idproceso: any, datos: any) {
     return this.http.put<{ mensaje: string }>(`${this.apiUrl}/proceso/${idproceso}`, datos);
   }
+
+  eliminarProceso(idproceso: number, accessToken: string) {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${accessToken}`
+    });
+
+    return this.http.delete<any>(`${this.apiUrl}/proceso/${idproceso}`, { headers });
+  }
+
+  
 }
 
 

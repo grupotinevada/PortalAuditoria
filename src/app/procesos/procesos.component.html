@@ -22,7 +22,7 @@
 <div *ngIf="!loading && !errorMessage && !infoMessage" class="container-fluid py-3">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Procesos de la Sociedad {{this.nombreSociedad}}</h2>
-    <span class="badge bg-primary">{{ procesos.length }} procesos</span>
+    <span class="badge bg-primary fs-6">{{ procesos.length }} procesos</span>
   </div>
   
   <div *ngIf="procesos.length === 0" class="alert alert-info">
@@ -33,13 +33,36 @@
     <table class="table table-striped table-hover table-bordered">
       <thead class="table">
         <tr>
-          <th class="procesos-th text-center">ID</th>
-          <th class="procesos-th">Nombre</th>
-          <th class="procesos-th">Fecha Inicio</th>
-          <th class="procesos-th">Fecha Fin</th>
-          <th class="procesos-th">Responsable</th>
-          <th class="procesos-th">Revisor</th>
-          <th class="procesos-th text-center">Estado</th>
+          <th class="procesos-th text-center" (click)="ordenarPor('idproceso')" style="cursor: pointer">
+            ID
+            <i *ngIf="ordenCampo === 'idproceso'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          <th class="procesos-th" (click)="ordenarPor('nombreproceso')" style="cursor: pointer">
+            Nombre
+            <i *ngIf="ordenCampo === 'nombreproceso'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          <th class="procesos-th" (click)="ordenarPor('fecha_inicio')" style="cursor: pointer">
+            Fecha Inicio
+            <i *ngIf="ordenCampo === 'fecha_inicio'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          <th class="procesos-th" (click)="ordenarPor('fecha_fin')" style="cursor: pointer">
+            Fecha Fin
+            <i *ngIf="ordenCampo === 'fecha_fin'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          <th class="procesos-th" (click)="ordenarPor('responsable_nombre')" style="cursor: pointer">
+            Responsable
+            <i *ngIf="ordenCampo === 'responsable_nombre'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          <th class="procesos-th" (click)="ordenarPor('revisor_nombre')" style="cursor: pointer">
+            Revisor
+            <i *ngIf="ordenCampo === 'revisor_nombre'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          <th class="procesos-th text-center" (click)="ordenarPor('descestado')" style="cursor: pointer">
+            Estado
+            <i *ngIf="ordenCampo === 'descestado'" class="bi " [ngClass]="ordenAscendente ? 'bi-caret-up-fill' : 'bi-caret-down-fill'"></i>
+          </th>
+          
+          
           <th class="procesos-th text-center">Acciones</th>
         </tr>
       </thead>

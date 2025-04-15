@@ -24,11 +24,15 @@
 
 <!-- Contenedor de proyectos -->
 <div class="containerProyectos d-flex flex-wrap gap-3">
-  <div class="card shadow-sm border-0 rounded-3" style="width: 18rem;" *ngFor="let proyecto of proyectos">
+  <div class="card shadow-sm border-0 rounded-3" 
+       [ngClass]="{'disabled-project': !proyecto.habilitado}"
+       style="width: 18rem;" 
+       *ngFor="let proyecto of proyectos">
     
     <!-- Header con nombre y botón editar -->
     <div class="text-white d-flex justify-content-between align-items-center p-3 rounded-top"
-         style="background: linear-gradient(90deg, var(--nevada-dark-blue) 0%, #2a6ca8 100%);">
+         [ngClass]="{'bg-secondary': !proyecto.habilitado}"
+         [style.background]="proyecto.habilitado ? 'linear-gradient(90deg, var(--nevada-dark-blue) 0%, #2a6ca8 100%)' : 'none'">
       <h5 class="mb-0 text-white text-truncate" title="{{ proyecto.nombreproyecto }}">{{ proyecto.nombreproyecto }}</h5>
       <button class="btn btn-sm btn-light" 
               (click)="proyecto.idproyecto !== null && editarProyecto(proyecto.idproyecto)" 
@@ -38,13 +42,14 @@
     </div>
 
     <!-- Cuerpo del proyecto -->
-    <div class="card-body text-start" >
+    <div class="card-body text-start">
       <p class="mb-2"><i class="bi bi-calendar-event me-2"></i>Inicio: {{ proyecto.fecha_inicio | date:'MMM d, y' }}</p>
       <p class="mb-2"><i class="bi bi-calendar-check me-2"></i>Fin: {{ proyecto.fecha_termino | date:'MMM d, y' }}</p>
       <p class="mb-3"><i class="bi bi-flag me-2"></i>País: {{ proyecto.cod }}</p>
 
       <!-- Botón para seleccionar proyecto -->
-      <button class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2"
+      <button class="btn w-100 d-flex align-items-center justify-content-center gap-2"
+              [ngClass]="{'btn-secondary': proyecto.habilitado, 'btn-outline-secondary': !proyecto.habilitado}"
               (click)="seleccionarProyecto(proyecto.idproyecto)"
               (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)"
               tabindex="0"
@@ -69,7 +74,8 @@
           *ngIf="proyectoSeleccionado" 
           [proyecto]="proyectoSeleccionado" 
           (guardarCambios)="actualizarProyecto($event)"
-          (cancelar)="cerrarModalEdicion()">
+          (cancelar)="cerrarModalEdicion()"
+          (eliminar)="eliminarProyecto($event)">
         </app-editar-proyecto>
       </div>
     </div>

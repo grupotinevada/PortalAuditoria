@@ -54,7 +54,8 @@ export class ProyectoService {
       nombreproyecto: proyecto.nombreproyecto,
       fecha_inicio: proyecto.fecha_inicio,
       fecha_termino: proyecto.fecha_termino,
-      habilitado: proyecto.habilitado || 1
+      habilitado: proyecto.habilitado || 1,
+      eliminado: proyecto.eliminado ?? 0
     };
     
     console.log('Enviando datos de proyecto:', body);
@@ -93,6 +94,19 @@ export class ProyectoService {
     return this.http.put(`${this.apiUrl}/proyecto/${idProyecto}`, body);
   }
 
+  // Método para eliminar un proyecto
+  eliminarProyecto(idProyecto: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/proyecto/${idProyecto}`).pipe(
+      tap(() => {
+        // Actualizar el listado en el servicio marcando el proyecto como eliminado
+        const current = this.proyectosSubject.value;
+        const updated = current.map(p => 
+          p.idproyecto === idProyecto ? { ...p, eliminado: 1 } : p
+        );
+        this.proyectosSubject.next(updated);
+      })
+    );
+  }
 
   obtenerTotalDeProyectos(): Observable<[]> {
     return this.http.get<[]>(`${this.apiUrl}/proyectos`);

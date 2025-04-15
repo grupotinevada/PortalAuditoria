@@ -14,6 +14,7 @@ export class SociedadesComponent implements OnInit{
   idPais!: number;
   idProyecto!: number;
   sociedades: ISociedad[] = [];
+  mostrarMensajeAdvertencia: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -27,12 +28,20 @@ export class SociedadesComponent implements OnInit{
 
     this.cargarSociedadPorProyecto();
   }  
+  
   cargarSociedadPorProyecto(): void {
     this.idProyecto = Number(this.route.snapshot.paramMap.get('ProyectoID'));
     if (this.idProyecto) {
-      this.proyectoService.obtenerSociedades(this.idProyecto).subscribe((sociedades: ISociedad[]) => {
-        this.sociedades = sociedades;
-        console.log('sociedades: ', this.sociedades)
+      this.proyectoService.obtenerSociedades(this.idProyecto).subscribe({
+        next: (sociedades: ISociedad[]) => {
+          this.sociedades = sociedades;
+          this.mostrarMensajeAdvertencia = this.sociedades.length === 0;
+          console.log('sociedades: ', this.sociedades)
+        },
+        error: (error) => {
+          console.error('Error al cargar sociedades:', error);
+          this.mostrarMensajeAdvertencia = true;
+        }
       });
       this.sociedades = this.sociedades.filter(p => p.ProyectoID === this.idProyecto);
   

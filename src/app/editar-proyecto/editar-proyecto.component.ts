@@ -17,11 +17,13 @@ export class EditarProyectoComponent implements OnInit, OnChanges {
   @Input() proyecto!: IProyecto;
   @Output() guardarCambios = new EventEmitter<IProyecto>();
   @Output() cancelar = new EventEmitter<void>();
+  @Output() eliminar = new EventEmitter<number>();
   
   proyectoForm: FormGroup;
   sociedades: ISociedad[] = [];
   sociedadesSeleccionadas: ISociedad[] = [];
   cargandoSociedades = false;
+  mostrarModalConfirmacion = false;
 
   constructor(
     private fb: FormBuilder,
@@ -166,4 +168,21 @@ export class EditarProyectoComponent implements OnInit, OnChanges {
   onCancelar(): void {
     this.cancelar.emit();
   }
+
+  abrirModalConfirmacion(): void {
+    this.mostrarModalConfirmacion = true;
+  }
+
+  cerrarModalConfirmacion(): void {
+    this.mostrarModalConfirmacion = false;
+  }
+
+  confirmarEliminacion(): void {
+    if (this.proyecto && this.proyecto.idproyecto) {
+      console.log('Eliminando proyecto:', this.proyecto.idproyecto);
+      this.eliminar.emit(this.proyecto.idproyecto);
+      this.cerrarModalConfirmacion();
+    }
+  }
+
 }

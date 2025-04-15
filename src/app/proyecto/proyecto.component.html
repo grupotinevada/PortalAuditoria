@@ -74,7 +74,8 @@
           *ngIf="proyectoSeleccionado" 
           [proyecto]="proyectoSeleccionado" 
           (guardarCambios)="actualizarProyecto($event)"
-          (cancelar)="cerrarModalEdicion()">
+          (cancelar)="cerrarModalEdicion()"
+          (eliminar)="eliminarProyecto($event)">
         </app-editar-proyecto>
       </div>
     </div>

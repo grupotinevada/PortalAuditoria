@@ -313,7 +313,8 @@ app.get('/proyectos/:PaisID', async (req, res) => {
             p.fecha_inicio, 
             p.fecha_termino, 
             p.habilitado, 
-            p.nombreproyecto
+            p.nombreproyecto,
+            p.eliminado
         FROM panelAuditoria.proyecto p    
         JOIN panelAuditoria.pais p2 ON p.idpais = p2.idpais  
         JOIN panelAuditoria.usuario u ON p.idusuario = u.idusuario  
@@ -474,8 +475,8 @@ app.put('/proyecto/:idproyecto', async (req, res) => {
 app.post('/proyecto', async (req, res) => {
     console.log('[INFO] Petición recibida para crear un nuevo proyecto.');
     
-    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas } = req.body;
-    console.log('[DEBUG] Datos recibidos:', { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas });
+    const { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas, eliminado } = req.body;
+    console.log('[DEBUG] Datos recibidos:', { idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, sociedadesSeleccionadas, eliminado });
 
     if (!nombreproyecto || !fecha_inicio || !fecha_termino || habilitado == null) {
         console.warn('[WARN] Datos insuficientes para crear un proyecto.');
@@ -492,10 +493,10 @@ app.post('/proyecto', async (req, res) => {
     try {
         // Insertar el nuevo proyecto
         const sqlProyecto = `
-            INSERT INTO proyecto (idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO proyecto (idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, eliminado) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        const valuesProyecto = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado];
+        const valuesProyecto = [idpais, idusuario, nombreproyecto, fecha_inicio, fecha_termino, habilitado, eliminado];
 
         console.log('[DEBUG] Ejecutando inserción en tabla "proyecto"');
         const [result] = await db.promise().query(sqlProyecto, valuesProyecto);
@@ -532,6 +533,35 @@ app.post('/proyecto', async (req, res) => {
         res.status(500).json({ error: 'Error al crear el proyecto o vincularlo con las sociedades seleccionadas' });
     }
 });
+
+// Eliminar un proyecto (borrado lógico)
+app.delete('/proyecto/:idproyecto', async (req, res) => {
+    const { idproyecto } = req.params;
+    console.log(`[INFO] Petición recibida para eliminar proyecto con ID: ${idproyecto}`);
+
+    const connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+
+    try {
+        // 1. Eliminar relaciones en proyecto_sociedad si deseas
+        await connection.query('DELETE FROM proyecto_sociedad WHERE idproyecto = ?', [idproyecto]);
+        console.log(`[SUCCESS] Relaciones proyecto-sociedad eliminadas para el proyecto ${idproyecto}`);
+
+        // 2. Borrado lógico: marcar como eliminado = 1
+        await connection.query('UPDATE proyecto SET eliminado = 1 WHERE idproyecto = ?', [idproyecto]);
+        console.log(`[SUCCESS] Proyecto ${idproyecto} marcado como eliminado.`);
+
+        await connection.commit();
+        res.status(200).json({ message: 'Proyecto eliminado exitosamente (borrado lógico)' });
+    } catch (error) {
+        await connection.rollback();
+        console.error(`[ERROR] Error al eliminar el proyecto ${idproyecto}:`, error);
+        res.status(500).json({ error: 'Error al eliminar el proyecto', details: error.message });
+    } finally {
+        connection.release();
+    }
+});
+
 
 // FUNCIONES PARA EL SHAREPOINT
 async function subirArchivoASharepoint(accessToken, idproceso, archivo) {

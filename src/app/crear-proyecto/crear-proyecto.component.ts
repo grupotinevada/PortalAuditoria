@@ -121,6 +121,7 @@ export class CrearProyectoComponent implements OnInit {
           fecha_inicio: this.proyectoForm.get('fechaInicio')?.value,
           fecha_termino: this.proyectoForm.get('fechaFin')?.value,
           habilitado: 1,
+          eliminado: 0,
           sociedadesSeleccionadas: sociedadesSeleccionadas, // Añadir sociedades seleccionadas
           // Campos opcionales
           nombrepais: null,

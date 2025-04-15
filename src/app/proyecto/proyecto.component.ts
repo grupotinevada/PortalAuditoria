@@ -6,6 +6,7 @@ import { IProyecto } from 'src/models/proyecto.model';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 import { EditarProyectoComponent } from "../editar-proyecto/editar-proyecto.component";
 import { SpinnerComponent } from '../spinner/spinner.component';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-proyecto',
@@ -24,9 +25,10 @@ export class ProyectoComponent implements OnInit {
   proyectoSeleccionado: IProyecto | null = null;
   mostrarModalEdicion = false;
   mostrarActivos = true; // Valor inicial
+  isLoading = false;
+  proyectoAEliminar: IProyecto | null = null;
+  mostrarModalConfirmacion = false;
 
-
-  isLoading = false; ;
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -60,15 +62,19 @@ export class ProyectoComponent implements OnInit {
   }  
 
   private cargarProyectosPorPais(): void {
-
     this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
     if (this.idPais) {
-      this.isLoading=true;
+      this.isLoading = true;
       this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
-        this.proyectos = proyectos.filter(p => p.idpais === this.idPais && p.habilitado === (this.mostrarActivos ? 1 : 0));
-        console.log('proyectos filtrados: ', this.proyectos);
+        // Filtrar proyectos por país, estado (activo/inactivo) y que no estén eliminados
+        this.proyectos = proyectos.filter(p => 
+          p.idpais === this.idPais && 
+          p.habilitado === (this.mostrarActivos ? 1 : 0) && 
+          p.eliminado === 0
+        );
+        console.log('Proyectos filtrados:', this.proyectos);
+        this.isLoading = false;
       });
-      this.isLoading=false;
     }
   }
 
@@ -110,6 +116,47 @@ export class ProyectoComponent implements OnInit {
           this.cerrarModalEdicion();
         },
         error: (err) => console.error('Error al actualizar proyecto:', err)
+      });
+    }
+  }
+
+  abrirModalConfirmacion(proyecto: IProyecto): void {
+    this.proyectoAEliminar = proyecto;
+    this.mostrarModalConfirmacion = true;
+  }
+
+  cerrarModalConfirmacion(): void {
+    this.mostrarModalConfirmacion = false;
+    this.proyectoAEliminar = null;
+  }
+
+  eliminarProyecto(idProyecto: number): void {
+    if (idProyecto) {
+      this.isLoading = true;
+      this.proyectoService.eliminarProyecto(idProyecto).subscribe({
+        next: () => {
+          this.proyectoEventoService.notificarProyectoActualizado();
+          this.cerrarModalEdicion();
+          this.isLoading = false;
+          Swal.fire({
+            title: '¡Eliminado!',
+            text: 'El proyecto ha sido eliminado correctamente',
+            icon: 'success',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#3085d6'
+          });
+        },
+        error: (err) => {
+          console.error('Error al eliminar proyecto:', err);
+          this.isLoading = false;
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudo eliminar el proyecto. Por favor, intente nuevamente.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#d33'
+          });
+        }
       });
     }
   }

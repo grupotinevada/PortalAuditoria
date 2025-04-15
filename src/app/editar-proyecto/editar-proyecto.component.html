@@ -1,4 +1,11 @@
 <!-- editar-proyecto.component.html -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Editar Proyecto</h4>
+  <button class="btn btn-danger" (click)="abrirModalConfirmacion()">
+    <i class="bi bi-trash"></i> Eliminar
+  </button>
+</div>
+
 <form [formGroup]="proyectoForm" (ngSubmit)="guardar()">
     <div class="mb-3">
       <label for="nombreproyecto" class="form-label">Nombre del Proyecto</label>
@@ -74,3 +81,23 @@
       <button type="submit" class="btn btn-primary" [disabled]="proyectoForm.invalid">Guardar</button>
     </div>
   </form>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" [class.show]="mostrarModalConfirmacion" [style.display]="mostrarModalConfirmacion ? 'block' : 'none'" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close" (click)="cerrarModalConfirmacion()"></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Está seguro(a) de que desea eliminar este proyecto?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalConfirmacion()">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="confirmarEliminacion()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="mostrarModalConfirmacion"></div>

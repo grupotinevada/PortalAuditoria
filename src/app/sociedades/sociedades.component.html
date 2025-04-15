@@ -1,3 +1,6 @@
+<div *ngIf="sociedades.length === 0" class="alert alert-warning alert-dismissible fade show my-3">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>No se encontraron sociedades relacionadas para este proyecto.
+</div>
 <div class="containerSociedades">
     <div class="card sociedad-card" *ngFor="let sociedad of sociedades" 
          (click)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0" 

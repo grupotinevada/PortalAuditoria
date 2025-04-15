@@ -470,7 +470,6 @@ app.put('/proyecto/:idproyecto', async (req, res) => {
     }
 });
 
-
 //Crear un nuevo proyecto
 app.post('/proyecto', async (req, res) => {
     console.log('[INFO] Petición recibida para crear un nuevo proyecto.');

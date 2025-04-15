@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { IProyecto } from 'src/models/proyecto.model';
 import { ISociedad } from 'src/models/sociedad.model';
 import { ProyectoService } from 'src/services/proyecto.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-editar-proyecto',
@@ -170,7 +171,21 @@ export class EditarProyectoComponent implements OnInit, OnChanges {
   }
 
   abrirModalConfirmacion(): void {
-    this.mostrarModalConfirmacion = true;
+    Swal.fire({
+      title: '¿Está seguro(a)?',
+      html: 'Esta acción eliminará el proyecto <b>'+this.proyecto.nombreproyecto+'</b> de forma permanente.',
+      //text: 'Esta acción eliminará el proyecto '+this.proyecto.nombreproyecto+' de forma permanente.',
+      icon: 'warning',
+      showCancelButton: true,
+      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Sí, eliminar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.confirmarEliminacion();
+      }
+    });
   }
 
   cerrarModalConfirmacion(): void {

@@ -1,19 +1,20 @@
-<div *ngIf="sociedades.length === 0" class="alert alert-warning alert-dismissible fade show my-3">
+<div *ngIf="mostrarMensajeAdvertencia" class="alert alert-warning alert-dismissible fade show my-3">
   <i class="bi bi-exclamation-triangle-fill me-2"></i>No se encontraron sociedades relacionadas para este proyecto.
 </div>
-<div class="containerSociedades">
-    <div class="card sociedad-card" *ngFor="let sociedad of sociedades" 
-         (click)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0" 
-         (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)">
-      <div class="card-body">
-        <h3 class="sociedad-name">{{ sociedad.nombresociedad }}</h3>
-        <p class="sociedad-id">COD: {{ sociedad.idsociedad }}</p>
-        <a (click)="seleccionarSociedad(sociedad.idsociedad)" class="btn btn-outline-primary view-link" 
-           (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0">
-          Ver detalles
-          <i class="bi bi-chevron-right"></i>
-        </a>
-      </div>
+
+<div *ngIf="!mostrarMensajeAdvertencia" class="containerSociedades">
+  <div class="card sociedad-card" *ngFor="let sociedad of sociedades" 
+       (click)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0" 
+       (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)">
+    <div class="card-body">
+      <h3 class="sociedad-name">{{ sociedad.nombresociedad }}</h3>
+      <p class="sociedad-id">COD: {{ sociedad.idsociedad }}</p>
+      <a (click)="seleccionarSociedad(sociedad.idsociedad)" class="btn btn-outline-primary view-link" 
+         (keydown.enter)="seleccionarSociedad(sociedad.idsociedad)" tabindex="0">
+        Ver detalles
+        <i class="bi bi-chevron-right"></i>
+      </a>
     </div>
   </div>
+</div>
   

@@ -1,10 +1,10 @@
+import { ProcesoService } from './../../services/proceso.service';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Swal from 'sweetalert2';
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ISociedad } from 'src/models/sociedad.model';
-import { ProyectoService } from 'src/services/proyecto.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
@@ -20,7 +20,7 @@ import { UserService } from 'src/services/user.service';
 import { MsalService } from '@azure/msal-angular';
 import { environment } from 'src/environments/environment';
 import { SpinnerComponent } from '../spinner/spinner.component';
-
+import { ProyectoService } from 'src/services/proyecto.service';
 @Component({
   selector: 'app-crear-proceso',
   imports: [ReactiveFormsModule, CommonModule, SpinnerComponent],
@@ -57,6 +57,7 @@ export class CrearProcesoComponent implements OnInit{
   isLoading = false;
   constructor(
     private fb: FormBuilder,
+    private procesoService: ProcesoService,
     private proyectoService: ProyectoService,
     private route: ActivatedRoute,
     private router : Router,
@@ -186,7 +187,7 @@ export class CrearProcesoComponent implements OnInit{
         }
   
         // Llamar servicio con token en header
-        this.proyectoService.crearProceso(formData, accessToken).subscribe(
+        this.procesoService.crearProceso(formData, accessToken).subscribe(
           (res) => {
             console.log('Proceso creado exitosamente', res);
             Swal.fire('Éxito', res.message, 'success').then(() => {

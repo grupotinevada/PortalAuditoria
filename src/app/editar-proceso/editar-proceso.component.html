@@ -1,0 +1,46 @@
+<!-- Backdrop -->
+<div class="modal-backdrop fade show"></div>
+
+<!-- Modal de Editar Proceso con estilo mejorado -->
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px;">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content p-3">
+      <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex flex-column">
+          <h5 class="modal-title mb-0">Editando Proceso {{ idProceso }}</h5>
+          <small class="text-muted">Modifique los campos que desee actualizar</small>
+        </div>
+        <button type="button" class="btn-close ms-2" (click)="cerrarModalEditar()" aria-label="Close"></button>
+      </div>
+
+      <!-- Formulario de edición -->
+      <form>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
+            <input type="text" class="form-control" id="nombreProceso" placeholder="Ingrese el nombre">
+          </div>
+
+          <div class="mb-3">
+            <label for="descripcionProceso" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcionProceso" rows="3" placeholder="Ingrese la descripción"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="estadoProceso" class="form-label">Estado</label>
+            <select class="form-select" id="estadoProceso">
+              <option value="">Seleccione un estado</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-danger" (click)="cerrarModalEditar()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

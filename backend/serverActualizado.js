@@ -684,6 +684,63 @@ async function subirArchivoASharepoint(accessToken, idproceso, archivo) {
 
 
   //PROCESOS
+  //Obtener proceso por idProceso
+  app.get('/proceso/:idproceso', async (req, res) => {
+    const { idproceso } = req.params;
+
+    console.debug(`[DEBUG] Petición recibida: /proceso/${idproceso}`);
+
+    const sql = `
+        SELECT 
+            p.idproceso,
+            p.idproyecto,
+            p.idsociedad,
+            p.nombreproceso,
+            p.fecha_inicio,
+            p.fecha_fin,
+            p.responsable,
+            p.revisor,
+            p.idestado,
+            s.nombresociedad,
+            e.descestado,
+            r1.nombreusuario AS responsable_nombre,
+            r2.nombreusuario AS revisor_nombre,
+            a.ruta AS link,
+            a.nombrearchivo
+        FROM proceso p
+        JOIN proyecto_sociedad ps 
+            ON p.idsociedad = ps.idsociedad AND p.idproyecto = ps.idproyecto
+        LEFT JOIN sociedad s ON p.idsociedad = s.idsociedad
+        LEFT JOIN estado e ON p.idestado = e.idestado
+        LEFT JOIN usuario r1 ON p.responsable = r1.idusuario
+        LEFT JOIN usuario r2 ON p.revisor = r2.idusuario
+        LEFT JOIN archivo a ON p.idproceso = a.idproceso
+        WHERE p.idproceso = ?
+    `;
+
+    try {
+        console.debug(`[DEBUG] Ejecutando consulta SQL con param: ${idproceso}`);
+
+        const [results] = await db.promise().query(sql, [idproceso]);
+
+        if (results.length === 0) {
+            console.warn(`[WARN] No se encontró ningún proceso con idproceso: ${idproceso}`);
+            return res.status(404).json({ mensaje: 'Proceso no encontrado' });
+        }
+
+        console.info(`[INFO] Consulta exitosa. Proceso encontrado.`);
+        console.debug(`[SUCCESS] Datos enviados al frontend:`, results[0]);
+
+        res.json(results[0]);
+    } catch (err) {
+        console.error(`[ERROR] Error al obtener el proceso, ${err}`);
+        res.status(500).json({ error: 'Error al obtener proceso', details: err.message });
+    }
+});
+
+
+
+  //Crear procesos
   const upload = multer();
   app.post('/procesos', upload.single('archivo'), async (req, res) => {
     const connection = await db.promise().getConnection();

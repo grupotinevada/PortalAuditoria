@@ -4,7 +4,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { IProyecto } from 'src/models/proyecto.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ProyectoEventoService {
   //varibales para el modal crear proyecto
@@ -13,14 +13,6 @@ export class ProyectoEventoService {
   proyectoCreado$ = this.proyectoCreadoSource.asObservable();
   //variables para el modal de editar proyecto
   proyectoActualizado$ = this.proyectoActualizadoSource.asObservable();
-  
-  //varaibles para el modal de crear proceso
-  private procesoCreadoSubject = new Subject<void>();  //refresh
-  procesoCreado$ = this.procesoCreadoSubject.asObservable();//refresh
-
-  private mostrarModalCrearProcesoSubject = new BehaviorSubject<boolean>(false);
-  mostrarModalCrearProceso$ = this.mostrarModalCrearProcesoSubject.asObservable();
-
 
   emitirProyectoCreado(proyecto: IProyecto) {
     this.proyectoCreadoSource.next(proyecto);
@@ -34,10 +26,16 @@ export class ProyectoEventoService {
     this.proyectoActualizadoSource.next();
   }
 
+  //MODAL PROCESO
 
+  //varaibles para el modal de crear proceso
+  private procesoCreadoSubject = new Subject<void>(); //refresh
+  procesoCreado$ = this.procesoCreadoSubject.asObservable(); //refresh
 
+  private mostrarModalCrearProcesoSubject = new BehaviorSubject<boolean>(false);
+  mostrarModalCrearProceso$ =
+    this.mostrarModalCrearProcesoSubject.asObservable();
 
-//MODAL PROCESO
   abrirCrearProceso() {
     this.mostrarModalCrearProcesoSubject.next(true);
   }
@@ -49,9 +47,20 @@ export class ProyectoEventoService {
     this.procesoCreadoSubject.next();
   }
 
+// variables para el modal de editar proceso
+private mostrarModalEditarProcesoSubject = new BehaviorSubject<boolean>(false);
+mostrarModalEditarProceso$ = this.mostrarModalEditarProcesoSubject.asObservable();
 
+private idProcesoEditarSubject = new BehaviorSubject<number | null>(null);
+idProcesoEditar$ = this.idProcesoEditarSubject.asObservable();
 
-
+abrirEditarProceso(id: number) {
+  this.idProcesoEditarSubject.next(id);
+  this.mostrarModalEditarProcesoSubject.next(true);
 }
 
-
+cerrarEditarProceso() {
+  this.mostrarModalEditarProcesoSubject.next(false);
+  this.idProcesoEditarSubject.next(null);
+}
+}

@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { IProyecto } from 'src/models/proyecto.model';
 import { ISociedad } from 'src/models/sociedad.model';
 import { UserService } from './user.service';
-import { IProceso } from 'src/models/proceso.model';
 import { IPais } from 'src/models/pais.model';
 import { IEstado } from 'src/models/estado.model';
 
@@ -36,10 +35,6 @@ export class ProyectoService {
     return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/por-proyecto/${idProyecto}`);
   }
 
-  //Obtiene los procesos de cada sociedad
-  obtenerProcesosPorSociedad(idSociedad: number,idProyecto: number ): Observable<IProceso[]> {
-    return this.http.get<IProceso[]>(`${this.apiUrl}/procesos/${idSociedad}/${idProyecto}`);
-  }
 
   ObtenerSociedadesPorPais(PaisID: number): Observable<ISociedad[]> {
     return this.http.get<ISociedad[]>(`${this.apiUrl}/sociedades/por-pais/${PaisID}`);
@@ -73,19 +68,7 @@ export class ProyectoService {
   }
   
   
-  crearProceso(procesoData: FormData, accessToken: string): Observable<any> {
-    const currentUser = this.userService.getCurrentUser();
-  
-    if (!currentUser || !currentUser.idusuario) {
-      throw new Error('Usuario no autenticado o sin ID');
-    }
-  
-    const headers = new HttpHeaders({
-      Authorization: `Bearer: ${accessToken}`
-    });
-  
-    return this.http.post(`${this.apiUrl}/procesos`, procesoData, { headers });
-  }
+
 
   // Método para actualizar un proyecto (basado en tu endpoint PUT)
   actualizarProyecto(idProyecto: number, proyectoData: any): Observable<any> {

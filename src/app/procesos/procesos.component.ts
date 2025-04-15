@@ -1,15 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ProcesoService } from './../../services/proceso.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ProyectoService } from 'src/services/proyecto.service';
 import { IProceso } from 'src/models/proceso.model';
 import { CommonModule } from '@angular/common';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
+import { EditarProcesoComponent } from '../editar-proceso/editar-proceso.component';
 
 @Component({
   selector: 'app-procesos',
-  imports: [CommonModule],
+  imports: [CommonModule, EditarProcesoComponent],
   templateUrl: './procesos.component.html',
   styleUrl: './procesos.component.css'
 })
@@ -22,15 +24,18 @@ export class ProcesosComponent implements OnInit {
   loading = true;
   errorMessage: string | null = null;     // Errores del servidor (rojo)
   infoMessage: string | null = null;      // Mensajes informativos (amarillo)
-  
+  mostrarModalEditarProceso  = false;
+  idProcesoAEditar: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
-    private proyectoService: ProyectoService,
-    private eventoService: ProyectoEventoService
+    private procesoService: ProcesoService,
+    private eventoService: ProyectoEventoService,
+    private modalService: ProyectoEventoService
   ) {}
 
   ngOnInit(): void {
+    
     this.route.paramMap.subscribe(params => {
       // Obtener valores de los parámetros de la URL
       this.PaisID = Number(params.get('PaisID'));
@@ -58,6 +63,14 @@ export class ProcesosComponent implements OnInit {
     this.eventoService.procesoCreado$.subscribe(() => {
       this.cargarProcesos(); // 👈 recargar procesos al crear uno nuevo
     });
+    this.modalService.mostrarModalEditarProceso$.subscribe((mostrar) => {
+      this.mostrarModalEditarProceso = mostrar;
+    });
+  
+    this.modalService.idProcesoEditar$.subscribe((idproceso) => {
+      this.idProcesoAEditar = idproceso;
+    });
+  
   }
 
   cargarProcesos():void {
@@ -66,7 +79,7 @@ export class ProcesosComponent implements OnInit {
     
     console.log('🔹 Cargando procesos para sociedad:', this.idSociedad);
     
-    this.proyectoService.obtenerProcesosPorSociedad(this.idSociedad, this.idProyecto)
+    this.procesoService.obtenerProcesosPorSociedad(this.idSociedad, this.idProyecto)
       .pipe(
         catchError(error => {
           this.errorMessage = 'Error al cargar los procesos';
@@ -89,5 +102,13 @@ export class ProcesosComponent implements OnInit {
       });
 }
 
+editarProceso(idproceso: any) {
+  this.modalService.abrirEditarProceso(idproceso);
+}
+
+
+borrarProceso(idproceso: any):void{
+  console.log('🔹 Borrando proceso:',idproceso);
+}
 
 }

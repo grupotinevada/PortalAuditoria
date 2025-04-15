@@ -10,6 +10,17 @@
     color: var(--bs-primary) !important;
   
 }
+.btn {
+  font-size: 1rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.4rem;
+}
+.procesos-btn button {
+  margin: 0 0.2rem;
+}
+td.procesos-btn {
+  vertical-align: middle;
+}
 
 .container-fluid{
   zoom: 0.88;

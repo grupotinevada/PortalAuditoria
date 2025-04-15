@@ -1,3 +1,4 @@
+
 <!-- Spinner -->
 <div *ngIf="loading" class="d-flex justify-content-center my-5 text-small">
   <div class="spinner-border text-primary" role="status">
@@ -39,6 +40,7 @@
           <th class="procesos-th">Responsable</th>
           <th class="procesos-th">Revisor</th>
           <th class="procesos-th text-center">Estado</th>
+          <th class="procesos-th text-center">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -56,16 +58,25 @@
             <span class="badge bg-warning text-dark">{{ proceso.revisor_nombre }}</span>
           </td>
           <td class="procesos-td text-center">
-            <!--<span class="badge" [ngClass]="{
-              'bg-success': proceso.descestado === 'Activo',
-              'bg-secondary': proceso.descestado === 'Inactivo',
-              'bg-danger': proceso.descestado === 'Cancelado'
-            }">-->
               {{ proceso.descestado }}
-            <!--</span>-->
+          </td>
+          <td class="procesos-btn text-center">
+            <button class="btn btn-secondary" (click)="editarProceso(proceso.idproceso)">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            
+            <button class="btn btn-danger m-2" (click)="borrarProceso(proceso.idproceso)">
+              <i class="bi bi-trash"></i>
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
 </div>
+
+
+<app-editar-proceso
+  *ngIf="mostrarModalEditarProceso"
+  [idProceso]="idProcesoAEditar"
+></app-editar-proceso>

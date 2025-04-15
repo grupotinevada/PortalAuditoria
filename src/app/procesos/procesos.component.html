@@ -55,7 +55,7 @@
             <span class="badge bg-info text-dark">{{ proceso.responsable_nombre }}</span>
           </td>
           <td class="procesos-td">
-            <span class="badge bg-warning text-dark">{{ proceso.revisor_nombre }}</span>
+            <span class="badge bg-warning text-dark">{{ proceso.revisor_nombre || 'Sin revisor' }}</span>
           </td>
           <td class="procesos-td text-center">
               {{ proceso.descestado }}
@@ -74,7 +74,6 @@
     </table>
   </div>
 </div>
-
 
 <app-editar-proceso
   *ngIf="mostrarModalEditarProceso"

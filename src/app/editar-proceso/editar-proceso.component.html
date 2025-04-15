@@ -1,46 +1,83 @@
-<!-- Backdrop -->
-<div class="modal-backdrop fade show"></div>
-
-<!-- Modal de Editar Proceso con estilo mejorado -->
-<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" style="padding-right: 15px;">
-  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+<div class="modal fade show d-block" tabindex="-1" aria-modal="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content p-3">
       <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
         <div class="d-flex flex-column">
-          <h5 class="modal-title mb-0">Editando Proceso {{ idProceso }}</h5>
-          <small class="text-muted">Modifique los campos que desee actualizar</small>
+          <h5 class="modal-title mb-0">Editar proceso</h5>
+          <small class="text-danger">Debe completar todos los campos</small>
         </div>
         <button type="button" class="btn-close ms-2" (click)="cerrarModalEditar()" aria-label="Close"></button>
       </div>
 
-      <!-- Formulario de edición -->
-      <form>
+      <form *ngIf="editarProcesoForm" [formGroup]="editarProcesoForm" (ngSubmit)="onSubmit()">
         <div class="modal-body">
-          <div class="mb-3">
-            <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
-            <input type="text" class="form-control" id="nombreProceso" placeholder="Ingrese el nombre">
+
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="nombreproceso" class="form-label">Nombre del Proceso</label>
+              <input id="nombreproceso" class="form-control" type="text" formControlName="nombreproceso" />
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="responsable" class="form-label">Responsable</label>
+              <select id="responsable" class="form-select" formControlName="responsable">
+                <option *ngFor="let user of usuarios" [value]="user.idusuario">
+                  {{ user.nombreUsuario }}
+                </option>
+              </select>
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label for="descripcionProceso" class="form-label">Descripción</label>
-            <textarea class="form-control" id="descripcionProceso" rows="3" placeholder="Ingrese la descripción"></textarea>
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
+              <input id="fecha_inicio" class="form-control" type="date" formControlName="fecha_inicio" />
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="fecha_fin" class="form-label">Fecha de Fin</label>
+              <input id="fecha_fin" class="form-control" type="date" formControlName="fecha_fin" />
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label for="estadoProceso" class="form-label">Estado</label>
-            <select class="form-select" id="estadoProceso">
-              <option value="">Seleccione un estado</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="revisor" class="form-label">Revisor</label>
+              <select id="revisor" class="form-select" formControlName="revisor">
+                <option [ngValue]="null">-- Sin revisor --</option>
+                <option *ngFor="let user of usuarios" [ngValue]="user.idusuario">
+                  {{ user.nombreUsuario || 'Aun no se ha revisado'}}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3 col-md-6">
+              <label for="idestado" class="form-label">Estado</label>
+              <select id="idestado" class="form-select" formControlName="idestado">
+                <option *ngFor="let estado of estados" [value]="estado.idestado">
+                  {{ estado.descestado }}
+                </option>
+              </select>
+            </div>
+            
+
           </div>
+
         </div>
 
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-danger" (click)="cerrarModalEditar()">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         </div>
       </form>
     </div>
   </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+<div
+  *ngIf="isLoading"
+  class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+  style="z-index: 2000; background-color: rgba(255,255,255,0.5)"
+>
+  <app-spinner [loading]="true" />
 </div>

@@ -132,12 +132,22 @@ export class AppComponent implements OnInit, OnDestroy {
         this.setLoginDisplay();
         this.checkAndSetActiveAccount();
       });
-    // Iniciar View Transition en NavigationStart
+
     this.router.events
       .pipe(filter((event) => event instanceof NavigationStart))
       .subscribe(() => {
         if (document.startViewTransition) {
-          document.startViewTransition(() => {});
+          document.startViewTransition(() => {
+          // Lógica general de transición de vista
+          const mainContent = document.querySelector('main');
+          if (mainContent) {
+            mainContent.classList.add('fade-out');
+            setTimeout(() => {
+              mainContent.classList.remove('fade-out');
+              mainContent.classList.add('fade-in');
+            }, 300);
+          }
+          });
         }
       });
   }

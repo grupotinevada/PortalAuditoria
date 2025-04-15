@@ -24,7 +24,7 @@
 
 /* Títulos y texto dentro de las tarjetas */
 .project-name {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--bs-primary) !important;
 }

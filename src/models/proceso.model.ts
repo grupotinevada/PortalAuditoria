@@ -13,6 +13,6 @@ export interface IProceso {
     idestado: number | null;
     descestado: string | null;
     link: string | null;
-    nombrearchivo?: string | null;       // <-- nuevo, opcional por si no siempre viene
+    nombrearchivo?: string | null;       
   }
   

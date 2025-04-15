@@ -766,7 +766,51 @@ async function subirArchivoASharepoint(accessToken, idproceso, archivo) {
         res.status(500).json({ error: 'Error al obtener proceso', details: err.message });
     }
 });
+//ediat proceso
+app.put('/proceso/:idproceso', async (req, res) => {
+    const { idproceso } = req.params;
+    const { nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado } = req.body;
 
+    console.debug(`[DEBUG] Petición recibida: PUT /proceso/${idproceso}`);
+    console.debug(`[DEBUG] Datos recibidos:`, req.body);
+
+    const sql = `
+        UPDATE proceso
+        SET 
+            nombreproceso = ?,
+            fecha_inicio = ?,
+            fecha_fin = ?,
+            responsable = ?,
+            revisor = ?,
+            idestado = ?
+        WHERE idproceso = ?
+    `;
+
+    try {
+        console.debug(`[DEBUG] Ejecutando UPDATE con idproceso: ${idproceso}`);
+
+        const [result] = await db.promise().query(sql, [
+            nombreproceso,
+            fecha_inicio,
+            fecha_fin,
+            responsable,
+            revisor,
+            idestado,
+            idproceso
+        ]);
+
+        if (result.affectedRows === 0) {
+            console.warn(`[WARN] No se actualizó ningún proceso con idproceso: ${idproceso}`);
+            return res.status(404).json({ mensaje: 'Proceso no encontrado para actualizar' });
+        }
+
+        console.info(`[INFO] Proceso actualizado exitosamente`);
+        res.json({ mensaje: 'Proceso actualizado correctamente' });
+    } catch (err) {
+        console.error(`[ERROR] Error al actualizar el proceso:`, err);
+        res.status(500).json({ error: 'Error al actualizar proceso', details: err.message });
+    }
+});
 
 
   //Crear procesos

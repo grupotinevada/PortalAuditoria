@@ -64,7 +64,7 @@ export class ProyectoComponent implements OnInit {
   private cargarProyectosPorPais(): void {
     this.idPais = Number(this.route.snapshot.paramMap.get('PaisID'));
     if (this.idPais) {
-      this.isLoading = true;
+
       this.proyectoService.obtenerProyectosPorPais(this.idPais).subscribe((proyectos: IProyecto[]) => {
         // Filtrar proyectos por país, estado (activo/inactivo) y que no estén eliminados
         this.proyectos = proyectos.filter(p => 
@@ -73,7 +73,7 @@ export class ProyectoComponent implements OnInit {
           p.eliminado === 0
         );
         console.log('Proyectos filtrados:', this.proyectos);
-        this.isLoading = false;
+
       });
     }
   }

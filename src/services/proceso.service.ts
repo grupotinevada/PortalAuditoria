@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { IProceso } from 'src/models/proceso.model';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { UserService } from './user.service';
 
 @Injectable({
@@ -40,16 +40,12 @@ export class ProcesoService {
   //obtiene un proceso por idproceso
   obtenerProcesoPorId(idproceso: number): Observable<IProceso> {
     const url = `${this.apiUrl}/proceso/${idproceso}`;
+    return this.http.get<IProceso>(url);
+   }
 
-    return this.http.get<IProceso>(url).pipe(
-      map((proceso: IProceso) => ({
-        ...proceso,
-        fecha_inicio: proceso.fecha_inicio ? new Date(proceso.fecha_inicio) : null,
-        fecha_fin: proceso.fecha_fin ? new Date(proceso.fecha_fin) : null
-      }))
-    );
+   actualizarProceso(idproceso: any, datos: any) {
+    return this.http.put<{ mensaje: string }>(`${this.apiUrl}/proceso/${idproceso}`, datos);
   }
-
-
-
 }
+
+

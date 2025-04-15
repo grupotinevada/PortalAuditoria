@@ -8,7 +8,6 @@
 >
   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
     <div class="modal-content p-3" style="max-width: 100%; overflow: hidden">
-
       <div
         class="modal-header d-flex justify-content-between align-items-center flex-wrap"
       >
@@ -27,9 +26,7 @@
       <form [formGroup]="procesoForm" (ngSubmit)="onSubmit()">
         <div class="modal-body">
           <div class="mb-3">
-            <label for="nombreProceso" class="form-label"
-              >Nombre del Proceso</label
-            >
+            <label for="nombreProceso" class="form-label">Nombre del Proceso</label>
             <input
               id="nombreProceso"
               class="form-control"
@@ -91,95 +88,88 @@
             </div>
           </div>
 
-          <div class="mb-3">
-            <label for="responsable" class="form-label">Responsable</label>
-            <select
-              id="responsable"
-              class="form-select"
-              formControlName="responsable"
-              style="width: 100%; max-width: 100%"
-            >
-              <option
-                *ngFor="let usuario of usuarios"
-                [value]="usuario.idusuario"
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="responsable" class="form-label">Responsable</label>
+              <select
+                id="responsable"
+                class="form-select"
+                formControlName="responsable"
               >
-                {{ usuario.nombreUsuario }}
-              </option>
-            </select>
-            <div
-              *ngIf="
-                procesoForm.get('responsable')?.invalid &&
-                (procesoForm.get('responsable')?.dirty ||
-                  procesoForm.get('responsable')?.touched)
-              "
-              class="text-danger"
-            >
-              El responsable es requerido.
+                <option *ngFor="let usuario of usuarios" [value]="usuario.idusuario">
+                  {{ usuario.nombreUsuario }}
+                </option>
+              </select>
+              <div
+                *ngIf="
+                  procesoForm.get('responsable')?.invalid &&
+                  (procesoForm.get('responsable')?.dirty ||
+                    procesoForm.get('responsable')?.touched)
+                "
+                class="text-danger"
+              >
+                El responsable es requerido.
+              </div>
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="idestado" class="form-label">Estado</label>
+              <select
+                id="idestado"
+                class="form-select"
+                formControlName="idestado"
+              >
+                <option [value]="null">Seleccione el Estado</option>
+                <option *ngFor="let estado of estados" [value]="estado.idestado">
+                  {{ estado.descestado }}
+                </option>
+              </select>
+              <div
+                *ngIf="
+                  procesoForm.get('idestado')?.invalid &&
+                  (procesoForm.get('idestado')?.dirty ||
+                    procesoForm.get('idestado')?.touched)
+                "
+                class="text-danger"
+              >
+                El estado es requerido.
+              </div>
             </div>
           </div>
 
-          <div class="mb-3">
-            <label for="idestado" class="form-label">Estado</label>
-            <select
-              id="idestado"
-              class="form-select"
-              formControlName="idestado"
-            >
-              <option [value]="null">Seleccione el Estado</option>
-              <option *ngFor="let estado of estados" [value]="estado.idestado">
-                {{ estado.descestado }}
-              </option>
-            </select>
-            <div
-              *ngIf="
-                procesoForm.get('idestado')?.invalid &&
-                (procesoForm.get('idestado')?.dirty ||
-                  procesoForm.get('idestado')?.touched)
-              "
-              class="text-danger"
-            >
-              El estado es requerido.
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="archivoProceso" class="form-label">Seleccionar Archivo</label>
+              <input
+                id="archivoProceso"
+                type="file"
+                class="form-control"
+                (change)="onFileSelected($event)"
+                [disabled]="procesoForm.get('crear_archivo_en_blanco')?.value"
+              />
             </div>
-          </div>
-          <div class="mb-3">
-            <label for="archivoProceso" class="form-label"
-              >Seleccionar Archivo</label
-            >
-            <input
-              id="archivoProceso"
-              type="file"
-              class="form-control"
-              (change)="onFileSelected($event)"
-              [disabled]="procesoForm.get('crear_archivo_en_blanco')?.value"
-            />
-          </div>
 
-          <div class="mb-3 form-check">
-            <input
-              type="checkbox"
-              class="form-check-input"
-              formControlName="crear_archivo_en_blanco"
-              id="crear_archivo_en_blanco"
-            />
-            <label class="form-check-label" for="crear_archivo_en_blanco"
-              >Crear archivo XLSX en blanco</label
-            >
+            <div class="mb-3 col-md-6 d-flex align-items-end">
+              <div class="form-check mt-3">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  formControlName="crear_archivo_en_blanco"
+                  id="crear_archivo_en_blanco"
+                />
+                <label class="form-check-label" for="crear_archivo_en_blanco">
+                  Crear archivo XLSX en blanco
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="modal-footer justify-content-between">
-          <button
-            type="button"
-            class="btn btn-danger"
-            (click)="cerrarModalProceso()"
-          >
+          <button type="button" class="btn btn-danger" (click)="cerrarModalProceso()">
             Cancelar
           </button>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            [disabled]="procesoForm.invalid"
-          >
+          <button type="submit" class="btn btn-primary" [disabled]="procesoForm.invalid">
             Guardar
           </button>
         </div>
@@ -189,6 +179,11 @@
 </div>
 
 <div class="modal-backdrop fade show"></div>
-<div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 2000; background-color: rgba(255,255,255,0.5)">
+
+<div
+  *ngIf="isLoading"
+  class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+  style="z-index: 2000; background-color: rgba(255,255,255,0.5)"
+>
   <app-spinner [loading]="true" />
 </div>

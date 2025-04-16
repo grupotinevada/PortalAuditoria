@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { IProceso } from 'src/models/proceso.model';
 import { Observable } from 'rxjs';
@@ -43,9 +43,24 @@ export class ProcesoService {
     return this.http.get<IProceso>(url);
    }
 
-   actualizarProceso(idproceso: any, datos: any) {
-    return this.http.put<{ mensaje: string }>(`${this.apiUrl}/proceso/${idproceso}`, datos);
+
+   actualizarProceso(idproceso: any, datos: FormData, overwrite: boolean, accessToken: string) {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${accessToken}`
+    });
+    
+    let params = new HttpParams();
+    if (overwrite) {
+      params = params.set('overwrite', 'true');
+    }
+  
+    return this.http.put<{ mensaje: string }>(`${this.apiUrl}/proceso/${idproceso}`, datos, { 
+      headers, 
+      params 
+    });
   }
+  
+  
 
   eliminarProceso(idproceso: number, accessToken: string) {
     const headers = new HttpHeaders({
@@ -55,7 +70,14 @@ export class ProcesoService {
     return this.http.delete<any>(`${this.apiUrl}/proceso/${idproceso}`, { headers });
   }
 
-  
+  eliminarArchivo(idproceso: any, nombreArchivo: string, accessToken: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`
+    });
+
+    const url = `${this.apiUrl}/archivo/${idproceso}/${encodeURIComponent(nombreArchivo)}`;
+    return this.http.delete(url, { headers });
+  }
 }
 
 

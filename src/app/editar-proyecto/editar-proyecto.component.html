@@ -1,3 +1,4 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
 <!-- editar-proyecto.component.html -->
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Editar Proyecto</h4>
@@ -33,10 +34,10 @@
     
     <!-- Checkboxes de sociedades -->
     <div class="mb-3">
-      <label class="form-label">Sociedades asociadas:</label>
+      <label for="sociedades" class="form-label">Sociedades asociadas:</label>
       <div *ngIf="cargandoSociedades" class="text-center py-2">
         <div class="spinner-border spinner-border-sm text-primary" role="status">
-          <span class="visually-hidden">Cargando...</span>
+          <span class="visualmente-oculto">Cargando...</span>
         </div>
         <span class="ms-2">Cargando sociedades...</span>
       </div>

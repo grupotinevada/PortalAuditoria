@@ -1,3 +1,5 @@
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
+<!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="modal fade show d-block" tabindex="-1" aria-modal="true" role="dialog">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content p-3">
@@ -59,10 +61,59 @@
                 </option>
               </select>
             </div>
-            
-
           </div>
 
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="nuevoArchivo" class="form-label">Subir nuevo archivo</label>
+              <input 
+                id="nuevoArchivo" 
+                class="form-control" 
+                type="file" 
+                (change)="onArchivoSeleccionado($event)"
+               
+              />
+            </div>
+          </div>
+          <!-- ESTO DESHABILITA EL INPUT CUANDO EXISTE ARCHIVO [disabled]="editarProcesoForm.get('nombrearchivo')?.value" -->
+
+
+          
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="archivo" class="form-label">Archivo asociado al proceso</label>
+          
+              <div
+                *ngIf="editarProcesoForm.get('nombrearchivo')?.value && editarProcesoForm.get('link')?.value"
+                class="d-flex align-items-center"
+              >
+                <a
+                  [href]="editarProcesoForm.get('link')?.value"
+                  target="_blank"
+                  class="me-2 text-decoration-none text-primary"
+                  [attr.title]="editarProcesoForm.get('nombrearchivo')?.value"
+                  data-bs-toggle="tooltip"
+                >
+                  <i class="bi bi-file-earmark-text me-1"></i>
+                  {{ editarProcesoForm.get('nombrearchivo')?.value || 'No hay archivo asociado'}}
+                </a>
+          
+                <i
+                  class="bi bi-x-circle text-danger"
+                  role="button"
+                  [attr.title]="'Eliminar archivo'"
+                  data-bs-toggle="tooltip"
+                  (click)="eliminarArchivo(
+                    editarProcesoForm.get('nombrearchivo')?.value
+                  )"
+                ></i>
+              </div>
+            </div>
+          </div>
+          
+          
+
+          
         </div>
 
         <div class="modal-footer justify-content-between">

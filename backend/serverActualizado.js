@@ -36,6 +36,232 @@ db.getConnection((err, connection) => {
     connection.release(); // Liberar la conexión después de la prueba
 });
  
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#########################################  FUNCIONES AUXILIARES PARA EL SHAREPOINT  #################################################
+//#####################################################################################################################################
+//#########################################  FUNCIONES AUXILIARES PARA EL SHAREPOINT  #################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+  // Función auxiliar para eliminar un archivo en SharePoint
+  async function eliminarArchivoSharePoint(accessToken, idProceso, nombreArchivo) {
+    const nombreCarpeta = `proceso_${idProceso}`;
+    const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
+    const DRIVE_NAME = process.env.DRIVE_NAME;
+  
+    try {
+      // 1. Obtener ID del drive
+      const driveRes = await axios.get(
+        `https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_SITE_ID}/drives`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+  
+      const drive = driveRes.data.value.find(d => d.name === DRIVE_NAME);
+      if (!drive) {
+        console.error(`[ERROR] No se encontró el drive con nombre: ${DRIVE_NAME}`);
+        return { exito: false, mensaje: 'Drive no encontrado' };
+      }
+  
+      const driveId = drive.id;
+  
+      // 2. Obtener ID del archivo dentro de la carpeta
+      const archivoPath = `/${nombreCarpeta}/${nombreArchivo}`;
+      const archivoRes = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${archivoPath}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+  
+      const archivoId = archivoRes.data.id;
+  
+      // 3. Eliminar el archivo
+      await axios.delete(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${archivoId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+  
+      console.info(`[INFO] Archivo '${nombreArchivo}' eliminado correctamente de '${nombreCarpeta}'`);
+      return { exito: true };
+  
+    } catch (error) {
+      const mensajeError = error.response?.data || error.message;
+      console.error(`[ERROR] al eliminar archivo '${nombreArchivo}':`, mensajeError);
+  
+      return {
+        exito: false,
+        mensaje: 'Error al eliminar el archivo en SharePoint',
+        error: mensajeError
+      };
+    }
+  }
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+
+// FUNCIONES PARA EL SHAREPOINT
+async function subirArchivoASharepoint(accessToken, idproceso, archivo, overwrite = false) {
+    const siteName = process.env.SITE_NAME;
+    const driveName = process.env.DRIVE_NAME;
+    const carpetaNombre = `proceso_${idproceso}`;
+    const archivoNombre = archivo.originalname;
+  
+    try {
+      // 1. Obtener siteId
+      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const siteId = siteResp.data.id;
+  
+      // 2. Obtener driveId
+      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
+      if (!driveId) throw new Error("No se encontró el drive");
+  
+      // 3. Obtener o crear carpeta
+      let folderId;
+      const folderList = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const folder = folderList.data.value[0];
+  
+      if (folder) {
+        folderId = folder.id;
+      } else {
+        const createFolderResp = await axios.post(
+          `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
+          {
+            name: carpetaNombre,
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "fail"
+          },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        folderId = createFolderResp.data.id;
+      }
+  
+      // 4. Verificar si el archivo ya existe
+      const archivoCheck = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}/children?$filter=name eq '${archivoNombre}'`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const archivoYaExiste = archivoCheck.data.value.length > 0;
+  
+      if (archivoYaExiste && !overwrite) {
+        throw new Error('El archivo ya existe en SharePoint');
+      }
+  
+      // 5. Subir archivo (sobrescribe si existe)
+      const uploadResp = await axios.put(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${carpetaNombre}/${archivoNombre}:/content`,
+        archivo.buffer,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': archivo.mimetype
+          }
+        }
+      );
+  
+      return {
+        carpeta: carpetaNombre,
+        rutaArchivo: uploadResp.data.webUrl,
+        nombreArchivo: archivoNombre
+      };
+  
+    } catch (err) {
+      console.error('Error al subir archivo a SharePoint:', err.response?.data || err.message);
+      throw new Error('Error al subir archivo a SharePoint');
+    }
+  }
+  
+  //#####################################################################################################################################
+  //#####################################################################################################################################
+  //#####################################################################################################################################
+  
+  async function crearCarpetaYArchivoEnBlancoSharepoint(accessToken, idproceso) {
+    const siteName = process.env.SITE_NAME;
+    const driveName = process.env.DRIVE_NAME;
+    const carpetaNombre = `proceso_${idproceso}`;
+    const nombreArchivo = `archivo_proceso_${idproceso}.xlsx`;
+  
+    try {
+      // 1. Obtener siteId
+      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const siteId = siteResp.data.id;
+  
+      // 2. Obtener driveId
+      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
+      if (!driveId) throw new Error("No se encontró el drive");
+  
+      // 3. Verificar si carpeta ya existe
+      const folderCheck = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+  
+      if (folderCheck.data.value.length > 0) throw new Error('La carpeta del proceso ya existe');
+  
+      // 4. Crear carpeta
+      const folderResp = await axios.post(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
+        {
+          name: carpetaNombre,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "fail"
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const folderId = folderResp.data.id;
+  
+      // 5. Crear archivo Excel en memoria
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Datos');
+      sheet.addRow(['ID', 'Nombre', 'Estado']); // ejemplo
+      const buffer = await workbook.xlsx.writeBuffer();
+  
+      // 6. Subir archivo
+      const uploadResp = await axios.put(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${nombreArchivo}:/content`,
+        buffer,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }
+        }
+      );
+  
+      return {
+        carpeta: carpetaNombre,
+        rutaArchivo: uploadResp.data.webUrl,
+        nombreArchivo
+      };
+  
+    } catch (err) {
+      console.error('Error creando carpeta y archivo Excel en blanco:', err.response?.data || err.message);
+      throw new Error('Error al crear carpeta y archivo en blanco en SharePoint');
+    }
+  }
+
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+
 // Guardar o actualizar usuario autenticado
 app.post('/usuarios', async (req, res) => {
     const { idusuario, nombreUsuario, correo, idrol, habilitado } = req.body;
@@ -563,154 +789,46 @@ app.delete('/proyecto/:idproyecto', async (req, res) => {
 });
 
 
-// FUNCIONES PARA EL SHAREPOINT
-async function subirArchivoASharepoint(accessToken, idproceso, archivo) {
-    const siteName = process.env.SITE_NAME;
-    const driveName = process.env.DRIVE_NAME;
-    const carpetaNombre = `proceso_${idproceso}`;
-    const archivoNombre = archivo.originalname;
+
+
+  
+  // Endpoint para eliminar archivo
+  app.delete('/archivo/:idProceso/:nombreArchivo', async (req, res) => {
+    const { idProceso, nombreArchivo } = req.params;
+    const accessToken = req.headers.authorization?.replace('Bearer ', '');
+  
+    if (!accessToken) {
+      return res.status(401).json({ mensaje: 'Token de acceso no proporcionado' });
+    }
   
     try {
-      // 1. Obtener siteId
-      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const siteId = siteResp.data.id;
+      const resultado = await eliminarArchivoSharePoint(accessToken, idProceso, nombreArchivo);
   
-      // 2. Obtener driveId
-      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
-      if (!driveId) throw new Error("No se encontró el drive");
-  
-      // 3. Obtener folderId (verificar si la carpeta existe)
-      let folderId;
-      const folderList = await axios.get(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const folder = folderList.data.value[0];
-  
-      if (folder) {
-        // Si la carpeta existe, obtener su ID
-        folderId = folder.id;
+      if (resultado.exito) {
+        // Establecer conexión a la base de datos
+        const connection = await db.promise().getConnection();
+        try {
+          // Eliminar registro en base de datos
+          await connection.query(
+            'DELETE FROM archivo WHERE idproceso = ? AND nombrearchivo = ?',
+            [idProceso, nombreArchivo]
+          );
+          console.log(`[INFO] Archivo '${nombreArchivo}' eliminado de la base de datos para el proceso ${idProceso}`);
+          return res.status(200).json({ mensaje: 'Archivo eliminado correctamente de SharePoint y base de datos' });
+        } finally {
+          // Liberar la conexión
+          connection.release();
+        }
       } else {
-        // Si no existe, crear la carpeta
-        const createFolderResp = await axios.post(
-          `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
-          {
-            name: carpetaNombre,
-            folder: {},
-            "@microsoft.graph.conflictBehavior": "fail"
-          },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        folderId = createFolderResp.data.id;
+        return res.status(500).json({ mensaje: resultado.mensaje, error: resultado.error });
       }
   
-      // 4. Verificar si archivo ya existe
-      const archivoCheck = await axios.get(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}/children?$filter=name eq '${archivoNombre}'`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      if (archivoCheck.data.value.length > 0) throw new Error('El archivo ya existe en SharePoint');
-  
-      // 5. Subir archivo
-      const uploadResp = await axios.put(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${archivoNombre}:/content`,
-        archivo.buffer,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': archivo.mimetype
-          }
-        }
-      );
-  
-      return {
-        carpeta: carpetaNombre,
-        rutaArchivo: uploadResp.data.webUrl,
-        nombreArchivo: archivoNombre
-      };
-  
-    } catch (err) {
-      console.error('Error al subir archivo a SharePoint:', err.response?.data || err.message);
-      throw new Error('Error al subir archivo a SharePoint');
+    } catch (error) {
+      console.error('[ERROR] al procesar la eliminación del archivo:', error.message);
+      return res.status(500).json({ mensaje: 'Error inesperado', error: error.message });
     }
-  }
+  });
   
-  
-  async function crearCarpetaYArchivoEnBlancoSharepoint(accessToken, idproceso) {
-    const siteName = process.env.SITE_NAME;
-    const driveName = process.env.DRIVE_NAME;
-    const carpetaNombre = `proceso_${idproceso}`;
-    const nombreArchivo = `archivo_proceso_${idproceso}.xlsx`;
-  
-    try {
-      // 1. Obtener siteId
-      const siteResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/root:/sites/${siteName}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const siteId = siteResp.data.id;
-  
-      // 2. Obtener driveId
-      const driveResp = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const driveId = driveResp.data.value.find(d => d.name === driveName)?.id;
-      if (!driveId) throw new Error("No se encontró el drive");
-  
-      // 3. Verificar si carpeta ya existe
-      const folderCheck = await axios.get(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-  
-      if (folderCheck.data.value.length > 0) throw new Error('La carpeta del proceso ya existe');
-  
-      // 4. Crear carpeta
-      const folderResp = await axios.post(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`,
-        {
-          name: carpetaNombre,
-          folder: {},
-          "@microsoft.graph.conflictBehavior": "fail"
-        },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const folderId = folderResp.data.id;
-  
-      // 5. Crear archivo Excel en memoria
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet('Datos');
-      sheet.addRow(['ID', 'Nombre', 'Estado']); // ejemplo
-      const buffer = await workbook.xlsx.writeBuffer();
-  
-      // 6. Subir archivo
-      const uploadResp = await axios.put(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${folderId}:/${nombreArchivo}:/content`,
-        buffer,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          }
-        }
-      );
-  
-      return {
-        carpeta: carpetaNombre,
-        rutaArchivo: uploadResp.data.webUrl,
-        nombreArchivo
-      };
-  
-    } catch (err) {
-      console.error('Error creando carpeta y archivo Excel en blanco:', err.response?.data || err.message);
-      throw new Error('Error al crear carpeta y archivo en blanco en SharePoint');
-    }
-  }
-
 
   //PROCESOS
   //Obtener proceso por idProceso
@@ -766,51 +884,123 @@ async function subirArchivoASharepoint(accessToken, idproceso, archivo) {
         res.status(500).json({ error: 'Error al obtener proceso', details: err.message });
     }
 });
-//ediat proceso
-app.put('/proceso/:idproceso', async (req, res) => {
-    const { idproceso } = req.params;
-    const { nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado } = req.body;
 
-    console.debug(`[DEBUG] Petición recibida: PUT /proceso/${idproceso}`);
-    console.debug(`[DEBUG] Datos recibidos:`, req.body);
 
-    const sql = `
-        UPDATE proceso
-        SET 
-            nombreproceso = ?,
-            fecha_inicio = ?,
-            fecha_fin = ?,
-            responsable = ?,
-            revisor = ?,
-            idestado = ?
-        WHERE idproceso = ?
+
+
+
+
+const upload2 = multer();
+
+app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
+  const { idproceso } = req.params;
+  const { nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado } = req.body;
+  const archivo = req.file;
+  const accessToken = req.headers.authorization?.split(' ')[1];
+
+  const revisorFinal = !revisor || revisor === 'null' ? null : revisor;
+  const overwrite = req.query.overwrite; // Parámetro opcional
+
+  console.log(overwrite);
+
+  try {
+    // 1. Actualizar proceso
+    const updateSQL = `
+      UPDATE proceso
+      SET 
+        nombreproceso = ?,
+        fecha_inicio = ?,
+        fecha_fin = ?,
+        responsable = ?,
+        revisor = ?,
+        idestado = ?
+      WHERE idproceso = ?
     `;
+    const [result] = await db.promise().query(updateSQL, [
+      nombreproceso,
+      fecha_inicio,
+      fecha_fin,
+      responsable,
+      revisorFinal,
+      idestado,
+      idproceso
+    ]);
 
-    try {
-        console.debug(`[DEBUG] Ejecutando UPDATE con idproceso: ${idproceso}`);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensaje: 'Proceso no encontrado para actualizar' });
+    }
 
-        const [result] = await db.promise().query(sql, [
-            nombreproceso,
-            fecha_inicio,
-            fecha_fin,
-            responsable,
-            revisor,
-            idestado,
-            idproceso
-        ]);
+    let resultadoArchivo = null;
 
-        if (result.affectedRows === 0) {
-            console.warn(`[WARN] No se actualizó ningún proceso con idproceso: ${idproceso}`);
-            return res.status(404).json({ mensaje: 'Proceso no encontrado para actualizar' });
+    // 2. Subir archivo si viene
+    if (archivo && accessToken) {
+      const nombreArchivo = archivo.originalname;
+
+      // Subir a SharePoint (incluso si va a reemplazar)
+      resultadoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo, overwrite);
+
+
+      // Verificar si ya hay un archivo con ese nombre
+      const checkArchivoSQL = `
+        SELECT * FROM archivo WHERE idproceso = ? AND nombrearchivo = ?
+      `;
+      const [archivosExistentes] = await db.promise().query(checkArchivoSQL, [
+        idproceso,
+        nombreArchivo
+      ]);
+
+      if (archivosExistentes.length > 0) {
+        if (!overwrite) {
+          // Si no permite sobreescritura, lo notificamos
+          return res.status(409).json({
+            error: 'Ya existe un archivo con ese nombre',
+            nombreArchivo
+          });
         }
 
-        console.info(`[INFO] Proceso actualizado exitosamente`);
-        res.json({ mensaje: 'Proceso actualizado correctamente' });
-    } catch (err) {
-        console.error(`[ERROR] Error al actualizar el proceso:`, err);
-        res.status(500).json({ error: 'Error al actualizar proceso', details: err.message });
+        // Si permite sobreescritura, actualizamos la ruta
+        const updateArchivoSQL = `
+          UPDATE archivo
+          SET ruta = ?
+          WHERE idproceso = ? AND nombrearchivo = ?
+        `;
+        await db.promise().query(updateArchivoSQL, [
+          resultadoArchivo.rutaArchivo,
+          idproceso,
+          nombreArchivo
+        ]);
+      } else {
+        // Si no existe, insertamos
+        const insertArchivoSQL = `
+          INSERT INTO archivo (idproceso, ruta, nombrearchivo)
+          VALUES (?, ?, ?)
+        `;
+        await db.promise().query(insertArchivoSQL, [
+          idproceso,
+          resultadoArchivo.rutaArchivo,
+          resultadoArchivo.nombreArchivo
+        ]);
+      }
     }
+
+    res.json({
+      mensaje: 'Proceso actualizado correctamente',
+      archivoSubido: resultadoArchivo || null
+    });
+
+  } catch (err) {
+    console.error(`[ERROR] Error al actualizar proceso o subir archivo:`, err);
+    res.status(500).json({ error: 'Error al actualizar proceso', details: err.message });
+  }
 });
+
+  
+  
+
+
+
+
+
 
 
   //Crear procesos

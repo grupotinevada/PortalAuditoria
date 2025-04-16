@@ -27,7 +27,7 @@ import {
   EventType,
 } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter, takeUntil, take } from 'rxjs/operators';
 import { UserService } from '../services/user.service';
 import { IUsuario } from '../models/user.model';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -67,6 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'Portal Auditoria';
   isIframe = false;
   loginDisplay = false;
+  isLoading = true;
   private readonly _destroying$ = new Subject<void>();
   isDarkMode = false;
   mostrarNavbar = true;
@@ -105,13 +106,18 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isIframe = window !== window.parent && !window.opener;
 
     this.authService.instance.enableAccountStorageEvents();
+    
+    // Verificar el estado inicial de autenticación
+    this.checkInitialAuthState();
+
     this.msalBroadcastService.msalSubject$
       .pipe(
         filter(
           (msg: EventMessage) =>
             msg.eventType === EventType.ACCOUNT_ADDED ||
             msg.eventType === EventType.ACCOUNT_REMOVED
-        )
+        ),
+        takeUntil(this._destroying$)
       )
       .subscribe((result: EventMessage) => {
         if (this.authService.instance.getAllAccounts().length === 0) {
@@ -131,6 +137,15 @@ export class AppComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.setLoginDisplay();
         this.checkAndSetActiveAccount();
+        this.isLoading = false;
+      });
+
+    this.msalBroadcastService.inProgress$
+      .pipe(take(1))
+      .subscribe(status => {
+        if (status === InteractionStatus.None) {
+          this.isLoading = false;
+        }
       });
 
     this.router.events
@@ -150,6 +165,16 @@ export class AppComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  private checkInitialAuthState() {
+    const accounts = this.authService.instance.getAllAccounts();
+    if (accounts.length > 0) {
+      this.setLoginDisplay();
+      this.isLoading = false;
+    } else {
+      this.isLoading = false;
+    }
   }
 
   setLoginDisplay() {
@@ -173,10 +198,7 @@ export class AppComponent implements OnInit, OnDestroy {
           usuario.idrol = perfilResponse.idrol;
           usuario.descrol = perfilResponse.descrol;
           sessionStorage.setItem('userData', JSON.stringify(usuario));
-          console.log(
-            'Usuario Cargado con idPerfil en sessionStorage',
-            usuario
-          );
+          console.log('Usuario Cargado con idPerfil en sessionStorage', usuario);
         });
     }
   }

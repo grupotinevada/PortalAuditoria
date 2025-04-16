@@ -71,7 +71,8 @@
                 class="form-control" 
                 type="file" 
                 (change)="onArchivoSeleccionado($event)"
-               
+                [disabled]="editarProcesoForm.get('nombrearchivo')?.value"
+                title="Por el momento no se puede subir un nuevo archivo, para reemplazar el existente, se debe eliminar el archivo actual y subir el nuevo."
               />
             </div>
           </div>

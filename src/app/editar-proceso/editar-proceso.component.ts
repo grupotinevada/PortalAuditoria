@@ -54,15 +54,20 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    console.log('aaaaaa ID del proceso a editar:', this.idProceso);
+    this.cargar();
+    this.cargarUsuarios();
+  }
+
+
+  cargar(){
     if (this.idProceso) {
       this.procesoService.obtenerProcesoPorId(Number(this.idProceso)).subscribe({
         next: (proceso) => this.inicializarFormulario(proceso),
         error: (err) => console.error('Error al cargar proceso', err)
       });
     }
-    this.cargarUsuarios();
   }
+
   ngAfterViewInit() {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltipTriggerList.forEach((tooltipTriggerEl) => {
@@ -101,12 +106,10 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-
   
-        // Verificar si se seleccionó un archivo nuevo
         const formValues = this.editarProcesoForm.value;
         const formData = new FormData();
-    
+  
         formData.append('nombreproceso', formValues.nombreproceso);
         formData.append('fecha_inicio', formValues.fecha_inicio);
         formData.append('fecha_fin', formValues.fecha_fin);
@@ -114,54 +117,82 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
         formData.append('revisor', formValues.revisor);
         formData.append('idestado', formValues.idestado);
   
-        // Adquirir el token de acceso
         this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
           next: (tokenResult) => {
             const accessToken = tokenResult.accessToken;
   
-            if (this.archivoSeleccionado) {
-              // Confirmar si el usuario desea sobrescribir el archivo
-              Swal.fire({
-                title: '¿Reemplazar archivo?',
-                text: '¿Estás seguro de que quieres reemplazar el archivo existente?, No se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, reemplazar',
-                cancelButtonText: 'Cancelar'
-              }).then((confirm) => {
-                if (confirm.isConfirmed) {
-                  this.isLoading = true;
-                  // Enviar el archivo para reemplazarlo
-                  if (this.archivoSeleccionado) {
-                    formData.append('archivo', this.archivoSeleccionado);
+            const archivoSeleccionado = this.archivoSeleccionado;
+            const nombreArchivoExistente = this.editarProcesoForm.get('nombrearchivo')?.value;
+  
+            if (archivoSeleccionado) {
+  
+              // Validación agregada: solo mostrar Swal si hay un archivo existente
+              if (nombreArchivoExistente) {
+                Swal.fire({
+                  title: '¿Reemplazar archivo?',
+                  text: '¿Estás seguro de que quieres reemplazar el archivo existente?, No se puede deshacer.',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonText: 'Sí, reemplazar',
+                  cancelButtonText: 'Cancelar'
+                }).then((confirm) => {
+                  if (confirm.isConfirmed) {
+                    this.isLoading = true;
+                    formData.append('archivo', archivoSeleccionado);
+                    this.procesoService.actualizarProceso(this.idProceso, formData, true, accessToken).subscribe({
+                      next: (res) => {
+                        this.modalService.notificarProcesoEditado();
+                        Swal.fire({
+                          icon: 'success',
+                          title: 'Proceso actualizado',
+                          text: res.mensaje || 'El proceso se actualizó correctamente.',
+                        });
+                        this.cerrarModalEditar();
+                        this.isLoading = false;
+                      },
+                      error: (err) => {
+                        this.isLoading = false;
+                        console.error('❌ Error al actualizar el proceso:', err);
+                        Swal.fire({
+                          icon: 'error',
+                          title: 'Error',
+                          text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
+                        });
+                      }
+                    });
+                  } else {
+                    this.isLoading = false;
                   }
-                  this.procesoService.actualizarProceso(this.idProceso, formData, true, accessToken).subscribe({
-                    next: (res) => {
-                      this.modalService.notificarProcesoEditado();
-                      Swal.fire({
-                        icon: 'success',
-                        title: 'Proceso actualizado',
-                        text: res.mensaje || 'El proceso se actualizó correctamente.',
-                      });
-                      this.cerrarModalEditar();
-                      this.isLoading = false;
-                    },
-                    error: (err) => {
-                      this.isLoading = false;
-                      console.error('❌ Error al actualizar el proceso:', err);
-                      Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
-                      });
-                    }
-                  });
-                } else {
-                  this.isLoading = false; // Detener la carga si no se confirma el reemplazo
-                }
-              });
+                });
+              } else {
+                // Si no hay archivo anterior, no se pregunta, simplemente se actualiza
+                this.isLoading = true;
+                formData.append('archivo', archivoSeleccionado);
+                this.procesoService.actualizarProceso(this.idProceso, formData, true, accessToken).subscribe({
+                  next: (res) => {
+                    this.modalService.notificarProcesoEditado();
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Proceso actualizado',
+                      text: res.mensaje || 'El proceso se actualizó correctamente.',
+                    });
+                    this.cerrarModalEditar();
+                    this.isLoading = false;
+                  },
+                  error: (err) => {
+                    this.isLoading = false;
+                    console.error('❌ Error al actualizar el proceso:', err);
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Error',
+                      text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
+                    });
+                  }
+                });
+              }
+  
             } else {
-              // Si no hay archivo seleccionado, solo actualizar el proceso sin cambiar el archivo
+              // No hay archivo seleccionado, solo actualizar sin modificar archivo
               this.procesoService.actualizarProceso(this.idProceso, formData, false, accessToken).subscribe({
                 next: (res) => {
                   this.modalService.notificarProcesoEditado();
@@ -194,6 +225,7 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
       }
     });
   }
+  
   
   
   
@@ -263,6 +295,7 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
           cancelButtonText: 'No'
         }).then(confirmacion => {
           if (confirmacion.isConfirmed) {
+            this.isLoading = true;
             // Obtener token de acceso
             this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
               next: (tokenResult) => {
@@ -270,16 +303,20 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
   
                 this.procesoService.eliminarArchivo(this.idProceso, nombreArchivo, accessToken).subscribe({
                   next: () => {
+                    this.isLoading = false;
                     Swal.fire('¡Eliminado!', 'El archivo fue eliminado correctamente.', 'success');
-                    this.inicializarFormulario(this.procesoSeleccionado);
+                    //this.cerrarModalEditar();
+                    this.cargar();
                   },
                   error: (err) => {
+                    this.isLoading = false;
                     console.error('Error al eliminar archivo:', err);
                     Swal.fire('Error', 'Hubo un problema al eliminar el archivo.', 'error');
                   }
                 });
               },
               error: (err) => {
+                this.isLoading = false;
                 console.error('Error al adquirir token:', err);
                 Swal.fire('Error de autenticación', 'No se pudo obtener el token de acceso.', 'error');
               }

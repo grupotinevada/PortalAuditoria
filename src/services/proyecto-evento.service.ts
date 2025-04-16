@@ -57,7 +57,7 @@ mostrarModalEditarProceso$ = this.mostrarModalEditarProcesoSubject.asObservable(
 private idProcesoEditarSubject = new BehaviorSubject<number | null>(null);
 idProcesoEditar$ = this.idProcesoEditarSubject.asObservable();
 
-abrirEditarProceso(id: number) {
+abrirEditarProceso(id: number | any) {
   this.idProcesoEditarSubject.next(id);
   this.mostrarModalEditarProcesoSubject.next(true);
 }

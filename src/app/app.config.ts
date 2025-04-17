@@ -38,6 +38,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { LOCALE_ID } from '@angular/core';
 
 
 export function loggerCallback(logLevel: LogLevel, message: string) {
@@ -123,6 +124,7 @@ export const appConfig: ApplicationConfig = {
       provide: MSAL_INTERCEPTOR_CONFIG,
       useFactory: MSALInterceptorConfigFactory,
     },
+    { provide: LOCALE_ID, useValue: 'es' },
     MsalService,
     MsalGuard,
     MsalBroadcastService,

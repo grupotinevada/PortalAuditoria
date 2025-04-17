@@ -463,8 +463,8 @@ app.get('/sociedades/por-proyecto/:idproyecto', async (req, res) => {
         SELECT 
             s.idsociedad,
             s.nombresociedad
-        FROM panelAuditoria.sociedad s
-        JOIN panelAuditoria.proyecto_sociedad ps ON s.idsociedad = ps.idsociedad
+        FROM sociedad s
+        JOIN proyecto_sociedad ps ON s.idsociedad = ps.idsociedad
         WHERE ps.idproyecto = ?;
     `;
 
@@ -492,7 +492,7 @@ app.get('/sociedades/por-proyecto/:idproyecto', async (req, res) => {
 app.get('/sociedades', async (req, res) => {
     const sql = `
         SELECT idsociedad, nombresociedad
-        FROM panelAuditoria.sociedad
+        FROM sociedad
         WHERE habilitado = 1;
     `;
 
@@ -541,9 +541,9 @@ app.get('/proyectos/:PaisID', async (req, res) => {
             p.habilitado, 
             p.nombreproyecto,
             p.eliminado
-        FROM panelAuditoria.proyecto p    
-        JOIN panelAuditoria.pais p2 ON p.idpais = p2.idpais  
-        JOIN panelAuditoria.usuario u ON p.idusuario = u.idusuario  
+        FROM proyecto p    
+        JOIN pais p2 ON p.idpais = p2.idpais  
+        JOIN usuario u ON p.idusuario = u.idusuario  
         WHERE p.idpais = ?;
     `;
  

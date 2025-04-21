@@ -101,17 +101,22 @@ export class CrearProcesoComponent implements OnInit{
     this.isLoading = true;
     this.userService.obtenerUsuarios().subscribe(
       (data) => {
-        this.usuarios = data;
-        console.log('Usuarios:', this.usuarios);
+        const correosExcluidos = ['maguilera@inevada.cl', 'aastorga@inevada.cl', 'isalazar@inevada.cl', 'soporte@inevada.cl'];
+        this.usuarios = data.filter((usuario: any) =>
+          !correosExcluidos.includes(usuario.correo)
+        );
+        console.log('Usuarios filtrados:', this.usuarios);
         this.isLoading = false;
       },
       (error) => {
         this.isLoading = false;
         console.error('Error al cargar usuarios:', error);
       }
-    )
+    );
     this.cargarEstados();
   }
+  
+  
 
   cargarEstados(): void {
     this.isLoading = true;

@@ -509,7 +509,7 @@ app.get('/proyectos', async (req, res) => {
     const sql = `
         SELECT idproyecto
         FROM proyecto
-        WHERE eliminado = 0;
+        WHERE eliminado = 0 AND habilitado = 1;
 
     `;
 

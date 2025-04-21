@@ -1,3 +1,4 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
 <!-- Botones para alternar entre Activos y Deshabilitados -->
 <div class="d-flex mb-4">
   <button 
@@ -21,6 +22,11 @@
 
 <!-- Título -->
 <h2 *ngIf="proyectos.length > 0">Proyectos en {{ proyectos[0].nombrepais }}</h2>
+
+
+<div *ngIf="proyectos.length === 0" class="alert alert-info">
+  <i class="bi bi-info-circle-fill me-2"></i>No se encontraron proyectos, crea uno nuevo!.
+</div>
 
 <!-- Contenedor de proyectos -->
 <div class="containerProyectos d-flex flex-wrap gap-3">

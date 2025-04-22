@@ -341,7 +341,7 @@ app.get('/usuario/:idusuario/:correo/perfil', async (req, res) => {
         // Obtener detalles del usuario si los idusuarios coinciden
         console.log('[INFO] idusuario coincide. Obteniendo detalles del perfil...');
         const sql = `
-            SELECT u.idusuario, u.nombreUsuario, u.correo, r.idrol, r.descrol
+            SELECT u.idusuario, u.nombreUsuario, u.correo, u.habilitado, r.idrol, r.descrol
             FROM usuario u
             JOIN rol r ON u.idrol = r.idrol
             WHERE u.correo = ?
@@ -385,27 +385,38 @@ app.get('/usuario/:idusuario/:correo/perfil', async (req, res) => {
     }
 });
 
- // Obtener usuarios
+// Obtener usuarios
 app.get('/usuarios', async (req, res) => {
-    console.log('[INFO] Petición recibida para obtener usuarios.');
- 
-    try {
-        const sql = `SELECT * FROM usuario`;
-        const [results] = await db.promise().query(sql);
- 
-        if (results.length === 0) {
-            console.warn('[WARN] No se encontraron usuarios en la base de datos.');
-            return res.status(404).json({ error: 'No se encontraron usuarios' });
-        }
- 
-        console.log(`[SUCCESS] ${results.length} usuarios obtenidos.`);
-        res.json(results);
- 
-    } catch (error) {
-        console.error('[ERROR] Error al obtener usuarios:', error);
-        res.status(500).json({ error: 'Error en el servidor al obtener usuarios' });
+  console.log('[INFO] Petición recibida para obtener usuarios.');
+
+  try {
+    const sql = `
+      SELECT * FROM usuario
+      WHERE correo NOT IN (?, ?, ?, ?, ?)
+    `;
+    const [results] = await db.promise().query(sql, [
+      'maguilera@inevada.cl',
+      'aastorga@inevada.cl',
+      'isalazar@inevada.cl',
+      'soporte@inevada.cl',
+      'soporteti@inevada.cl',
+      'tecnologia@inevada.cl'
+    ]);
+
+    if (results.length === 0) {
+      console.warn('[WARN] No se encontraron usuarios en la base de datos.');
+      return res.status(404).json({ error: 'No se encontraron usuarios' });
     }
+
+    console.log(`[SUCCESS] ${results.length} usuarios obtenidos.`);
+    res.json(results);
+
+  } catch (error) {
+    console.error('[ERROR] Error al obtener usuarios:', error);
+    res.status(500).json({ error: 'Error en el servidor al obtener usuarios' });
+  }
 });
+
  
 // Obtener países
 app.get('/pais', async (req, res) => {

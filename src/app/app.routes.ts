@@ -8,6 +8,7 @@ import { SociedadesComponent } from './sociedades/sociedades.component';
 import { ProcesosComponent } from './procesos/procesos.component';
 import { PaisComponent } from './pais/pais.component';
 import { InformesComponent } from './informes/informes.component';
+import { AuthGuard } from '../guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -17,13 +18,13 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: ProfileComponent,
-    canActivate: [MsalGuard],
+    canActivate: [MsalGuard, AuthGuard],
     data: { breadcrumb: 'Perfil' }
   },
   {
     path: 'informes',
     component: InformesComponent,
-    canActivate: [MsalGuard],
+    canActivate: [MsalGuard, AuthGuard],
     data: { breadcrumb: 'informes' }
   },
   {
@@ -34,25 +35,25 @@ export const routes: Routes = [
   {
     path: 'pais',
     component: PaisComponent,
-    canActivate: [MsalGuard],
+    canActivate: [MsalGuard, AuthGuard],
     data: { breadcrumb: 'Países' }
   },
   {
     path: 'pais/:PaisID',
     component: ProyectoComponent,
-    canActivate: [MsalGuard],
+    canActivate: [MsalGuard, AuthGuard],
     data: { breadcrumb: 'País' } // nombre real se carga dinámicamente
   },
   {
     path: 'pais/:PaisID/proyecto/:ProyectoID',
     component: SociedadesComponent,
-    canActivate: [MsalGuard],
+    canActivate: [MsalGuard, AuthGuard],
     data: { breadcrumb: 'Proyecto' } // nombre real se carga dinámicamente
   },
   {
     path: 'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID',
     component: ProcesosComponent,
-    canActivate: [MsalGuard],
+    canActivate: [MsalGuard, AuthGuard],
     data: { breadcrumb: 'Sociedad' } // nombre real se carga dinámicamente
   }
 ];

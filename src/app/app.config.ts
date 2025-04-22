@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/array-type */
 import {
   ApplicationConfig,
   importProvidersFrom,
@@ -39,6 +40,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { LOCALE_ID } from '@angular/core';
+import { AuthGuard } from '../guards/auth.guard';
 
 
 export function loggerCallback(logLevel: LogLevel, message: string) {
@@ -128,5 +130,6 @@ export const appConfig: ApplicationConfig = {
     MsalService,
     MsalGuard,
     MsalBroadcastService,
+    AuthGuard
   ],
 };

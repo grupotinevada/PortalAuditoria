@@ -1,3 +1,5 @@
+/* eslint-disable no-var */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare var bootstrap: any;
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
@@ -249,7 +251,7 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
     this.userService.obtenerUsuarios().subscribe(
       (data) => {
         const correosExcluidos = ['maguilera@inevada.cl', 'aastorga@inevada.cl', 'isalazar@inevada.cl', 'soporte@inevada.cl'];
-        this.usuarios = data.filter((usuario: any) =>
+        this.usuarios = data.filter((usuario: IUsuario) =>
           !correosExcluidos.includes(usuario.correo)
         );
         console.log('Usuarios filtrados:', this.usuarios);

@@ -60,24 +60,51 @@ db.getConnection((err, connection) => {
   
       const drive = driveRes.data.value.find(d => d.name === DRIVE_NAME);
       if (!drive) {
-        console.error(`[ERROR] No se encontró el drive con nombre: ${DRIVE_NAME}`);
-        return { exito: false, mensaje: 'Drive no encontrado' };
+        console.warn(`[INFO] Drive '${DRIVE_NAME}' no encontrado. Continuando...`);
+        return { exito: true };
       }
   
       const driveId = drive.id;
   
-      // 2. Obtener ID del archivo dentro de la carpeta
-      const archivoPath = `/${nombreCarpeta}/${nombreArchivo}`;
-      const archivoRes = await axios.get(
-        `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${archivoPath}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
+      // 2. Verificar si la carpeta existe
+      let carpetaId;
+      try {
+        const carpetaRes = await axios.get(
+          `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/proceso_${idProceso}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+        carpetaId = carpetaRes.data.id;
+      } catch (err) {
+        if (err.response?.status === 404) {
+          console.warn(`[INFO] Carpeta '${nombreCarpeta}' no existe. Continuando...`);
+          return { exito: true };
+        } else {
+          throw err;
         }
-      );
+      }
   
-      const archivoId = archivoRes.data.id;
+      // 3. Verificar si el archivo existe dentro de la carpeta
+      let archivoId;
+      try {
+        const archivoRes = await axios.get(
+          `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/proceso_${idProceso}/${nombreArchivo}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+        archivoId = archivoRes.data.id;
+      } catch (err) {
+        if (err.response?.status === 404) {
+          console.warn(`[INFO] Archivo '${nombreArchivo}' no existe en la carpeta '${nombreCarpeta}'. Continuando...`);
+          return { exito: true };
+        } else {
+          throw err;
+        }
+      }
   
-      // 3. Eliminar el archivo
+      // 4. Eliminar el archivo
       await axios.delete(
         `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${archivoId}`,
         {
@@ -90,7 +117,7 @@ db.getConnection((err, connection) => {
   
     } catch (error) {
       const mensajeError = error.response?.data || error.message;
-      console.error(`[ERROR] al eliminar archivo '${nombreArchivo}':`, mensajeError);
+      console.error(`[ERROR] al intentar eliminar archivo '${nombreArchivo}':`, mensajeError);
   
       return {
         exito: false,
@@ -99,6 +126,7 @@ db.getConnection((err, connection) => {
       };
     }
   }
+  
 //#####################################################################################################################################
 //#####################################################################################################################################
 //#####################################################################################################################################
@@ -1017,7 +1045,7 @@ app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
 
   //Crear procesos
   const upload = multer();
-  app.post('/procesos', upload.single('archivo'), async (req, res) => {
+  app.post('/procesos', upload.array('archivos'), async (req, res) => {
     const connection = await db.promise().getConnection();
   
     try {
@@ -1033,12 +1061,12 @@ app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
         crear_archivo_en_blanco,
       } = req.body;
   
-      const accessToken = req.headers.authorization?.split(' ')[1];  // Extraer el token del encabezado Authorization
+      const accessToken = req.headers.authorization?.split(' ')[1];
       if (!accessToken) {
         return res.status(400).json({ error: 'Access token es requerido' });
       }
   
-      const archivoSubido = req.file;
+      const archivosSubidos = req.files; // <- ahora es un array
   
       // Validaciones
       const errores = [];
@@ -1075,21 +1103,27 @@ app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
   
       const idproceso = procesoResult.insertId;
   
-      // Archivos
-      let archivoResult;
+      // Manejo de archivos
       if (crear_archivo_en_blanco === 'true') {
-        archivoResult = await crearCarpetaYArchivoEnBlancoSharepoint(accessToken, idproceso);
-      } else if (archivoSubido) {
-        archivoResult = await subirArchivoASharepoint(accessToken, idproceso, archivoSubido);
-      }
-  
-      if (archivoResult) {
-        const { rutaArchivo, nombreArchivo } = archivoResult;
-        await connection.execute('INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)', [
-          idproceso,
-          rutaArchivo,
-          nombreArchivo
-        ]);
+        const archivoResult = await crearCarpetaYArchivoEnBlancoSharepoint(accessToken, idproceso);
+        if (archivoResult) {
+          const { rutaArchivo, nombreArchivo } = archivoResult;
+          await connection.execute(
+            'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
+            [idproceso, rutaArchivo, nombreArchivo]
+          );
+        }
+      } else if (archivosSubidos?.length) {
+        for (const archivo of archivosSubidos) {
+          const archivoResult = await subirArchivoASharepoint(accessToken, idproceso, archivo);
+          if (archivoResult) {
+            const { rutaArchivo, nombreArchivo } = archivoResult;
+            await connection.execute(
+              'INSERT INTO archivo (idproceso, ruta, nombrearchivo) VALUES (?, ?, ?)',
+              [idproceso, rutaArchivo, nombreArchivo]
+            );
+          }
+        }
       }
   
       await connection.commit();
@@ -1103,6 +1137,7 @@ app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
       connection.release();
     }
   });
+  
   
 
 

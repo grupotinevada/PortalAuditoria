@@ -3,7 +3,6 @@
   .profile-container {
     max-width: 320px;
     margin: 0 auto;
-    background-color: #fff;
     transition: transform 0.2s ease-in-out;
     border-radius: 10px;
   }
@@ -14,7 +13,7 @@
   
   .profile-header {
     height: 60px;
-    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    background: linear-gradient(135deg, #6a11cb 0%, #133e87 100%);
   }
   
   .profile-photo-container {

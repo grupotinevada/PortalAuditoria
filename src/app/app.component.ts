@@ -232,6 +232,7 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
+
   private checkInitialAuthState() {
     const accounts = this.authService.instance.getAllAccounts();
     if (accounts.length > 0) {
@@ -253,26 +254,45 @@ export class AppComponent implements OnInit, OnDestroy {
         correo: account.username || '',
         idrol: 1,
         habilitado: 1,
+        // La foto se establecerá después
       };
   
-      this.userService.obtenerPerfil(usuario.idusuario!, usuario.correo).subscribe({
-        next: (perfilResponse) => {
-          if (perfilResponse) {
-            usuario.idrol = perfilResponse.idrol;
-            usuario.descrol = perfilResponse.descrol;
-            sessionStorage.setItem('userData', JSON.stringify(usuario));
-            console.log('Usuario ya existe, perfil cargado', usuario);
-          } else {
-            // Usuario no existe, no guardar
-            console.warn('Usuario no existe, no se guardará en la BD');
+      // Primero intenta obtener la foto de perfil
+      this.userService.obtenerFotoPerfil(account.name || '', account.localAccountId || '').then(fotoUrl => {
+        usuario.fotoPerfil = fotoUrl;
+        
+        // Luego obtén el resto del perfil
+        this.userService.obtenerPerfil(usuario.idusuario!, usuario.correo).subscribe({
+          next: (perfilResponse) => {
+            if (perfilResponse) {
+              usuario.idrol = perfilResponse.idrol;
+              usuario.descrol = perfilResponse.descrol;
+              sessionStorage.setItem('userData', JSON.stringify(usuario));
+              console.log('Usuario ya existe, perfil cargado', usuario);
+            } else {
+              // Usuario no existe, no guardar
+              console.warn('Usuario no existe, no se guardará en la BD');
+            }
+          },
+          error: (err) => {
+            console.error('Error al verificar existencia del usuario:', err);
           }
-        },
-        error: (err) => {
-          console.error('Error al verificar existencia del usuario:', err);
-        }
+        });
       });
     }
   }
+
+  guardarUsuario(usuario: IUsuario): void {
+    this.userService.guardarUsuario(usuario).subscribe({
+      next: (response) => {
+        console.log('Usuario guardado exitosamente:', response);
+      },
+      error: (err) => {
+        console.error('Error al guardar usuario:', err);
+      }
+    });
+  }
+  
 
   checkAndSetActiveAccount() {
     let activeAccount = this.authService.instance.getActiveAccount();

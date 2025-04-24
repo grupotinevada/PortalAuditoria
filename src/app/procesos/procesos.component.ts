@@ -237,19 +237,8 @@ export class ProcesosComponent implements OnInit {
       this.procesoSeleccionado = proceso;
       this.mostrarModalArchivos = true;
       this.estaCerrando = false;
-      // Agregar listener para cerrar al hacer clic fuera
-      setTimeout(() => {
-        document.addEventListener('click', this.cerrarAlHacerClicFuera);
-      }, 0);
     } else if (proceso.archivos && proceso.archivos.length === 1 && proceso.archivos[0].link) {
       window.open(proceso.archivos[0].link, '_blank');
-    }
-  }
-  
-  private cerrarAlHacerClicFuera = (event: MouseEvent) => {
-    const sidebar = document.getElementById('sidebarArchivos');
-    if (sidebar && !sidebar.contains(event.target as Node)) {
-      this.cerrarModalArchivos();
     }
   }
 
@@ -260,7 +249,6 @@ export class ProcesosComponent implements OnInit {
       this.mostrarModalArchivos = false;
       this.estaCerrando = false;
       this.procesoSeleccionado = null;
-      document.removeEventListener('click', this.cerrarAlHacerClicFuera);
     }, 300); // Duración de la animación en milisegundos
   }
 
@@ -286,7 +274,6 @@ export class ProcesosComponent implements OnInit {
     }
   }
 
-  
   eliminarArchivo(nombreArchivo: string) {
     Swal.fire({
       title: 'Advertencia',
@@ -317,9 +304,8 @@ export class ProcesosComponent implements OnInit {
                   next: () => {
                     this.isLoading = false;
                     Swal.fire('¡Eliminado!', 'El archivo fue eliminado correctamente.', 'success');
-                    //this.cerrarModalEditar();                    
-                    //this.cerrarModalArchivos();
-                    this.cargarProcesos();
+                    //this.cerrarModalEditar();
+                    //this.cargar();
                   },
                   error: (err) => {
                     this.isLoading = false;

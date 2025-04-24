@@ -41,6 +41,11 @@ export class HomeComponent implements OnInit {
   totalPaises = 0;
   mostrarModal = false;
   paisSeleccionado: any = null;
+  archivosCargados: any[] = [];
+
+  paisesCargados = false;
+  proyectosCargados = false;
+
 
   constructor(
     private router: Router,
@@ -83,19 +88,55 @@ export class HomeComponent implements OnInit {
   loginMicrosoft() {
     this.appComponent.loginRedirect();
   }
+  contarProyectosPorPais() {
+    
+    if (!this.archivosCargados || !this.paises) {
+      
+      return;
+    }
+  
+   
+  
+    const conteo: Record<number, number> = {};
+  
+    this.archivosCargados.forEach((proyecto: any) => {
+     
+      const id = proyecto.idpais;
+      conteo[id] = (conteo[id] || 0) + 1;
+     
+    });
+  
+    this.paises = this.paises.map((pais: any) => {
+      const cantidad = conteo[pais.idpais] || 0;
+    
+      return {
+        ...pais,
+        cantidadProyectos: cantidad,
+      };
+    });
+  
+  }
+  
 
   contadorProyectos() {
+    this.contadorPaises();
     this.proyectoService.obtenerTotalDeProyectos().subscribe({
       next: (response: any[]) => {
-        console.log('Total de proyectos:', response.length);
+
         this.totalProyectos = response.length;
+        this.archivosCargados = response;
+  
+        // Si los países ya están cargados, ahora sí contamos los proyectos por país
+        if (this.paises?.length) {
+          this.contarProyectosPorPais();
+        }
       },
       error: (err) => {
         console.error('Error al obtener todos los proyectos', err);
         this.totalProyectos = 0;
       },
     });
-    this.contadorPaises();
+ // sigue siendo llamada
   }
 
   contadorPaises() {
@@ -104,6 +145,11 @@ export class HomeComponent implements OnInit {
         console.log('Total de Paises:', response.length);
         this.totalPaises = response.length;
         this.paises = response;
+  
+        // Si los proyectos ya están cargados, ahora sí contamos los proyectos por país
+        if (this.archivosCargados?.length) {
+          this.contarProyectosPorPais();
+        }
       },
       error: (err) => {
         console.error('Error al obtener todos los Paises', err);
@@ -111,6 +157,7 @@ export class HomeComponent implements OnInit {
       },
     });
   }
+
   abrirModal() {
     this.mostrarModal = true;
   }

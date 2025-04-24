@@ -5,4 +5,5 @@ export interface IUsuario {
   habilitado: number | null;
   idrol: number;
   descrol?: string | null;
+  fotoPerfil?: string | null;
 }

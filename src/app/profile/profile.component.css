@@ -1,34 +1,62 @@
-/* Contenedor de proyectos */
-.containerProyectos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    text-align: center;
+
+
+  .profile-container {
+    max-width: 320px;
+    margin: 0 auto;
+    transition: transform 0.2s ease-in-out;
+    border-radius: 10px;
   }
   
-  /* Estilos para las tarjetas */
-  .country-card {
-    background-color: var(--bs-card-bg) !important;
-    color: var(--bs-card-color) !important;
-    border: 1px solid var(--bs-border-color);
-    width: 300px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+  .profile-container:hover {
+    transform: translateY(-5px);
   }
   
-  .country-card:hover {
-    transform: scale(1.05);
+  .profile-header {
+    height: 60px;
+    background: linear-gradient(135deg, #6a11cb 0%, #133e87 100%);
   }
   
-  /* Títulos y texto dentro de las tarjetas */
-  .country-name {
+  .profile-photo-container {
+    margin-top: -50px;
+  }
+  
+  .profile-photo {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border: 4px solid #fff !important;
+    background-color: #f8f9fa;
+  }
+  
+  .profile-name {
     font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--bs-primary) !important;
+    color: #212529;
   }
   
-  .country-code, .project-count {
-    color: var(--bs-body-color) !important;
+  .profile-email {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  .profile-role .badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  
+  .profile-details {
+    font-size: 0.85rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed rgba(0,0,0,0.1);
+  }
+  
+  .user-id {
+    font-family: monospace;
+    font-size: 0.8rem;
+  }
+  
+  .profile-footer {
+    background-color: rgba(0,0,0,0.02);
   }

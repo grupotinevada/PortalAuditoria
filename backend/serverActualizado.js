@@ -589,7 +589,7 @@ app.get('/sociedades', async (req, res) => {
 // Obtener todas el numero de proyectos
 app.get('/proyectos', async (req, res) => {
     const sql = `
-        SELECT idproyecto
+        SELECT idproyecto, idpais
         FROM proyecto
         WHERE eliminado = 0 AND habilitado = 1;
 

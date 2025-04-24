@@ -83,6 +83,14 @@ export class ProcesoService {
     const url = `${this.apiUrl}/archivo/${idproceso}/${encodeURIComponent(nombreArchivo)}`;
     return this.http.delete(url, { headers });
   }
+
+  agregarArchivos(idproceso: number, formData: FormData, accessToken: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${accessToken}`
+    });
+
+    return this.http.post(`${this.apiUrl}/proceso/${idproceso}/archivos`, formData, { headers });
+  }
 }
 
 

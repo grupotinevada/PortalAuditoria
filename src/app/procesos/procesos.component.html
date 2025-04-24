@@ -107,23 +107,108 @@
   [idProceso]="idProcesoAEditar"
 ></app-editar-proceso>
 
-<!-- Modal para mostrar archivos -->
-<!-- Modal Angular para archivos -->
-<div *ngIf="mostrarModalArchivos" class="modal-custom-backdrop">
-  <div class="modal-custom">
-    <div class="modal-header-custom">
-      <h5>Archivos del proceso: {{ procesoSeleccionado?.nombreproceso }}</h5>
-      <button class="btn-close" (click)="cerrarModalArchivos()">&times;</button>
+<!-- Sidebar para mostrar archivos -->
+<div *ngIf="mostrarModalArchivos" 
+     class="offcanvas offcanvas-end fade" 
+     [class.show]="mostrarModalArchivos"
+     [class.hiding]="estaCerrando"
+     tabindex="-1" 
+     id="sidebarArchivos"
+     (click)="$event.stopPropagation()">
+  <div class="offcanvas-header text-white">
+    <h5 class="offcanvas-title">
+      <i class="bi bi-folder me-2"></i>
+      Archivos del proceso: {{ procesoSeleccionado?.nombreproceso }}
+    </h5>
+    <button type="button" class="btn-close btn-close-black" (click)="cerrarModalArchivos()"></button>
+  </div>
+  <div class="offcanvas-body">
+    <!-- Sección para subir nuevos archivos -->
+    <div class="mb-4">
+      <label for="nuevoArchivo" class="form-label">Subir nuevos archivos</label>
+      <input
+        id="nuevoArchivo"
+        class="form-control"
+        type="file"
+        multiple
+        (change)="onArchivoSeleccionado($event)"
+        [disabled]="isLoading"
+        title="Puedes subir múltiples archivos"
+      />
+      <div class="text-muted" style="font-size: x-small;">
+        Puedes seleccionar varios archivos a la vez
+      </div>
     </div>
-    <div class="modal-body-custom">
-      <div *ngIf="procesoSeleccionado?.nombrearchivo && procesoSeleccionado?.link">
-        <p><strong>Archivo:</strong></p>
-        <a [href]="procesoSeleccionado.link" target="_blank">{{ procesoSeleccionado.nombrearchivo }}</a>
+
+    <!-- Vista previa de archivos seleccionados -->
+    <div *ngIf="archivosSeleccionados.length > 0" class="mb-4">
+      <h6 class="mb-2">Archivos seleccionados para subir:</h6>
+      <div class="list-group">
+        <div *ngFor="let archivo of archivosSeleccionados" 
+             class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <i class="bi bi-file-earmark-text me-2"></i>
+            {{ archivo.name }}
+            <small class="text-muted d-block">{{ archivo.size | filesize }}</small>
+          </div>
+          <button class="btn btn-sm btn-outline-danger" 
+                  (click)="eliminarArchivoDeSeleccion(archivo)"
+                  title="Quitar archivo">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
       </div>
-      <div *ngIf="!procesoSeleccionado?.nombrearchivo">
-        <p>No hay archivos asociados a este proceso.</p>
+      <div class="mt-2">
+        <button class="btn btn-primary" 
+                (click)="subirArchivos()"
+                [disabled]="isLoading">
+          <i class="bi bi-upload me-2"></i>Subir archivos
+        </button>
+        <button class="btn btn-outline-secondary ms-2" 
+                (click)="limpiarSeleccion()"
+                [disabled]="isLoading">
+          <i class="bi bi-x-circle me-2"></i>Limpiar selección
+        </button>
       </div>
+    </div>
+
+    <div *ngIf="procesoSeleccionado?.archivos && procesoSeleccionado.archivos.length > 0">
+      <div class="list-group">
+        <div *ngFor="let archivo of procesoSeleccionado.archivos" 
+             class="list-group-item d-flex justify-content-between align-items-center"
+             style="cursor: pointer;"
+             (click)="abrirArchivo(archivo.link)">
+          <div>
+            <i class="bi bi-file-earmark-text me-2"></i>
+            {{ archivo.nombre }}
+          </div>
+          <div class="btn-group" (click)="$event.stopPropagation()">
+            <button class="btn btn-sm btn-outline-primary" 
+                    (click)="copiarEnlace(archivo.link)" 
+                    title="Copiar enlace">
+              <i class="bi bi-clipboard"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger"
+                    (click)="eliminarArchivo(archivo.nombre)"
+                    title="Eliminar archivo">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="!procesoSeleccionado?.archivos || procesoSeleccionado.archivos.length === 0" 
+         class="alert alert-info d-flex align-items-center">
+      <i class="bi bi-info-circle-fill me-2"></i>
+      No hay archivos asociados a este proceso.
     </div>
   </div>
 </div>
+
+<!-- Backdrop con animación -->
+<div *ngIf="mostrarModalArchivos" 
+     class="offcanvas-backdrop fade" 
+     [class.show]="mostrarModalArchivos"
+     [class.hiding]="estaCerrando"
+     (click)="cerrarModalArchivos()"></div>
 

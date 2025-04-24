@@ -82,34 +82,47 @@
           </div>
 
           <div class="row">
-            <div class="mb-3 col-md-6">
+            <div class="mb-3 col-md-8">
               <label class="form-label">Archivos asociados al proceso</label>
-              <div *ngIf="archivosSubidos!.length > 0" class="d-flex flex-column">
-                <div *ngFor="let archivo of archivosSubidos; let i = index" class="d-flex align-items-center mb-2">
-                  <a
-                    [href]="archivo.link"
-                    target="_blank"
-                    class="me-2 text-decoration-none text-primary"
-                    [attr.title]="archivo.nombre"
-                    data-bs-toggle="tooltip"
+          
+              <!-- Caja contenedora scrolleable -->
+              <div
+                *ngIf="archivosSubidos!.length > 0"
+                class="border rounded p-2"
+                style="max-height: 200px; overflow-y: auto;"
+              >
+                <ul class="list-group list-group-flush">
+                  <li
+                    *ngFor="let archivo of archivosSubidos; let i = index"
+                    class="list-group-item d-flex justify-content-between align-items-center"
                   >
-                    <i class="bi bi-file-earmark-text me-1"></i>
-                    {{ archivo.nombre }}
-                  </a>
-                  <i
-                    class="bi bi-x-circle text-danger"
-                    role="button"
-                    (click)="eliminarArchivo(archivo.nombre || '')"
-                    [attr.title]="'Eliminar archivo'"
-                    data-bs-toggle="tooltip"
-                  ></i>
-                </div>
+                    <a
+                      [href]="archivo.link"
+                      target="_blank"
+                      class="text-decoration-none text-primary"
+                      [attr.title]="archivo.nombre"
+                      data-bs-toggle="tooltip"
+                    >
+                      <i class="bi bi-file-earmark-text me-2"></i>
+                      {{ archivo.nombre }}
+                    </a>
+                    <i
+                      class="bi bi-x-circle text-danger"
+                      role="button"
+                      (click)="eliminarArchivo(archivo.nombre || '')"
+                      [attr.title]="'Eliminar archivo'"
+                      data-bs-toggle="tooltip"
+                    ></i>
+                  </li>
+                </ul>
               </div>
+          
               <div *ngIf="archivosSubidos?.length === 0">
                 <p>No hay archivos asociados al proceso.</p>
               </div>
             </div>
           </div>
+          
           
         </div>
 

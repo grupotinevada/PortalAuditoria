@@ -1,3 +1,4 @@
+<!-- eslint-disable @angular-eslint/template/label-has-associated-control -->
 <!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
 <!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
 <div class="modal fade show d-block" tabindex="-1" aria-modal="true" role="dialog">
@@ -8,12 +9,11 @@
           <h5 class="modal-title mb-0">Editar proceso</h5>
           <small class="text-danger">Debe completar todos los campos</small>
         </div>
-        <button type="button" class="btn-close ms-2" (click)="cerrarModalEditar()" aria-label="Close"></button>
+        <button type="button" class="btn-close ms-2" aria-label="Cerrar" (click)="cerrarModalEditar()"></button>
       </div>
 
       <form *ngIf="editarProcesoForm" [formGroup]="editarProcesoForm" (ngSubmit)="onSubmit()">
         <div class="modal-body">
-
           <div class="row">
             <div class="mb-3 col-md-6">
               <label for="nombreproceso" class="form-label">Nombre del Proceso</label>
@@ -48,11 +48,11 @@
               <select id="revisor" class="form-select" formControlName="revisor">
                 <option [ngValue]="null">-- Sin revisor --</option>
                 <option *ngFor="let user of usuarios" [ngValue]="user.idusuario">
-                  {{ user.nombreUsuario || 'Aun no se ha revisado'}}
+                  {{ user.nombreUsuario || 'Aún no se ha revisado' }}
                 </option>
               </select>
             </div>
-            
+
             <div class="mb-3 col-md-6">
               <label for="idestado" class="form-label">Estado</label>
               <select id="idestado" class="form-select" formControlName="idestado">
@@ -65,55 +65,51 @@
 
           <div class="row">
             <div class="mb-3 col-md-6">
-              <label for="nuevoArchivo" class="form-label">Subir nuevo archivo</label>
-              <input 
-                id="nuevoArchivo" 
-                class="form-control" 
-                type="file" 
+              <label for="nuevoArchivo" class="form-label">Subir nuevos archivos</label>
+              <input
+                id="nuevoArchivo"
+                class="form-control"
+                type="file"
+                multiple
                 (change)="onArchivoSeleccionado($event)"
-                [disabled]="editarProcesoForm.get('nombrearchivo')?.value"
-                title="Por el momento no se puede subir un nuevo archivo para reemplazar el existente, se debe eliminar el archivo actual y subir el nuevo."
+                [disabled]="isLoading"
+                title="Puedes subir múltiples archivos. Si alguno ya existe, se te preguntará si deseas reemplazarlo."
               />
-            </div>
-          </div>
-          <!-- ESTO DESHABILITA EL INPUT CUANDO EXISTE ARCHIVO [disabled]="editarProcesoForm.get('nombrearchivo')?.value" -->
-
-
-          
-          <div class="row">
-            <div class="mb-3 col-md-6">
-              <label for="archivo" class="form-label">Archivo asociado al proceso</label>
-          
-              <div
-                *ngIf="editarProcesoForm.get('nombrearchivo')?.value && editarProcesoForm.get('link')?.value"
-                class="d-flex align-items-center"
-              >
-                <a
-                  [href]="editarProcesoForm.get('link')?.value"
-                  target="_blank"
-                  class="me-2 text-decoration-none text-primary"
-                  [attr.title]="editarProcesoForm.get('nombrearchivo')?.value"
-                  data-bs-toggle="tooltip"
-                >
-                  <i class="bi bi-file-earmark-text me-1"></i>
-                  {{ editarProcesoForm.get('nombrearchivo')?.value || 'No hay archivo asociado'}}
-                </a>
-          
-                <i
-                  class="bi bi-x-circle text-danger"
-                  role="button"
-                  [attr.title]="'Eliminar archivo'"
-                  data-bs-toggle="tooltip"
-                  (click)="eliminarArchivo(
-                    editarProcesoForm.get('nombrearchivo')?.value
-                  )"
-                ></i>
+              <div class="text-muted text-primary" style="font-size: x-small;">
+                Puedes seleccionar varios archivos. Se te preguntará si deseas reemplazar.
               </div>
             </div>
           </div>
-          
-          
 
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label class="form-label">Archivos asociados al proceso</label>
+              <div *ngIf="archivosSubidos!.length > 0" class="d-flex flex-column">
+                <div *ngFor="let archivo of archivosSubidos; let i = index" class="d-flex align-items-center mb-2">
+                  <a
+                    [href]="archivo.link"
+                    target="_blank"
+                    class="me-2 text-decoration-none text-primary"
+                    [attr.title]="archivo.nombre"
+                    data-bs-toggle="tooltip"
+                  >
+                    <i class="bi bi-file-earmark-text me-1"></i>
+                    {{ archivo.nombre }}
+                  </a>
+                  <i
+                    class="bi bi-x-circle text-danger"
+                    role="button"
+                    (click)="eliminarArchivo(archivo.nombre || '')"
+                    [attr.title]="'Eliminar archivo'"
+                    data-bs-toggle="tooltip"
+                  ></i>
+                </div>
+              </div>
+              <div *ngIf="archivosSubidos?.length === 0">
+                <p>No hay archivos asociados al proceso.</p>
+              </div>
+            </div>
+          </div>
           
         </div>
 
@@ -125,7 +121,9 @@
     </div>
   </div>
 </div>
+
 <div class="modal-backdrop fade show"></div>
+
 <div
   *ngIf="isLoading"
   class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"

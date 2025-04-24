@@ -17,10 +17,17 @@ export class ProcesoService {
   ) { }
 
 
-    //Obtiene todoslos procesos de cada sociedad
+    //Obtiene todoslos procesos de cada sociedad para la tabla de procesos
     obtenerProcesosPorSociedad(idSociedad: number,idProyecto: number ): Observable<IProceso[]> {
       return this.http.get<IProceso[]>(`${this.apiUrl}/procesos/${idSociedad}/${idProyecto}`);
     }
+
+
+      //obtiene un proceso por idproceso para editar proceso
+  obtenerProcesoPorId(idproceso: number): Observable<IProceso> {
+    const url = `${this.apiUrl}/proceso/${idproceso}`;
+    return this.http.get<IProceso>(url);
+   }
 
     //crea el proceso
     crearProceso(procesoData: FormData, accessToken: string): Observable<any> {
@@ -37,11 +44,7 @@ export class ProcesoService {
     return this.http.post(`${this.apiUrl}/procesos`, procesoData, { headers });
   }
 
-  //obtiene un proceso por idproceso
-  obtenerProcesoPorId(idproceso: number): Observable<IProceso> {
-    const url = `${this.apiUrl}/proceso/${idproceso}`;
-    return this.http.get<IProceso>(url);
-   }
+
 
 
    actualizarProceso(idproceso: any, datos: FormData, overwrite: boolean, accessToken: string) {
@@ -54,10 +57,12 @@ export class ProcesoService {
       params = params.set('overwrite', 'true');
     }
   
-    return this.http.put<{ mensaje: string }>(`${this.apiUrl}/proceso/${idproceso}`, datos, { 
-      headers, 
-      params 
-    });
+    return this.http.put<{ mensaje: string, archivosSubidos: any[] | null }>(
+      `${this.apiUrl}/proceso/${idproceso}`,
+      datos,
+      { headers, params }
+    );
+    
   }
   
   

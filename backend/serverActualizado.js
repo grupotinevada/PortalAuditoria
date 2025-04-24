@@ -289,7 +289,50 @@ async function subirArchivoASharepoint(accessToken, idproceso, archivo, overwrit
 //#####################################################################################################################################
 //#####################################################################################################################################
 //#####################################################################################################################################
+async function eliminarCarpetaSharePoint(accessToken, idproceso) {
+  const nombreCarpeta = `proceso_${idproceso}`;
+  const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
+  const DRIVE_NAME = process.env.DRIVE_NAME;
+  try {
+    // Paso 1: Obtener ID del drive por nombre
+    const driveResponse = await axios.get(`https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_SITE_ID}/drives`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
 
+    const drive = driveResponse.data.value.find(d => d.name === DRIVE_NAME);
+
+    if (!drive) {
+      console.error(`[ERROR] No se encontró el drive con nombre: ${DRIVE_NAME}`);
+      return { exito: false, mensaje: 'Drive no encontrado' };
+    }
+
+    const driveId = drive.id;
+
+    // Paso 2: Obtener el ID del item (carpeta) a eliminar
+    const carpetaResponse = await axios.get(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombreCarpeta}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    const itemId = carpetaResponse.data.id;
+
+    // Paso 3: Eliminar la carpeta por su ID
+    await axios.delete(`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    console.info(`[INFO] Carpeta SharePoint '${nombreCarpeta}' eliminada correctamente`);
+    return { exito: true };
+
+  } catch (error) {
+    console.error(`[ERROR] al eliminar carpeta proceso_${idproceso}:`, error.response?.data || error.message);
+    return { exito: false, mensaje: 'Error al eliminar la carpeta en SharePoint', error: error.message };
+  }
+}
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
 // Guardar o actualizar usuario autenticado
 app.post('/usuarios', async (req, res) => {
     const { idusuario, nombreUsuario, correo, idrol, habilitado } = req.body;
@@ -872,12 +915,12 @@ app.delete('/proyecto/:idproyecto', async (req, res) => {
 
   //PROCESOS
   //Obtener proceso por idProceso
-  app.get('/proceso/:idproceso', async (req, res) => {
-    const { idproceso } = req.params;
+  app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
+    const { idSociedad, idProyecto } = req.params;
 
-    console.debug(`[DEBUG] Petición recibida: /proceso/${idproceso}`);
+    console.debug(`[DEBUG] Petición recibida: /procesos/${idSociedad}${idProyecto ? '/' + idProyecto : ''}`);
 
-    const sql = `
+    let sql = `
         SELECT 
             p.idproceso,
             p.idproyecto,
@@ -902,26 +945,66 @@ app.delete('/proyecto/:idproyecto', async (req, res) => {
         LEFT JOIN usuario r1 ON p.responsable = r1.idusuario
         LEFT JOIN usuario r2 ON p.revisor = r2.idusuario
         LEFT JOIN archivo a ON p.idproceso = a.idproceso
-        WHERE p.idproceso = ?
+        WHERE p.idsociedad = ?
     `;
 
-    try {
-        console.debug(`[DEBUG] Ejecutando consulta SQL con param: ${idproceso}`);
+    const params = [idSociedad];
 
-        const [results] = await db.promise().query(sql, [idproceso]);
+    if (idProyecto) {
+        sql += ' AND p.idproyecto = ?';
+        params.push(idProyecto);
+    }
+
+    try {
+        console.debug(`[DEBUG] Ejecutando consulta SQL con params: ${params}`);
+
+        const [results] = await db.promise().query(sql, params);
 
         if (results.length === 0) {
-            console.warn(`[WARN] No se encontró ningún proceso con idproceso: ${idproceso}`);
-            return res.status(404).json({ mensaje: 'Proceso no encontrado' });
+            console.warn(`[WARN] No se encontraron procesos para la sociedad ${idSociedad}${idProyecto ? ' y proyecto ' + idProyecto : ''}`);
+            return res.status(200).json({ mensaje: 'No hay procesos para los parámetros especificados', data: [] });
         }
 
-        console.info(`[INFO] Consulta exitosa. Proceso encontrado.`);
-        console.debug(`[SUCCESS] Datos enviados al frontend:`, results[0]);
+        // Agrupamos los procesos
+        const procesosMap = new Map();
 
-        res.json(results[0]);
+        for (const row of results) {
+            if (!procesosMap.has(row.idproceso)) {
+                procesosMap.set(row.idproceso, {
+                    idproceso: row.idproceso,
+                    idproyecto: row.idproyecto,
+                    idsociedad: row.idsociedad,
+                    nombreproceso: row.nombreproceso,
+                    fecha_inicio: row.fecha_inicio,
+                    fecha_fin: row.fecha_fin,
+                    responsable: row.responsable,
+                    revisor: row.revisor,
+                    idestado: row.idestado,
+                    nombresociedad: row.nombresociedad,
+                    descestado: row.descestado,
+                    responsable_nombre: row.responsable_nombre,
+                    revisor_nombre: row.revisor_nombre,
+                    archivos: []
+                });
+            }
+
+            if (row.link) {
+                procesosMap.get(row.idproceso).archivos.push({
+                    link: row.link,
+                    nombre: row.nombrearchivo
+                });
+            }
+        }
+
+        const procesosAgrupados = Array.from(procesosMap.values());
+
+        console.info(`[INFO] Procesos agrupados correctamente. Total: ${procesosAgrupados.length}`);
+        console.debug(`[SUCCESS] Datos agrupados enviados al frontend:`, procesosAgrupados);
+
+        res.json(procesosAgrupados);
     } catch (err) {
-        console.error(`[ERROR] Error al obtener el proceso, ${err}`);
-        res.status(500).json({ error: 'Error al obtener proceso', details: err.message });
+        console.error(`[ERROR] Error al obtener procesos, ${err}`);
+        res.status(500).json({ error: 'Error al obtener procesos', details: err.message });
     }
 });
 
@@ -930,21 +1013,47 @@ app.delete('/proyecto/:idproyecto', async (req, res) => {
 
 
 
+
 const upload2 = multer();
 
-app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
+app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
   const { idproceso } = req.params;
-  const { nombreproceso, fecha_inicio, fecha_fin, responsable, revisor, idestado } = req.body;
-  const archivo = req.file;
+  const {
+    nombreproceso,
+    fecha_inicio,
+    fecha_fin,
+    responsable,
+    revisor,
+    idestado
+  } = req.body;
+
+  const archivos = req.files;
   const accessToken = req.headers.authorization?.split(' ')[1];
+  const overwrite = req.query.overwrite === 'true';
 
   const revisorFinal = !revisor || revisor === 'null' ? null : revisor;
-  const overwrite = req.query.overwrite; // Parámetro opcional
 
-  console.log(overwrite);
+  // ---------- VALIDACIONES ----------
+  if (!idproceso) return res.status(400).json({ error: 'ID de proceso requerido' });
+  if (!nombreproceso || typeof nombreproceso !== 'string')
+    return res.status(400).json({ error: 'Nombre de proceso inválido' });
+  if (!fecha_inicio || isNaN(Date.parse(fecha_inicio)))
+    return res.status(400).json({ error: 'Fecha de inicio inválida' });
+  if (!fecha_fin || isNaN(Date.parse(fecha_fin)))
+    return res.status(400).json({ error: 'Fecha de fin inválida' });
+  if (new Date(fecha_inicio) > new Date(fecha_fin))
+    return res.status(400).json({ error: 'La fecha de inicio no puede ser posterior a la fecha de fin' });
+  if (!responsable) return res.status(400).json({ error: 'Responsable requerido' });
+  if (!idestado) return res.status(400).json({ error: 'Estado del proceso requerido' });
+
+  if (archivos?.length && !accessToken)
+    return res.status(401).json({ error: 'No autorizado: falta token para subir archivos' });
+
+  if (archivos?.some(f => !f.originalname))
+    return res.status(400).json({ error: 'Todos los archivos deben tener nombre válido' });
 
   try {
-    // 1. Actualizar proceso
+    // ---------- ACTUALIZAR PROCESO ----------
     const updateSQL = `
       UPDATE proceso
       SET 
@@ -967,81 +1076,70 @@ app.put('/proceso/:idproceso', upload2.single('archivo'), async (req, res) => {
     ]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ mensaje: 'Proceso no encontrado para actualizar' });
+      return res.status(404).json({ error: 'Proceso no encontrado para actualizar' });
     }
 
-    let resultadoArchivo = null;
+    let archivosSubidos = [];
 
-    // 2. Subir archivo si viene
-    if (archivo && accessToken) {
-      const nombreArchivo = archivo.originalname;
+    // ---------- SUBIR ARCHIVOS ----------
+    if (archivos?.length) {
+      for (const archivo of archivos) {
+        const nombreArchivo = archivo.originalname;
 
-      // Subir a SharePoint (incluso si va a reemplazar)
-      resultadoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo, overwrite);
+        // Verificar si ya existe en la base de datos
+        const [existentes] = await db.promise().query(`
+          SELECT * FROM archivo WHERE idproceso = ? AND nombrearchivo = ?
+        `, [idproceso, nombreArchivo]);
 
+        if (existentes.length > 0) {
+          if (!overwrite) {
+            return res.status(409).json({
+              error: 'Ya existe un archivo con ese nombre',
+              nombreArchivo
+            });
+          }
 
-      // Verificar si ya hay un archivo con ese nombre
-      const checkArchivoSQL = `
-        SELECT * FROM archivo WHERE idproceso = ? AND nombrearchivo = ?
-      `;
-      const [archivosExistentes] = await db.promise().query(checkArchivoSQL, [
-        idproceso,
-        nombreArchivo
-      ]);
+          // Eliminar archivo en SharePoint
+          await eliminarArchivoSharePoint(accessToken, idproceso, nombreArchivo);
 
-      if (archivosExistentes.length > 0) {
-        if (!overwrite) {
-          // Si no permite sobreescritura, lo notificamos
-          return res.status(409).json({
-            error: 'Ya existe un archivo con ese nombre',
-            nombreArchivo
-          });
+          // Subir nuevo archivo a SharePoint
+          const nuevoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo, true);
+
+          // Actualizar ruta manteniendo el idarchivo existente
+          await db.promise().query(`
+            UPDATE archivo SET ruta = ?, nombrearchivo = ?
+            WHERE idarchivo = ?
+          `, [nuevoArchivo.rutaArchivo, nuevoArchivo.nombreArchivo, existentes[0].idarchivo]);
+
+          archivosSubidos.push(nuevoArchivo);
+        } else {
+          // Subir nuevo archivo a SharePoint
+          const nuevoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo);
+
+          // Insertar nuevo registro en la base de datos
+          await db.promise().query(`
+            INSERT INTO archivo (idproceso, ruta, nombrearchivo)
+            VALUES (?, ?, ?)
+          `, [idproceso, nuevoArchivo.rutaArchivo, nuevoArchivo.nombreArchivo]);
+
+          archivosSubidos.push(nuevoArchivo);
         }
-
-        // Si permite sobreescritura, actualizamos la ruta
-        const updateArchivoSQL = `
-          UPDATE archivo
-          SET ruta = ?
-          WHERE idproceso = ? AND nombrearchivo = ?
-        `;
-        await db.promise().query(updateArchivoSQL, [
-          resultadoArchivo.rutaArchivo,
-          idproceso,
-          nombreArchivo
-        ]);
-      } else {
-        // Si no existe, insertamos
-        const insertArchivoSQL = `
-          INSERT INTO archivo (idproceso, ruta, nombrearchivo)
-          VALUES (?, ?, ?)
-        `;
-        await db.promise().query(insertArchivoSQL, [
-          idproceso,
-          resultadoArchivo.rutaArchivo,
-          resultadoArchivo.nombreArchivo
-        ]);
       }
     }
 
     res.json({
       mensaje: 'Proceso actualizado correctamente',
-      archivoSubido: resultadoArchivo || null
+      archivosSubidos: archivosSubidos.length ? archivosSubidos : null
     });
 
   } catch (err) {
-    console.error(`[ERROR] Error al actualizar proceso o subir archivo:`, err);
-    res.status(500).json({ error: 'Error al actualizar proceso', details: err.message });
+    console.error('[ERROR] Error al actualizar proceso:', err);
+    res.status(500).json({ error: 'Error al actualizar proceso', detalle: err.message });
   }
 });
 
+
   
-  
-
-
-
-
-
-
 
   //Crear procesos
   const upload = multer();
@@ -1202,45 +1300,89 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
 });
 
 //eliminar proceso
-async function eliminarCarpetaSharePoint(accessToken, idproceso) {
-    const nombreCarpeta = `proceso_${idproceso}`;
-    const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
-    const DRIVE_NAME = process.env.DRIVE_NAME;
+
+
+  //Obtener proceso por idProceso para editar el proceso
+  app.get('/proceso/:idproceso', async (req, res) => {
+    const { idproceso } = req.params;
+
+    console.debug(`[DEBUG] Petición recibida: /proceso/${idproceso}`);
+
+    const sql = `
+        SELECT 
+            p.idproceso,
+            p.idproyecto,
+            p.idsociedad,
+            p.nombreproceso,
+            p.fecha_inicio,
+            p.fecha_fin,
+            p.responsable,
+            p.revisor,
+            p.idestado,
+            s.nombresociedad,
+            e.descestado,
+            r1.nombreusuario AS responsable_nombre,
+            r2.nombreusuario AS revisor_nombre,
+            a.ruta AS link,
+            a.nombrearchivo
+        FROM proceso p
+        JOIN proyecto_sociedad ps 
+            ON p.idsociedad = ps.idsociedad AND p.idproyecto = ps.idproyecto
+        LEFT JOIN sociedad s ON p.idsociedad = s.idsociedad
+        LEFT JOIN estado e ON p.idestado = e.idestado
+        LEFT JOIN usuario r1 ON p.responsable = r1.idusuario
+        LEFT JOIN usuario r2 ON p.revisor = r2.idusuario
+        LEFT JOIN archivo a ON p.idproceso = a.idproceso
+        WHERE p.idproceso = ?
+    `;
+
     try {
-      // Paso 1: Obtener ID del drive por nombre
-      const driveResponse = await axios.get(`https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_SITE_ID}/drives`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-  
-      const drive = driveResponse.data.value.find(d => d.name === DRIVE_NAME);
-  
-      if (!drive) {
-        console.error(`[ERROR] No se encontró el drive con nombre: ${DRIVE_NAME}`);
-        return { exito: false, mensaje: 'Drive no encontrado' };
-      }
-  
-      const driveId = drive.id;
-  
-      // Paso 2: Obtener el ID del item (carpeta) a eliminar
-      const carpetaResponse = await axios.get(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombreCarpeta}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-  
-      const itemId = carpetaResponse.data.id;
-  
-      // Paso 3: Eliminar la carpeta por su ID
-      await axios.delete(`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-  
-      console.info(`[INFO] Carpeta SharePoint '${nombreCarpeta}' eliminada correctamente`);
-      return { exito: true };
-  
-    } catch (error) {
-      console.error(`[ERROR] al eliminar carpeta proceso_${idproceso}:`, error.response?.data || error.message);
-      return { exito: false, mensaje: 'Error al eliminar la carpeta en SharePoint', error: error.message };
+        console.debug(`[DEBUG] Ejecutando consulta SQL con param: ${idproceso}`);
+
+        const [results] = await db.promise().query(sql, [idproceso]);
+
+        if (results.length === 0) {
+            console.warn(`[WARN] No se encontró ningún proceso con idproceso: ${idproceso}`);
+            return res.status(404).json({ mensaje: 'Proceso no encontrado' });
+        }
+
+        const proceso = {
+            idproceso: results[0].idproceso,
+            idproyecto: results[0].idproyecto,
+            idsociedad: results[0].idsociedad,
+            nombreproceso: results[0].nombreproceso,
+            fecha_inicio: results[0].fecha_inicio,
+            fecha_fin: results[0].fecha_fin,
+            responsable: results[0].responsable,
+            revisor: results[0].revisor,
+            idestado: results[0].idestado,
+            nombresociedad: results[0].nombresociedad,
+            descestado: results[0].descestado,
+            responsable_nombre: results[0].responsable_nombre,
+            revisor_nombre: results[0].revisor_nombre,
+            archivos: []
+        };
+
+        for (const row of results) {
+            if (row.link) {
+                proceso.archivos.push({
+                    link: row.link,
+                    nombre: row.nombrearchivo
+                });
+            }
+        }
+
+        console.info(`[INFO] Proceso con archivos agrupado correctamente.`);
+        console.debug(`[SUCCESS] Datos enviados al frontend:`, proceso);
+
+        res.json(proceso);
+    } catch (err) {
+        console.error(`[ERROR] Error al obtener el proceso, ${err}`);
+        res.status(500).json({ error: 'Error al obtener proceso', details: err.message });
     }
-  }
+});
+
+
 
   app.delete('/proceso/:idproceso', async (req, res) => {
     const { idproceso } = req.params;

@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProcesoService } from './../../services/proceso.service';
 import { Component, OnInit } from '@angular/core';
@@ -19,6 +20,7 @@ import Swal from 'sweetalert2';
   styleUrl: './procesos.component.css',
 })
 export class ProcesosComponent implements OnInit {
+
   procesos: IProceso[] = [];
   idSociedad!: number;
   nombreSociedad: string | null = null;
@@ -32,6 +34,9 @@ export class ProcesosComponent implements OnInit {
   ordenCampo =  '';
   ordenAscendente = true;
   isLoading = false;
+  mostrarModalArchivos = false;
+  procesoSeleccionado: any = null;
+  
   constructor(
     private route: ActivatedRoute,
     private procesoService: ProcesoService,
@@ -83,9 +88,10 @@ export class ProcesosComponent implements OnInit {
   cargarProcesos(): void {
     this.loading = true;
     this.errorMessage = null;
-
+    this.infoMessage = null;
+  
     console.log('🔹 Cargando procesos para sociedad:', this.idSociedad);
-
+  
     this.procesoService
       .obtenerProcesosPorSociedad(this.idSociedad, this.idProyecto)
       .pipe(
@@ -99,16 +105,26 @@ export class ProcesosComponent implements OnInit {
       .subscribe((data) => {
         this.procesos = data;
         console.log('✅ Procesos recibidos:', data);
-
+        
+        // Verificar si los procesos tienen archivos
+        this.procesos.forEach(proceso => {
+          console.log(`Proceso ${proceso.idproceso} - Archivos:`, proceso.archivos);
+          // Asegurarnos de que siempre sea un array
+          if (!proceso.archivos) {
+            proceso.archivos = [];
+          }
+        });
+  
         if (this.procesos.length > 0) {
           this.nombreSociedad = this.procesos[0].nombresociedad;
         } else {
           this.infoMessage = 'No se encontraron procesos para esta sociedad';
         }
-
+  
         this.loading = false;
       });
   }
+  
 
   editarProceso(idproceso: any) {
     this.modalService.abrirEditarProceso(idproceso);
@@ -199,5 +215,15 @@ export class ProcesosComponent implements OnInit {
         return this.ordenAscendente ? valorA - valorB : valorB - valorA;
       }
     });
+  }
+
+  abrirModalArchivos(proceso: any): void {
+    this.procesoSeleccionado = proceso;
+    this.mostrarModalArchivos = true;
+  }
+  
+  cerrarModalArchivos(): void {
+    this.mostrarModalArchivos = false;
+    this.procesoSeleccionado = null;
   }
 }

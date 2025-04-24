@@ -52,7 +52,8 @@ export class CrearProcesoComponent implements OnInit{
   SociedadID!: number;
   
   crearArchivo = false; 
-  archivoSeleccionado: File | null = null;
+  archivoSeleccionado: File[] = [];
+
 
   isLoading = false;
   constructor(
@@ -151,17 +152,18 @@ export class CrearProcesoComponent implements OnInit{
   onSubmit(): void {
     if (this.procesoForm.valid) {
       const form = this.procesoForm.value;
-      this.isLoading=true;
+      this.isLoading = true;
+  
       // Validaciones cruzadas
-      if (form.crear_archivo_en_blanco && this.archivoSeleccionado) {
+      if (form.crear_archivo_en_blanco && this.archivoSeleccionado.length > 0) {
         this.isLoading = false;
-        Swal.fire('Error', 'No puede subir un archivo y seleccionar "Crear archivo en blanco"', 'warning');
+        Swal.fire('Error', 'No puede subir archivos y seleccionar "Crear archivo en blanco"', 'warning');
         return;
       }
   
-      if (!form.crear_archivo_en_blanco && !this.archivoSeleccionado) {
+      if (!form.crear_archivo_en_blanco && this.archivoSeleccionado.length === 0) {
         this.isLoading = false;
-        Swal.fire('Error', 'Debe subir un archivo si no selecciona "Crear archivo en blanco"', 'warning');
+        Swal.fire('Error', 'Debe subir al menos un archivo si no selecciona "Crear archivo en blanco"', 'warning');
         return;
       }
   
@@ -175,6 +177,7 @@ export class CrearProcesoComponent implements OnInit{
       this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe((result) => {
         const accessToken = result.accessToken;
         console.log('Access Token:', accessToken);
+  
         // Armar FormData
         const formData = new FormData();
         formData.append('idsociedad', form.idSociedad);
@@ -187,8 +190,10 @@ export class CrearProcesoComponent implements OnInit{
         formData.append('idestado', form.idestado);
         formData.append('crear_archivo_en_blanco', form.crear_archivo_en_blanco.toString());
   
-        if (this.archivoSeleccionado && !form.crear_archivo_en_blanco) {
-          formData.append('archivo', this.archivoSeleccionado);
+        if (this.archivoSeleccionado.length > 0 && !form.crear_archivo_en_blanco) {
+          this.archivoSeleccionado.forEach((file) => {
+            formData.append('archivos', file);
+          });
         }
   
         // Llamar servicio con token en header
@@ -197,10 +202,10 @@ export class CrearProcesoComponent implements OnInit{
             console.log('Proceso creado exitosamente', res);
             Swal.fire('Éxito', res.message, 'success').then(() => {
               this.ProcesoCreado.emit(res.data);
-              this.modalService.notificarProcesoCreado(); // envio la notificacion al servicio
+              this.modalService.notificarProcesoCreado(); // envio la notificación al servicio
               this.cerrarModalProceso();
               this.procesoForm.reset();
-              this.archivoSeleccionado = null;
+              this.archivoSeleccionado = [];
             });
             this.isLoading = false;
           },
@@ -217,6 +222,7 @@ export class CrearProcesoComponent implements OnInit{
       Swal.fire('Error', 'Por favor, completa todos los campos requeridos', 'warning');
     }
   }
+  
   
   
 
@@ -241,14 +247,15 @@ fechaFinMayorQueInicioValidator(formGroup: FormGroup): Record<string, boolean> |
 }
 
 onFileSelected(event: any): void {
-  const file: File = event.target.files[0];
-  if (file) {
-    this.archivoSeleccionado = file;
-    console.log('Archivo seleccionado:', file.name);
+  const files: FileList = event.target.files;
+  if (files && files.length > 0) {
+    this.archivoSeleccionado = Array.from(files);
+    console.log('Archivos seleccionados:', this.archivoSeleccionado.map(f => f.name).join(', '));
   } else {
-    this.archivoSeleccionado = null;
+    this.archivoSeleccionado = [];
   }
 }
+
 
 }
 

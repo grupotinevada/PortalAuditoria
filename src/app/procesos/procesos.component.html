@@ -69,9 +69,13 @@
       <tbody>
         <tr *ngFor="let proceso of procesos">
           <td class="procesos-td text-center fw-bold">{{ proceso.idproceso }}</td>
-            <td class="procesos-td">
-            <a [href]="proceso.link" target="_blank" title="Abrir Documento Adjunto">{{ proceso.nombreproceso }}</a>
-            </td>
+          <td class="procesos-td">
+            <a href="#" (click)="abrirModalArchivos(proceso); $event.preventDefault()" title="Ver Archivos Asociados">
+              {{ proceso.nombreproceso }}
+            </a>
+          </td>
+          
+          
           <td class="procesos-td">{{ proceso.fecha_inicio | date:'shortDate' }}</td>
           <td class="procesos-td">{{ proceso.fecha_fin | date:'shortDate' }}</td>
           <td class="procesos-td">
@@ -102,3 +106,24 @@
   *ngIf="mostrarModalEditarProceso"
   [idProceso]="idProcesoAEditar"
 ></app-editar-proceso>
+
+<!-- Modal para mostrar archivos -->
+<!-- Modal Angular para archivos -->
+<div *ngIf="mostrarModalArchivos" class="modal-custom-backdrop">
+  <div class="modal-custom">
+    <div class="modal-header-custom">
+      <h5>Archivos del proceso: {{ procesoSeleccionado?.nombreproceso }}</h5>
+      <button class="btn-close" (click)="cerrarModalArchivos()">&times;</button>
+    </div>
+    <div class="modal-body-custom">
+      <div *ngIf="procesoSeleccionado?.nombrearchivo && procesoSeleccionado?.link">
+        <p><strong>Archivo:</strong></p>
+        <a [href]="procesoSeleccionado.link" target="_blank">{{ procesoSeleccionado.nombrearchivo }}</a>
+      </div>
+      <div *ngIf="!procesoSeleccionado?.nombrearchivo">
+        <p>No hay archivos asociados a este proceso.</p>
+      </div>
+    </div>
+  </div>
+</div>
+

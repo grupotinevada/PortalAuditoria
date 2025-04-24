@@ -144,6 +144,7 @@
                 id="archivoProceso"
                 type="file"
                 class="form-control"
+                multiple
                 (change)="onFileSelected($event)"
                 [disabled]="procesoForm.get('crear_archivo_en_blanco')?.value"
               />

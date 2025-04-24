@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { IEstado } from 'src/models/estado.model';
-import { IProceso } from 'src/models/proceso.model';
+import { IArchivo, IProceso } from 'src/models/proceso.model';
 import { IUsuario } from 'src/models/user.model';
 import { ProcesoService } from 'src/services/proceso.service';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
@@ -40,7 +40,10 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
   @Input() idProceso: IProceso | number | null = null ;
   @Output() procesoEditado = new EventEmitter<IProceso>();
 
-  archivoSeleccionado: File | null = null;
+  archivosSeleccionados: File[] = [];
+  archivosSubidos: IArchivo[] = [];
+
+
   editarProcesoForm!: FormGroup;
   procesoSeleccionado!: IProceso;
   isLoading = false;
@@ -61,14 +64,20 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
   }
 
 
-  cargar(){
+  cargar() {
     if (this.idProceso) {
+      console.log('Cargando proceso con ID:', this.idProceso);
       this.procesoService.obtenerProcesoPorId(Number(this.idProceso)).subscribe({
-        next: (proceso) => this.inicializarFormulario(proceso),
+        next: (proceso: IProceso) => {
+          console.log('✨ Proceso recibido:', proceso);
+          console.log('✨ Archivos en el proceso:', proceso.archivos);
+          this.inicializarFormulario(proceso);
+        },
         error: (err) => console.error('Error al cargar proceso', err)
       });
     }
   }
+  
 
   ngAfterViewInit() {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -76,19 +85,29 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
       new bootstrap.Tooltip(tooltipTriggerEl);
     });
   }
+
   inicializarFormulario(proceso: IProceso) {
     this.editarProcesoForm = this.fb.group({
       nombreproceso: [proceso.nombreproceso],
       fecha_inicio: [proceso.fecha_inicio?.toString().slice(0, 10)],
       fecha_fin: [proceso.fecha_fin?.toString().slice(0, 10)],
-      responsable: [proceso.responsable], 
-      revisor: [proceso.revisor],         
+      responsable: [proceso.responsable],
+      revisor: [proceso.revisor],
       idestado: [proceso.idestado],
-      nombrearchivo: [proceso.nombrearchivo],
-      link: [proceso.link]
+      archivos: this.fb.array(proceso.archivos?.map(archivo => 
+        this.fb.group({
+          nombre: [archivo.nombre],
+          link: [archivo.link]
+        })) || [])
     });
-    
+    console.log('🔹 Archivos subidos:', this.archivosSubidos);
+
+    // Guardar los archivos subidos
+    this.archivosSubidos = proceso.archivos || [];
   }
+  
+
+
   onSubmit() {
     if (this.editarProcesoForm.invalid) {
       Swal.fire({
@@ -107,142 +126,98 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
       confirmButtonText: 'Sí, actualizar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
-      if (result.isConfirmed) {
+      if (!result.isConfirmed) return;
   
-        const formValues = this.editarProcesoForm.value;
-        const formData = new FormData();
+      const formValues = this.editarProcesoForm.value;
+      const formData = new FormData();
   
-        formData.append('nombreproceso', formValues.nombreproceso);
-        formData.append('fecha_inicio', formValues.fecha_inicio);
-        formData.append('fecha_fin', formValues.fecha_fin);
-        formData.append('responsable', formValues.responsable);
-        formData.append('revisor', formValues.revisor);
-        formData.append('idestado', formValues.idestado);
+      formData.append('nombreproceso', formValues.nombreproceso);
+      formData.append('fecha_inicio', formValues.fecha_inicio);
+      formData.append('fecha_fin', formValues.fecha_fin);
+      formData.append('responsable', formValues.responsable);
+      formData.append('revisor', formValues.revisor);
+      formData.append('idestado', formValues.idestado);
   
-        this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
-          next: (tokenResult) => {
-            const accessToken = tokenResult.accessToken;
+      this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
+        next: async (tokenResult) => {
+          const accessToken = tokenResult.accessToken;
+          const archivos = this.archivosSeleccionados;
+          const nombresExistentes = this.archivosSubidos.map(a => a.nombre);
+          const archivosAEnviar: File[] = [];
   
-            const archivoSeleccionado = this.archivoSeleccionado;
-            const nombreArchivoExistente = this.editarProcesoForm.get('nombrearchivo')?.value;
+          for (const archivo of archivos) {
+            if (nombresExistentes.includes(archivo.name)) {
+              const confirm = await Swal.fire({
+                title: `¿Reemplazar archivo "${archivo.name}"?`,
+                text: 'Este archivo ya existe. ¿Deseas reemplazarlo?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, reemplazar',
+                cancelButtonText: 'No subir'
+              });
   
-            if (archivoSeleccionado) {
-  
-              // Validación agregada: solo mostrar Swal si hay un archivo existente
-              if (nombreArchivoExistente) {
-                Swal.fire({
-                  title: '¿Reemplazar archivo?',
-                  text: '¿Estás seguro de que quieres reemplazar el archivo existente?, No se puede deshacer.',
-                  icon: 'warning',
-                  showCancelButton: true,
-                  confirmButtonText: 'Sí, reemplazar',
-                  cancelButtonText: 'Cancelar'
-                }).then((confirm) => {
-                  if (confirm.isConfirmed) {
-                    this.isLoading = true;
-                    formData.append('archivo', archivoSeleccionado);
-                    this.procesoService.actualizarProceso(this.idProceso, formData, true, accessToken).subscribe({
-                      next: (res) => {
-                        this.modalService.notificarProcesoEditado();
-                        Swal.fire({
-                          icon: 'success',
-                          title: 'Proceso actualizado',
-                          text: res.mensaje || 'El proceso se actualizó correctamente.',
-                        });
-                        this.cerrarModalEditar();
-                        this.isLoading = false;
-                      },
-                      error: (err) => {
-                        this.isLoading = false;
-                        console.error('❌ Error al actualizar el proceso:', err);
-                        Swal.fire({
-                          icon: 'error',
-                          title: 'Error',
-                          text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
-                        });
-                      }
-                    });
-                  } else {
-                    this.isLoading = false;
-                  }
-                });
-              } else {
-                // Si no hay archivo anterior, no se pregunta, simplemente se actualiza
-                this.isLoading = true;
-                formData.append('archivo', archivoSeleccionado);
-                this.procesoService.actualizarProceso(this.idProceso, formData, true, accessToken).subscribe({
-                  next: (res) => {
-                    this.modalService.notificarProcesoEditado();
-                    Swal.fire({
-                      icon: 'success',
-                      title: 'Proceso actualizado',
-                      text: res.mensaje || 'El proceso se actualizó correctamente.',
-                    });
-                    this.cerrarModalEditar();
-                    this.isLoading = false;
-                  },
-                  error: (err) => {
-                    this.isLoading = false;
-                    console.error('❌ Error al actualizar el proceso:', err);
-                    Swal.fire({
-                      icon: 'error',
-                      title: 'Error',
-                      text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
-                    });
-                  }
-                });
+              if (confirm.isConfirmed) {
+                archivosAEnviar.push(archivo);
               }
-  
             } else {
-              // No hay archivo seleccionado, solo actualizar sin modificar archivo
-              this.procesoService.actualizarProceso(this.idProceso, formData, false, accessToken).subscribe({
-                next: (res) => {
-                  this.modalService.notificarProcesoEditado();
-                  Swal.fire({
-                    icon: 'success',
-                    title: 'Proceso actualizado',
-                    text: res.mensaje || 'El proceso se actualizó correctamente.',
-                  });
-                  this.cerrarModalEditar();
-                  this.isLoading = false;
-                },
-                error: (err) => {
-                  this.isLoading = false;
-                  console.error('❌ Error al actualizar el proceso:', err);
-                  Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
-                  });
-                }
+              archivosAEnviar.push(archivo);
+            }
+          }
+  
+          // Agregar archivos al FormData
+          for (const archivo of archivosAEnviar) {
+            formData.append('archivos', archivo); // plural
+          }
+  
+          this.isLoading = true;
+  
+          this.procesoService.actualizarProceso(this.idProceso, formData, archivosAEnviar.length > 0, accessToken).subscribe({
+            next: (res) => {
+              this.modalService.notificarProcesoEditado();
+              Swal.fire({
+                icon: 'success',
+                title: 'Proceso actualizado',
+                text: res.mensaje || 'El proceso se actualizó correctamente.',
+              });
+              this.cerrarModalEditar();
+              this.isLoading = false;
+            },
+            error: (err) => {
+              this.isLoading = false;
+              console.error('❌ Error al actualizar el proceso:', err);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.error?.error || 'Ocurrió un error al intentar actualizar el proceso.',
               });
             }
-          },
-          error: (err) => {
-            this.isLoading = false;
-            console.error('Error al obtener token:', err);
-            Swal.fire('Error de autenticación', 'No se pudo obtener el token de acceso.', 'error');
-          }
-        });
-      }
+          });
+        },
+        error: (err) => {
+          this.isLoading = false;
+          console.error('Error al obtener token:', err);
+          Swal.fire('Error de autenticación', 'No se pudo obtener el token de acceso.', 'error');
+        }
+      });
     });
   }
   
   
   
   
+  cerrarModalEditar() {
+    this.modalService.cerrarEditarProceso();
+  }
+  
+  
   
   onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.archivoSeleccionado = input.files[0];
+      this.archivosSeleccionados = Array.from(input.files);
     } else {
-      this.archivoSeleccionado = null;
+      this.archivosSeleccionados = [];
     }
-  }
-
-  cerrarModalEditar() {
-    this.modalService.cerrarEditarProceso();
   }
 
   

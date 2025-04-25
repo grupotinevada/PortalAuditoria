@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProcesoService } from './../../services/proceso.service';
 import { Component, OnInit } from '@angular/core';
@@ -12,10 +11,25 @@ import { EditarProcesoComponent } from '../editar-proceso/editar-proceso.compone
 import { environment } from 'src/environments/environment';
 import { MsalService } from '@azure/msal-angular';
 import Swal from 'sweetalert2';
+import { Pipe, PipeTransform } from '@angular/core';
+import { SpinnerComponent } from "../spinner/spinner.component";
+
+@Pipe({
+  name: 'filesize'
+})
+export class FileSizePipe implements PipeTransform {
+  transform(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+}
 
 @Component({
   selector: 'app-procesos',
-  imports: [CommonModule, EditarProcesoComponent],
+  imports: [CommonModule, EditarProcesoComponent, FileSizePipe, SpinnerComponent],
   templateUrl: './procesos.component.html',
   styleUrl: './procesos.component.css',
 })
@@ -36,6 +50,9 @@ export class ProcesosComponent implements OnInit {
   isLoading = false;
   mostrarModalArchivos = false;
   procesoSeleccionado: any = null;
+  archivosSeleccionados: File[] = [];
+  estaCerrando = false;
+  archivoCopiado: string | null = null;
   
   constructor(
     private route: ActivatedRoute,
@@ -217,13 +234,174 @@ export class ProcesosComponent implements OnInit {
     });
   }
 
-  abrirModalArchivos(proceso: any): void {
-    this.procesoSeleccionado = proceso;
-    this.mostrarModalArchivos = true;
+  abrirModalArchivos(proceso: IProceso): void {
+    if (proceso.archivos && proceso.archivos.length > 1) {
+      this.procesoSeleccionado = proceso;
+      this.mostrarModalArchivos = true;
+      this.estaCerrando = false;
+    } else if (proceso.archivos && proceso.archivos.length === 1 && proceso.archivos[0].link) {
+      window.open(proceso.archivos[0].link, '_blank');
+    }
+  }
+
+  cerrarModalArchivos(): void {
+    this.estaCerrando = true;
+    // Esperar a que termine la animación antes de ocultar el sidebar
+    setTimeout(() => {
+      this.mostrarModalArchivos = false;
+      this.estaCerrando = false;
+      this.procesoSeleccionado = null;
+    }, 300); // Duración de la animación en milisegundos
+  }
+
+  copiarEnlace(link: string | null, nombreArchivo: string): void {
+    if (link) {
+      navigator.clipboard.writeText(link).then(() => {
+        this.archivoCopiado = nombreArchivo;
+        // Cambiar el ícono de vuelta después de 2 segundos
+        setTimeout(() => {
+          this.archivoCopiado = null;
+        }, 2000);
+      }).catch(err => {
+        console.error('Error al copiar el enlace:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo copiar el enlace al portapapeles'
+        });
+      });
+    }
+  }
+
+  eliminarArchivo(nombreArchivo: string) {
+    Swal.fire({
+      title: 'Advertencia',
+      text: `El archivo "${nombreArchivo}" se eliminará permanentemente.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Aceptar',
+      cancelButtonText: 'Cancelar'
+    }).then(result => {
+      if (result.isConfirmed) {
+        // Confirmación adicional
+        Swal.fire({
+          title: '¿Estás seguro?',
+          text: 'Esta acción no se puede deshacer.',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'No'
+        }).then(confirmacion => {
+          if (confirmacion.isConfirmed) {
+            this.isLoading = true;
+            // Obtener token de acceso
+            this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
+              next: (tokenResult) => {
+                const accessToken = tokenResult.accessToken;
+  
+                this.procesoService.eliminarArchivo(this.procesoSeleccionado.idproceso, nombreArchivo, accessToken).subscribe({
+                  next: () => {
+                    this.isLoading = false;
+                    Swal.fire('¡Eliminado!', 'El archivo fue eliminado correctamente.', 'success');
+                    // Actualizar la lista de archivos del proceso
+                    this.procesoSeleccionado.archivos = this.procesoSeleccionado.archivos.filter(
+                      (archivo: any) => archivo.nombre !== nombreArchivo
+                    );
+                  },
+                  error: (err) => {
+                    this.isLoading = false;
+                    console.error('Error al eliminar archivo:', err);
+                    Swal.fire('Error', 'Hubo un problema al eliminar el archivo.', 'error');
+                  }
+                });
+              },
+              error: (err) => {
+                this.isLoading = false;
+                console.error('Error al adquirir token:', err);
+                Swal.fire('Error de autenticación', 'No se pudo obtener el token de acceso.', 'error');
+              }
+            });
+          }
+        });
+      }
+    });
   }
   
-  cerrarModalArchivos(): void {
-    this.mostrarModalArchivos = false;
-    this.procesoSeleccionado = null;
+  abrirArchivo(link: string | null): void {
+    if (link) {
+      window.open(link, '_blank');
+    }
+  }
+
+  onArchivoSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.archivosSeleccionados = Array.from(input.files);
+    }
+  }
+
+  eliminarArchivoDeSeleccion(archivo: File): void {
+    this.archivosSeleccionados = this.archivosSeleccionados.filter(f => f !== archivo);
+  }
+
+  limpiarSeleccion(): void {
+    this.archivosSeleccionados = [];
+    const input = document.getElementById('nuevoArchivo') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  subirArchivos(): void {
+    if (this.archivosSeleccionados.length === 0 || !this.procesoSeleccionado) return;
+
+    this.isLoading = true;
+    const formData = new FormData();
+    
+    // Agregar archivos al FormData
+    for (const archivo of this.archivosSeleccionados) {
+      formData.append('archivos', archivo);
+    }
+
+    this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
+      next: (tokenResult) => {
+        const accessToken = tokenResult.accessToken;
+        
+        this.procesoService.agregarArchivos(this.procesoSeleccionado.idproceso, formData, accessToken).subscribe({
+          next: (res) => {
+            this.isLoading = false;
+            this.archivosSeleccionados = []; // Limpiar selección después de subir
+            Swal.fire({
+              icon: 'success',
+              title: 'Archivos subidos',
+              text: 'Los archivos se han subido correctamente.',
+              timer: 2000,
+              showConfirmButton: false
+            });
+            // Recargar los archivos del proceso
+            this.cargarProcesos();
+            this.cerrarModalArchivos();
+          },
+          error: (err) => {
+            this.isLoading = false;
+            console.error('Error al subir archivos:', err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'No se pudieron subir los archivos.'
+            });
+          }
+        });
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Error al obtener token:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo obtener el token de acceso.'
+        });
+      }
+    });
   }
 }

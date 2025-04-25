@@ -1424,16 +1424,6 @@ app.get('/procesos/:idSociedad/:idProyecto?', async (req, res) => {
   });
 
 
-
-
-
-
-
-
-
-
-
-
 //endpoints para los breadcrumbs:
 // Obtener un país por ID
 app.get('/pais/:idPais', async (req, res) => {

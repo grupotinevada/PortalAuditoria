@@ -53,3 +53,66 @@ td.procesos-btn {
   box-shadow: 0 0 20px rgba(0,0,0,0.3);
   position: relative;
 }
+
+/* Estilos para el sidebar */
+.offcanvas {
+  transition: transform 0.3s ease-in-out;
+}
+.hiding {
+  transform: translateX(100%);
+}
+
+
+.offcanvas.show {
+  transform: none !important;
+}
+
+.offcanvas.hiding {
+  transform: translateX(100%) !important;
+}
+
+.offcanvas-backdrop {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.offcanvas-backdrop.show {
+  opacity: 0.5;
+}
+
+.offcanvas-backdrop.hiding {
+  opacity: 0;
+}
+
+/* Estilos para el header del sidebar 
+.offcanvas-header {
+  background-color: #0d6efd;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+*/
+/* Estilos para los botones de acción */
+.btn-group .btn {
+  padding: 0.25rem 0.5rem;
+}
+
+/* Estilos para la lista de archivos */
+.list-group-item {
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Estilos para el input de archivos */
+input[type="file"] {
+  cursor: pointer;
+}
+
+/* Estilos para los botones de acción en la vista previa */
+.btn-outline-danger {
+  transition: all 0.2s ease;
+}
+
+.btn-outline-danger:hover {
+  transform: scale(1.1);
+}

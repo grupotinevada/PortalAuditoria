@@ -175,16 +175,17 @@
     <h5>Archivos del proceso</h5>
 
     <div *ngIf="procesoSeleccionado?.archivos && procesoSeleccionado.archivos.length > 0">
-      <div class="list-group">
+      <div class="list-group" style="zoom: 0.9; text-wrap: wrap;">
         <div *ngFor="let archivo of procesoSeleccionado.archivos" 
              class="list-group-item d-flex justify-content-between align-items-center"
              style="cursor: pointer;"
-             (click)="abrirArchivo(archivo.link)">
-          <div>
+             (click)="abrirArchivo(archivo.link)"
+             title="{{archivo.nombre}}">
+          <div class="text-truncate me-2" style="max-width: 300px;">
             <i class="bi bi-file-earmark-text me-2"></i>
             {{ archivo.nombre }}
           </div>
-          <div class="btn-group" (click)="$event.stopPropagation()">
+          <div class="btn-group flex-shrink-0" (click)="$event.stopPropagation()">
             <button class="btn btn-sm btn-outline-primary" 
                     (click)="copiarEnlace(archivo.link, archivo.nombre)" 
                     title="Copiar enlace">

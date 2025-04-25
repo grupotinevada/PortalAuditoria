@@ -81,10 +81,14 @@ generateInitialsAvatar(name: string, userId: string): string {
   
   // Generar un color basado en el userId
   const colors = [
-    '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#34495e',
-    '#16a085', '#27ae60', '#2980b9', '#8e44ad', '#2c3e50',
-    '#f1c40f', '#e67e22', '#e74c3c', '#f39c12', '#d35400'
+    '#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9',
+    '#BBDEFB', '#B3E5FC', '#B2EBF2', '#B2DFDB', '#C8E6C9',
+    '#DCEDC8', '#F0F4C3', '#FFF9C4', '#FFECB3', '#FFE0B2',
+    '#FFCCBC', '#D7CCC8', '#F5F5F5', '#CFD8DC', '#E6EE9C',
+    '#A5D6A7', '#80CBC4', '#4DB6AC', '#81D4FA', '#90CAF9',
+    '#AED581', '#FFAB91', '#FF8A65', '#FFD54F', '#FFF176'
   ];
+  
   
   let colorIndex = 0;
   for (let i = 0; i < userId.length; i++) {

@@ -353,24 +353,47 @@ export class ProcesosComponent implements OnInit {
   }
 
   subirArchivos(): void {
-    if (this.archivosSeleccionados.length === 0 || !this.procesoSeleccionado) return;
+    console.log('🔄 Iniciando proceso de subida de archivos...');
+    console.log('📁 Archivos seleccionados:', this.archivosSeleccionados);
+    console.log('📋 Proceso seleccionado:', this.procesoSeleccionado);
+
+    if (this.archivosSeleccionados.length === 0 || !this.procesoSeleccionado) {
+      console.log('❌ No se pueden subir archivos: No hay archivos seleccionados o no hay proceso seleccionado');
+      return;
+    }
 
     this.isLoading = true;
+    console.log('⏳ Cargando...');
+    
     const formData = new FormData();
+    formData.append('nombreproceso', this.procesoSeleccionado.nombreproceso);
+    formData.append('idproceso', this.procesoSeleccionado.idproceso);
+    formData.append('fecha_inicio', this.procesoSeleccionado.fecha_inicio);
+    formData.append('fecha_fin', this.procesoSeleccionado.fecha_fin);
+    formData.append('revisor', this.procesoSeleccionado.revisor);
+    formData.append('responsable', this.procesoSeleccionado.responsable);
+    formData.append('idestado', this.procesoSeleccionado.idestado);
     
     // Agregar archivos al FormData
     for (const archivo of this.archivosSeleccionados) {
       formData.append('archivos', archivo);
+      console.log('📤 Agregando archivo al FormData:', archivo.name);
     }
 
+    console.log('🔑 Obteniendo token de acceso...');
     this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
       next: (tokenResult) => {
         const accessToken = tokenResult.accessToken;
+        console.log('✅ Token obtenido correctamente');
         
-        this.procesoService.agregarArchivos(this.procesoSeleccionado.idproceso, formData, accessToken).subscribe({
+        console.log('🚀 Iniciando petición al servidor...');
+        this.procesoService.subirArchivosProceso(this.procesoSeleccionado.idproceso, formData, true, accessToken).subscribe({
           next: (res) => {
+            console.log('✅ Archivos subidos exitosamente:', res);
             this.isLoading = false;
             this.archivosSeleccionados = []; // Limpiar selección después de subir
+            console.log('🧹 Selección de archivos limpiada');
+            
             Swal.fire({
               icon: 'success',
               title: 'Archivos subidos',
@@ -378,13 +401,15 @@ export class ProcesosComponent implements OnInit {
               timer: 2000,
               showConfirmButton: false
             });
-            // Recargar los archivos del proceso
+            
+            console.log('🔄 Recargando procesos...');
             this.cargarProcesos();
+            console.log('🚪 Cerrando modal...');
             this.cerrarModalArchivos();
           },
           error: (err) => {
+            console.error('❌ Error al subir archivos:', err);
             this.isLoading = false;
-            console.error('Error al subir archivos:', err);
             Swal.fire({
               icon: 'error',
               title: 'Error',
@@ -394,8 +419,8 @@ export class ProcesosComponent implements OnInit {
         });
       },
       error: (err) => {
+        console.error('❌ Error al obtener token:', err);
         this.isLoading = false;
-        console.error('Error al obtener token:', err);
         Swal.fire({
           icon: 'error',
           title: 'Error',

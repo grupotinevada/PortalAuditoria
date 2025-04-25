@@ -304,8 +304,10 @@ export class ProcesosComponent implements OnInit {
                   next: () => {
                     this.isLoading = false;
                     Swal.fire('¡Eliminado!', 'El archivo fue eliminado correctamente.', 'success');
-                    //this.cerrarModalEditar();
-                    //this.cargar();
+                    // Actualizar la lista de archivos del proceso
+                    this.procesoSeleccionado.archivos = this.procesoSeleccionado.archivos.filter(
+                      (archivo: any) => archivo.nombre !== nombreArchivo
+                    );
                   },
                   error: (err) => {
                     this.isLoading = false;

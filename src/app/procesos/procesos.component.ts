@@ -12,6 +12,7 @@ import { environment } from 'src/environments/environment';
 import { MsalService } from '@azure/msal-angular';
 import Swal from 'sweetalert2';
 import { Pipe, PipeTransform } from '@angular/core';
+import { SpinnerComponent } from "../spinner/spinner.component";
 
 @Pipe({
   name: 'filesize'
@@ -28,7 +29,7 @@ export class FileSizePipe implements PipeTransform {
 
 @Component({
   selector: 'app-procesos',
-  imports: [CommonModule, EditarProcesoComponent, FileSizePipe],
+  imports: [CommonModule, EditarProcesoComponent, FileSizePipe, SpinnerComponent],
   templateUrl: './procesos.component.html',
   styleUrl: './procesos.component.css',
 })
@@ -51,6 +52,7 @@ export class ProcesosComponent implements OnInit {
   procesoSeleccionado: any = null;
   archivosSeleccionados: File[] = [];
   estaCerrando = false;
+  archivoCopiado: string | null = null;
   
   constructor(
     private route: ActivatedRoute,
@@ -252,17 +254,14 @@ export class ProcesosComponent implements OnInit {
     }, 300); // Duración de la animación en milisegundos
   }
 
-  copiarEnlace(link: string | null): void {
+  copiarEnlace(link: string | null, nombreArchivo: string): void {
     if (link) {
       navigator.clipboard.writeText(link).then(() => {
-        // Mostrar mensaje de éxito
-        Swal.fire({
-          icon: 'success',
-          title: 'Enlace copiado',
-          text: 'El enlace ha sido copiado al portapapeles',
-          timer: 500,
-          showConfirmButton: false
-        });
+        this.archivoCopiado = nombreArchivo;
+        // Cambiar el ícono de vuelta después de 2 segundos
+        setTimeout(() => {
+          this.archivoCopiado = null;
+        }, 2000);
       }).catch(err => {
         console.error('Error al copiar el enlace:', err);
         Swal.fire({

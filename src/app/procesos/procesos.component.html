@@ -186,9 +186,9 @@
           </div>
           <div class="btn-group" (click)="$event.stopPropagation()">
             <button class="btn btn-sm btn-outline-primary" 
-                    (click)="copiarEnlace(archivo.link)" 
+                    (click)="copiarEnlace(archivo.link, archivo.nombre)" 
                     title="Copiar enlace">
-              <i class="bi bi-clipboard"></i>
+              <i class="bi" [ngClass]="archivoCopiado === archivo.nombre ? 'bi-check-lg' : 'bi-clipboard'"></i>
             </button>
             <button class="btn btn-sm btn-outline-danger"
                     (click)="eliminarArchivo(archivo.nombre)"
@@ -214,3 +214,10 @@
      [class.hiding]="estaCerrando"
      (click)="cerrarModalArchivos()"></div>
 
+     <div
+     *ngIf="isLoading"
+     class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+     style="z-index: 2000; background-color: rgba(255,255,255,0.5)"
+   >
+     <app-spinner [loading]="true" />
+   </div>

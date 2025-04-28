@@ -76,6 +76,7 @@ export class AppComponent implements OnInit, OnDestroy {
   mostrarNavbar = true;
   isSidebarVisible = false;
   mostrarFondoNegro = false;
+  profile: IUsuario | null = null;
 
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
@@ -236,6 +237,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const accounts = this.authService.instance.getAllAccounts();
     if (accounts.length > 0) {
       this.setLoginDisplay();
+      this.getProfile();
       this.isLoading = false;
     } else {
       this.isLoading = false;
@@ -431,5 +433,15 @@ export class AppComponent implements OnInit, OnDestroy {
   hideBackdrop() {
     const backdrop = document.getElementById('backdrop');
     if (backdrop) backdrop.style.display = 'none';
+  }
+
+  getProfile() {
+    const userData = sessionStorage.getItem('userData');
+    if (userData) {
+      console.log('data', userData)
+      this.profile = JSON.parse(userData) as IUsuario;
+    } else {
+      this.profile = null;
+    }
   }
 }

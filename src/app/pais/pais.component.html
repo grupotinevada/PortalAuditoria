@@ -6,15 +6,21 @@
           <i class="bi bi-globe me-2"></i>
           <div class="country-name">{{ pais.nombrepais }}</div>
         </div>
-        <span class="badge bg-secondary">{{ pais.cod }}</span>
+        <span class="badge ">{{ pais.cod }}</span>
       </div>
 
       <hr />
 
       <div class="project-info d-flex align-items-center mb-3">
         <i class="bi bi-geo-alt-fill me-2"></i>
-        <span>Proyectos disponibles</span>
+        <span class="d-flex align-items-center">
+          Proyectos disponibles:
+          <span class="badge rounded-pill ms-2">
+            {{ pais.cantidadProyectos || 0 }}
+          </span>
+        </span>
       </div>
+      
 
       <button
         (click)="seleccionarPais(pais.idpais)"

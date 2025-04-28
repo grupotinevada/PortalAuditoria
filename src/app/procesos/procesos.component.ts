@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProcesoService } from './../../services/proceso.service';
 import { Component, OnInit } from '@angular/core';

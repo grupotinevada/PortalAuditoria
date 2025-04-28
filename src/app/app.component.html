@@ -61,12 +61,25 @@
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              <i class="bi bi-person-circle me-2"></i> <span>Usuario</span>
+              <ng-container *ngIf="profile?.fotoPerfil; else defaultIcon">
+                <img
+                  [src]="profile?.fotoPerfil"
+                  alt="Foto de perfil"
+                  class="rounded-circle me-2 object-fit-cover"
+                  width="20"
+                  height="20"
+
+                />
+              </ng-container>
+        
+              <ng-template #defaultIcon>
+                <i class="bi bi-person-circle me-2"></i>
+              </ng-template>
+        
+              <span class="text-truncate" style="max-width: 100px;">{{ profile?.nombreUsuario || 'Usuario' }}</span>
             </button>
-            <ul
-              class="dropdown-menu dropdown-menu-end"
-              aria-labelledby="userDropdown"
-            >
+        
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
               <li>
                 <a class="dropdown-item" routerLink="/profile">
                   <i class="bi bi-person"></i> Mi Perfil
@@ -80,6 +93,7 @@
             </ul>
           </div>
         </ng-container>
+        
 
         <!-- Botón de Modo Oscuro -->
         <button class="btn btn-primary ms-2" (click)="toggleDarkMode()">

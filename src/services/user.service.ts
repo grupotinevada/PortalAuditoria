@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -19,7 +20,7 @@ export class UserService {
   }
 
   obtenerPerfil(usuarioId: string, CorreoElectronico: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     return this.http.get<any>(`${this.apiUrl}/usuario/${usuarioId}/${CorreoElectronico}/perfil`);
   }
   

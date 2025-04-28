@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IArchivo {
   link: string | null;
   nombre: string | null;

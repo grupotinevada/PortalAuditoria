@@ -1,7 +1,7 @@
 <!-- eslint-disable @angular-eslint/template/elements-content -->
 <!-- editar-proyecto.component.html -->
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Editar Proyecto</h4>
+  <h4> {{proyecto.nombreproyecto}}</h4>
   <button class="btn btn-danger" (click)="abrirModalConfirmacion()">
     <i class="bi bi-trash"></i> Eliminar
   </button>
@@ -15,7 +15,6 @@
         El nombre del proyecto es obligatorio.
       </div>
     </div>
-    
     <div class="mb-3">
       <label for="fecha_inicio" class="form-label">Fecha de Inicio</label>
       <input type="date" class="form-control" id="fecha_inicio" formControlName="fecha_inicio">

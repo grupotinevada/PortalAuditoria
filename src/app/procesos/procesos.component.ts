@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProcesoService } from './../../services/proceso.service';
 import { Component, OnInit } from '@angular/core';
@@ -116,31 +117,30 @@ export class ProcesosComponent implements OnInit {
           this.errorMessage = 'Error al cargar los procesos';
           console.error('❌ Error al obtener procesos:', error);
           this.loading = false;
-          return of([]); // Continuar flujo aunque haya error
+          return of({ data: [] }); // Devolver objeto con data vacía para mantener estructura
         })
       )
-      .subscribe((data) => {
-        this.procesos = data;
-        console.log('✅ Procesos recibidos:', data);
-        
-        // Verificar si los procesos tienen archivos
-        this.procesos.forEach(proceso => {
-          console.log(`Proceso ${proceso.idproceso} - Archivos:`, proceso.archivos);
-          // Asegurarnos de que siempre sea un array
-          if (!proceso.archivos) {
-            proceso.archivos = [];
-          }
-        });
+      .subscribe((response) => {
+        console.log('✅ Respuesta recibida:', response);
   
-        if (this.procesos.length > 0) {
-          this.nombreSociedad = this.procesos[0].nombresociedad;
-        } else {
+        // Asegurarnos que response.data exista y sea un array
+        this.procesos = Array.isArray(response) ? response : [];
+  
+        if (this.procesos.length === 0) {
           this.infoMessage = 'No se encontraron procesos para esta sociedad';
+        } else {
+          this.procesos.forEach(proceso => {
+            console.log(`Proceso ${proceso.idproceso} - Archivos:`, proceso.archivos);
+            proceso.archivos = proceso.archivos ?? [];
+          });
+  
+          this.nombreSociedad = this.procesos[0].nombresociedad;
         }
   
         this.loading = false;
       });
   }
+  
   
 
   editarProceso(idproceso: any) {

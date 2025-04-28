@@ -1,3 +1,6 @@
+<!-- eslint-disable @angular-eslint/template/elements-content -->
+<!-- eslint-disable @angular-eslint/template/click-events-have-key-events -->
+<!-- eslint-disable @angular-eslint/template/interactive-supports-focus -->
 
 <!-- Spinner -->
 <div *ngIf="loading" class="d-flex justify-content-center my-5 text-small">
@@ -118,7 +121,7 @@
   <div class="offcanvas-header text-white">
     <h5 class="offcanvas-title">
       <i class="bi bi-folder me-2"></i>
-      Archivos del proceso: {{ procesoSeleccionado?.nombreproceso }}
+       {{ procesoSeleccionado?.nombreproceso }}
     </h5>
     <button type="button" class="btn-close btn-close-black" (click)="cerrarModalArchivos()"></button>
   </div>
@@ -147,7 +150,7 @@
         <div *ngFor="let archivo of archivosSeleccionados" 
              class="list-group-item d-flex justify-content-between align-items-center">
           <div>
-            <i class="bi bi-file-earmark-text me-2"></i>
+            <i class="bi bi-file-earmark-text me-2 "></i>
             {{ archivo.name }}
             <small class="text-muted d-block">{{ archivo.size | filesize }}</small>
           </div>

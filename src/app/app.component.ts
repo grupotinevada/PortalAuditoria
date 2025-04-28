@@ -130,6 +130,7 @@ export class AppComponent implements OnInit, OnDestroy {
               // Usuario autorizado: establecer cuenta activa y mostrar login
               this.authService.instance.setActiveAccount(account);
               this.setLoginDisplay(); // ✅ SOLO aquí se llama
+
             },
             error: (err) => {
               console.error('Error al obtener perfil del usuario:', err);
@@ -237,7 +238,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const accounts = this.authService.instance.getAllAccounts();
     if (accounts.length > 0) {
       this.setLoginDisplay();
-      this.getProfile();
+
       this.isLoading = false;
     } else {
       this.isLoading = false;
@@ -281,6 +282,7 @@ export class AppComponent implements OnInit, OnDestroy {
         });
       });
     }
+    this.getProfile();
   }
 
   guardarUsuario(usuario: IUsuario): void {

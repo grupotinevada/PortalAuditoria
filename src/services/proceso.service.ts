@@ -65,6 +65,22 @@ export class ProcesoService {
     
   }
   
+  subirArchivosProceso(idproceso: any, datos: FormData, overwrite: boolean, accessToken: string) {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${accessToken}`
+    });
+  
+    let params = new HttpParams();
+    if (overwrite) {
+      params = params.set('overwrite', 'true');
+    }
+  
+    return this.http.post<{ mensaje: string, archivosSubidos: any[] }>(
+      `${this.apiUrl}/proceso/${idproceso}/archivos`,
+      datos,
+      { headers, params }
+    );
+  }
   
 
   eliminarProceso(idproceso: number, accessToken: string) {

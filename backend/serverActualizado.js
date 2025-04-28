@@ -1138,6 +1138,77 @@ app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
   }
 });
 
+const uploadArchivos = multer();
+
+app.post('/proceso/:idproceso/archivos', uploadArchivos.array('archivos'), async (req, res) => {
+  const { idproceso } = req.params;
+  const archivos = req.files;
+  const accessToken = req.headers.authorization?.split(' ')[1];
+  const overwrite = req.query.overwrite === 'true';
+
+  if (!idproceso) return res.status(400).json({ error: 'ID de proceso requerido' });
+
+  if (!archivos?.length) return res.status(400).json({ error: 'No se recibieron archivos' });
+
+  if (!accessToken) return res.status(401).json({ error: 'No autorizado: falta token' });
+
+  try {
+    let archivosSubidos = [];
+
+    for (const archivo of archivos) {
+      const nombreArchivo = archivo.originalname;
+
+      if (!nombreArchivo) {
+        return res.status(400).json({ error: 'Todos los archivos deben tener nombre válido' });
+      }
+
+      // Verificar si ya existe
+      const [existentes] = await db.promise().query(`
+        SELECT * FROM archivo WHERE idproceso = ? AND nombrearchivo = ?
+      `, [idproceso, nombreArchivo]);
+
+      if (existentes.length > 0) {
+        if (!overwrite) {
+          return res.status(409).json({
+            error: 'Ya existe un archivo con ese nombre',
+            nombreArchivo
+          });
+        }
+
+        // Eliminar de SharePoint
+        await eliminarArchivoSharePoint(accessToken, idproceso, nombreArchivo);
+
+        // Subir nuevo archivo
+        const nuevoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo, true);
+
+        // Actualizar registro
+        await db.promise().query(`
+          UPDATE archivo SET ruta = ?, nombrearchivo = ? WHERE idarchivo = ?
+        `, [nuevoArchivo.rutaArchivo, nuevoArchivo.nombreArchivo, existentes[0].idarchivo]);
+
+        archivosSubidos.push(nuevoArchivo);
+      } else {
+        // Subir y registrar nuevo archivo
+        const nuevoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo);
+        await db.promise().query(`
+          INSERT INTO archivo (idproceso, ruta, nombrearchivo)
+          VALUES (?, ?, ?)
+        `, [idproceso, nuevoArchivo.rutaArchivo, nuevoArchivo.nombreArchivo]);
+
+        archivosSubidos.push(nuevoArchivo);
+      }
+    }
+
+    res.json({
+      mensaje: 'Archivos subidos correctamente',
+      archivosSubidos
+    });
+
+  } catch (err) {
+    console.error('[ERROR] Al subir archivos:', err);
+    res.status(500).json({ error: 'Error interno', detalle: err.message });
+  }
+});
 
   
 

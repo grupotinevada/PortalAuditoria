@@ -9,7 +9,6 @@ import { ProcesosComponent } from './procesos/procesos.component';
 import { PaisComponent } from './pais/pais.component';
 import { InformesComponent } from './informes/informes.component';
 import { AuthGuard } from '../guards/auth.guard';
-import { CrearUsuarioComponent } from './crear-usuario/crear-usuario.component';
 import { AdministracionComponent } from './administracion/administracion.component';
 
 export const routes: Routes = [

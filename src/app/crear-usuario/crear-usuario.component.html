@@ -1,0 +1,36 @@
+<!-- Modal -->
+<div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Aquí puedes agregar el formulario o contenido para crear un usuario -->
+        <form>
+          <div class="mb-3">
+            <label for="nombreUsuario" class="form-label">Nombre de Usuario</label>
+            <input type="text" class="form-control" id="nombreUsuario" placeholder="Ingrese el nombre de usuario">
+          </div>
+          <div class="mb-3">
+            <label for="correoUsuario" class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" id="correoUsuario" placeholder="Ingrese el correo electrónico">
+          </div>
+          <div class="mb-3">
+            <label for="rolUsuario" class="form-label">Rol</label>
+            <select class="form-select" id="rolUsuario">
+              <option selected>Seleccione un rol</option>
+              <option value="1">Administrador</option>
+              <option value="2">Usuario</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>

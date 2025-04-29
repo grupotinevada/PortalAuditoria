@@ -92,8 +92,7 @@ export class ProyectoComponent implements OnInit {
         return;
       }
       this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
-    } else {
-    }
+    } 
   }
 
   abrirModalEdicion(proyecto: IProyecto): void {

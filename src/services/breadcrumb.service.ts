@@ -93,6 +93,9 @@ export class BreadcrumbService {
       } else if (part === 'login-failed') {
         breadcrumbs.push({ label: 'Error de Login', url: currentUrl });
       }
+        else if (part === 'crear-usuario') {
+        breadcrumbs.push({ label: 'Administración', url: currentUrl });
+      }
     }
 
     const requests: Observable<any>[] = [];

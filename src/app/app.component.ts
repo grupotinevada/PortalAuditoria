@@ -77,6 +77,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isSidebarVisible = false;
   mostrarFondoNegro = false;
   profile: IUsuario | null = null;
+  botonCrearUsuario = false;
 
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
@@ -95,6 +96,14 @@ export class AppComponent implements OnInit, OnDestroy {
         this.mostrarNavbar = !['/login-failed'].includes(event.url);
       }
     });
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        // Evalúa la ruta actual
+        const url = event.urlAfterRedirects.split('?')[0];
+        this.botonCrearUsuario = /^\/crear-usuario\/?$/.test(url);
+      }
+    });
+
 
     this.isDarkMode = localStorage.getItem('darkMode') === 'true';
     this.updateTheme();
@@ -112,50 +121,62 @@ export class AppComponent implements OnInit, OnDestroy {
           const account = result.account;
           const usuarioId = account.localAccountId;
           const correo = account.username;
-  
+
           // Validar que el usuario esté registrado y habilitado
           this.userService.obtenerPerfil(usuarioId, correo).subscribe({
             next: (perfil) => {
               if (!perfil) {
-                this.showErrorAlert('No autorizado', 'Este correo no está registrado o no tiene acceso.',' Por favor contacta con el administrador.');
+                this.showErrorAlert(
+                  'No autorizado',
+                  'Este correo no está registrado o no tiene acceso.',
+                  ' Por favor contacta con el administrador.'
+                );
                 return;
               }
-  
+
               if (!perfil.habilitado) {
                 console.log('Usuario deshabilitado:', perfil);
-                this.showErrorAlert('No autorizado', 'Tu cuenta está deshabilitada', 'Por favor contacta con el administrador.');
+                this.showErrorAlert(
+                  'No autorizado',
+                  'Tu cuenta está deshabilitada',
+                  'Por favor contacta con el administrador.'
+                );
                 return;
               }
-  
+
               // Usuario autorizado: establecer cuenta activa y mostrar login
               this.authService.instance.setActiveAccount(account);
               this.setLoginDisplay(); // ✅ SOLO aquí se llama
-
             },
             error: (err) => {
               console.error('Error al obtener perfil del usuario:', err);
-              this.showErrorAlert('No autorizado', 'NO TIENES PERMISOS PARA ACCEDER A ESTA APLICACION.', 'Por favor contacta con el administrador.');
-            }
+              this.showErrorAlert(
+                'No autorizado',
+                'NO TIENES PERMISOS PARA ACCEDER A ESTA APLICACION.',
+                'Por favor contacta con el administrador.'
+              );
+            },
           });
         }
       },
       error: (err) => {
         console.error('Error en el proceso de redirección:', err);
-      }
+      },
     });
-  
+
     // Inicialización de otros estados
     this.isIframe = window !== window.parent && !window.opener;
     this.authService.instance.enableAccountStorageEvents();
-  
+
     // Verificar el estado inicial de autenticación (sin guardar usuario)
     this.checkInitialAuthState();
-  
+
     this.msalBroadcastService.msalSubject$
       .pipe(
-        filter((msg: EventMessage) =>
-          msg.eventType === EventType.ACCOUNT_ADDED ||
-          msg.eventType === EventType.ACCOUNT_REMOVED
+        filter(
+          (msg: EventMessage) =>
+            msg.eventType === EventType.ACCOUNT_ADDED ||
+            msg.eventType === EventType.ACCOUNT_REMOVED
         ),
         takeUntil(this._destroying$)
       )
@@ -166,25 +187,25 @@ export class AppComponent implements OnInit, OnDestroy {
           this.setLoginDisplay();
         }
       });
-  
+
     this.msalBroadcastService.inProgress$
       .pipe(
-        filter((status: InteractionStatus) => status === InteractionStatus.None),
+        filter(
+          (status: InteractionStatus) => status === InteractionStatus.None
+        ),
         takeUntil(this._destroying$)
       )
       .subscribe(() => {
         this.checkAndSetActiveAccount();
         this.isLoading = false;
       });
-  
-    this.msalBroadcastService.inProgress$
-      .pipe(take(1))
-      .subscribe(status => {
-        if (status === InteractionStatus.None) {
-          this.isLoading = false;
-        }
-      });
-  
+
+    this.msalBroadcastService.inProgress$.pipe(take(1)).subscribe((status) => {
+      if (status === InteractionStatus.None) {
+        this.isLoading = false;
+      }
+    });
+
     this.router.events
       .pipe(filter((event) => event instanceof NavigationStart))
       .subscribe(() => {
@@ -202,8 +223,6 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       });
   }
-  
-
 
   private showErrorAlert(title: string, text: string, footer: string): void {
     Swal.fire({
@@ -217,22 +236,18 @@ export class AppComponent implements OnInit, OnDestroy {
       showCancelButton: false,
       allowEscapeKey: false,
       willOpen: () => {
-
-        this.showBackdrop(); 
+        this.showBackdrop();
       },
-
     }).then(() => {
-      
       this.authService.logout().subscribe({
         complete: () => {
           // Redirige manualmente si quieres
           this.hideBackdrop();
           this.router.navigateByUrl('/');
-        }
+        },
       });
     });
   }
-
 
   private checkInitialAuthState() {
     const accounts = this.authService.instance.getAllAccounts();
@@ -258,29 +273,36 @@ export class AppComponent implements OnInit, OnDestroy {
         habilitado: 1,
         // La foto se establecerá después
       };
-  
+
       // Primero intenta obtener la foto de perfil
-      this.userService.obtenerFotoPerfil(account.name || '', account.localAccountId || '').then(fotoUrl => {
-        usuario.fotoPerfil = fotoUrl;
-        
-        // Luego obtén el resto del perfil
-        this.userService.obtenerPerfil(usuario.idusuario!, usuario.correo).subscribe({
-          next: (perfilResponse) => {
-            if (perfilResponse) {
-              usuario.idrol = perfilResponse.idrol;
-              usuario.descrol = perfilResponse.descrol;
-              sessionStorage.setItem('userData', JSON.stringify(usuario));
-              console.log('Usuario ya existe, perfil cargado', usuario);
-            } else {
-              // Usuario no existe, no guardar
-              console.warn('Usuario no existe, no se guardará en la BD');
-            }
-          },
-          error: (err) => {
-            console.error('Error al verificar existencia del usuario:', err);
-          }
+      this.userService
+        .obtenerFotoPerfil(account.name || '', account.localAccountId || '')
+        .then((fotoUrl) => {
+          usuario.fotoPerfil = fotoUrl;
+
+          // Luego obtén el resto del perfil
+          this.userService
+            .obtenerPerfil(usuario.idusuario!, usuario.correo)
+            .subscribe({
+              next: (perfilResponse) => {
+                if (perfilResponse) {
+                  usuario.idrol = perfilResponse.idrol;
+                  usuario.descrol = perfilResponse.descrol;
+                  sessionStorage.setItem('userData', JSON.stringify(usuario));
+                  console.log('Usuario ya existe, perfil cargado', usuario);
+                } else {
+                  // Usuario no existe, no guardar
+                  console.warn('Usuario no existe, no se guardará en la BD');
+                }
+              },
+              error: (err) => {
+                console.error(
+                  'Error al verificar existencia del usuario:',
+                  err
+                );
+              },
+            });
         });
-      });
     }
     this.getProfile();
   }
@@ -292,10 +314,9 @@ export class AppComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error al guardar usuario:', err);
-      }
+      },
     });
   }
-  
 
   checkAndSetActiveAccount() {
     let activeAccount = this.authService.instance.getActiveAccount();
@@ -391,6 +412,7 @@ export class AppComponent implements OnInit, OnDestroy {
     return urlRegex.test(this.router.url);
   }
 
+
   paisId: number | null = null;
 
   abrirModalCrearProyecto(): void {
@@ -422,8 +444,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   //procesos
 
-
   abrirModalCrearProceso(): void {
+    this.modalService.abrirCrearProceso();
+  }
+
+  abrirModalCrearUsuario(): void {
     this.modalService.abrirCrearProceso();
   }
 
@@ -431,7 +456,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const backdrop = document.getElementById('backdrop');
     if (backdrop) backdrop.style.display = 'block';
   }
-  
+
   hideBackdrop() {
     const backdrop = document.getElementById('backdrop');
     if (backdrop) backdrop.style.display = 'none';
@@ -440,7 +465,7 @@ export class AppComponent implements OnInit, OnDestroy {
   getProfile() {
     const userData = sessionStorage.getItem('userData');
     if (userData) {
-      console.log('data', userData)
+      console.log('data', userData);
       this.profile = JSON.parse(userData) as IUsuario;
     } else {
       this.profile = null;

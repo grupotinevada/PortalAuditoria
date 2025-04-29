@@ -69,8 +69,8 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
       console.log('Cargando proceso con ID:', this.idProceso);
       this.procesoService.obtenerProcesoPorId(Number(this.idProceso)).subscribe({
         next: (proceso: IProceso) => {
-          console.log('✨ Proceso recibido:', proceso);
-          console.log('✨ Archivos en el proceso:', proceso.archivos);
+          console.log('✨Proceso recibido:', proceso);
+          console.log('Archivos en el proceso:', proceso.archivos);
           this.inicializarFormulario(proceso);
         },
         error: (err) => console.error('Error al cargar proceso', err)
@@ -223,7 +223,7 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
   
   cargarUsuarios(): void {
     this.isLoading = true;
-    this.userService.obtenerUsuarios().subscribe(
+    this.userService.obtenerUsuariosFiltrados().subscribe(
       (data) => {
         const correosExcluidos = ['maguilera@inevada.cl', 'aastorga@inevada.cl', 'isalazar@inevada.cl', 'soporte@inevada.cl'];
         this.usuarios = data.filter((usuario: IUsuario) =>

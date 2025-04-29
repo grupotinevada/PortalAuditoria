@@ -34,8 +34,12 @@ export class UserService {
     return userData ? JSON.parse(userData) as IUsuario : null;
   }
 
-  obtenerUsuarios(){
+  obtenerTodosLosUsuarios(){
     return this.http.get<IUsuario[]>(`${this.apiUrl}/usuarios`);
+  }
+
+  obtenerUsuariosFiltrados(){
+    return this.http.get<IUsuario[]>(`${this.apiUrl}/usuarios/filter`);
   }
 
   enviarTokensAlBackend(accessToken: string, idToken: string): Observable<any> {

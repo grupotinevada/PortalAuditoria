@@ -140,7 +140,7 @@
           </a>
           <a
           class="list-group-item list-group-item-action mt-2"
-          routerLink="/crear-usuario"
+          routerLink="/administracion"
           data-bs-dismiss="offcanvas"
         >
           <i class="bi bi-gear"></i> Administración
@@ -245,6 +245,23 @@
             *ngIf="showNewProcessButton"
             class="btn btn-secondary d-md-none"
             (click)="abrirModalCrearProceso()"
+          >
+            <i class="bi bi-plus"></i>
+          </button>
+
+          <button
+            *ngIf="botonCrearUsuario"
+            class="btn btn-secondary d-none d-md-inline-flex mb-2"
+            (click)="abrirModalCrearUsuario()"
+          >
+            <i class="fas fa-plus"></i> Nuevo Usuario
+          </button>
+
+          <!-- Botón para móviles -->
+          <button
+            *ngIf="botonCrearUsuario"
+            class="btn btn-secondary d-md-none"
+            (click)="abrirModalCrearUsuario()"
           >
             <i class="bi bi-plus"></i>
           </button>

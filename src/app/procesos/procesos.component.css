@@ -22,9 +22,7 @@ td.procesos-btn {
   vertical-align: middle;
 }
 
-.container-fluid{
-  zoom: 0.88;
-}
+
 
 
 
@@ -115,4 +113,28 @@ input[type="file"] {
 
 .btn-outline-danger:hover {
   transform: scale(1.1);
+}
+
+.custom-file-upload {
+  position: relative;
+  display: inline-block;
+}
+
+.custom-file-upload input[type="file"] {
+  display: none; /* ocultamos el input nativo */
+}
+
+.custom-file-upload label {
+  background-color: #0d6efd; /* color azul */
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.custom-file-upload label:hover {
+  background-color: #0b5ed7;
 }

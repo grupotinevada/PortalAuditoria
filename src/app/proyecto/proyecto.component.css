@@ -5,6 +5,8 @@
   gap: 16px;
   justify-content: center;
   text-align: center;
+  font-size: 18px;
+  zoom: 0.88;
 }
 
 /* Estilos para las tarjetas   box-shadow: 0px 4px 12px rgb(38, 105, 192); */

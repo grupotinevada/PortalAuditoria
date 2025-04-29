@@ -456,8 +456,33 @@ app.get('/usuario/:idusuario/:correo/perfil', async (req, res) => {
     }
 });
 
-// Obtener usuarios
+// Obtiene todos los usuarios
 app.get('/usuarios', async (req, res) => {
+  console.log('[INFO] Petición recibida para obtener usuarios.');
+  try {
+    const sql = `
+      SELECT u.*, r.descrol
+      FROM usuario u 
+      JOIN rol r ON u.idrol = r.idrol
+    `;
+    const [results] = await db.promise().query(sql);
+    
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron usuarios.' });
+    }
+
+    console.log(`[SUCCESS] ${results.length} usuarios obtenidos.`);
+    res.json(results);
+
+  } catch (error) {
+    console.error('[ERROR] Error al obtener usuarios:', error);
+    res.status(500).json({ error: `Error en el servidor: ${error.message}` });
+  }
+});
+
+
+// Obtener usuarios
+app.get('/usuarios/filter', async (req, res) => {
   console.log('[INFO] Petición recibida para obtener usuarios.');
 
   try {

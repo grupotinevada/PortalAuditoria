@@ -1,0 +1,21 @@
+.procesos-th {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--bs-primary) !important;
+  }
+
+.procesos-td{
+    /*font-size: 1.25rem;*/
+    font-weight: 400;
+    color: var(--bs-primary) !important;
+  
+}
+  
+  .procesos-btn .btn {
+    transition: all 0.2s ease;
+  }
+  
+  .procesos-btn .btn:hover {
+    opacity: 0.85;
+  }
+  

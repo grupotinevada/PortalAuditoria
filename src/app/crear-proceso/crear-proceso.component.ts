@@ -100,7 +100,7 @@ export class CrearProcesoComponent implements OnInit{
 
   cargarUsuarios(): void {
     this.isLoading = true;
-    this.userService.obtenerUsuarios().subscribe(
+    this.userService.obtenerUsuariosFiltrados().subscribe(
       (data) => {
         const correosExcluidos = ['maguilera@inevada.cl', 'aastorga@inevada.cl', 'isalazar@inevada.cl', 'soporte@inevada.cl'];
         this.usuarios = data.filter((usuario: any) =>

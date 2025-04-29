@@ -9,6 +9,7 @@ import { ProcesosComponent } from './procesos/procesos.component';
 import { PaisComponent } from './pais/pais.component';
 import { InformesComponent } from './informes/informes.component';
 import { AuthGuard } from '../guards/auth.guard';
+import { CrearUsuarioComponent } from './crear-usuario/crear-usuario.component';
 
 export const routes: Routes = [
   {
@@ -31,6 +32,12 @@ export const routes: Routes = [
     path: 'login-failed',
     component: FailedComponent,
     data: { breadcrumb: 'Error de Login' }
+  },
+  {
+    path: 'crear-usuario',
+    component: CrearUsuarioComponent,
+    canActivate:[MsalGuard, AuthGuard],
+    data: { breadcrumb: 'Crear Usuario'}
   },
   {
     path: 'pais',

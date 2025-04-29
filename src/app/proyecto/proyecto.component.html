@@ -41,6 +41,7 @@
          [style.background]="proyecto.habilitado ? 'linear-gradient(90deg, var(--nevada-dark-blue) 0%, #2a6ca8 100%)' : 'none'">
       <h5 class="mb-0 text-white text-truncate" title="{{ proyecto.nombreproyecto }}">{{ proyecto.nombreproyecto }}</h5>
       <button class="btn btn-sm btn-light" 
+              [disabled]="!proyecto.habilitado"
               (click)="proyecto.idproyecto !== null && editarProyecto(proyecto.idproyecto)" 
               title="Editar proyecto">
         <i class="bi bi-pencil"></i>
@@ -57,6 +58,7 @@
       <button class="btn w-100 d-flex align-items-center justify-content-center gap-2"
               [ngClass]="{'btn-secondary': proyecto.habilitado, 'btn-outline-secondary': !proyecto.habilitado}"
               (click)="seleccionarProyecto(proyecto.idproyecto)"
+              [disabled]="!proyecto.habilitado"
               (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)"
               tabindex="0"
               title="Seleccionar Proyecto">

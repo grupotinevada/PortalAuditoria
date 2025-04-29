@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/services/proyecto-evento.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -69,4 +70,27 @@ cerrarEditarProceso() {
   this.mostrarModalEditarProcesoSubject.next(false);
   this.idProcesoEditarSubject.next(null);
 }
+
+
+
+  // MODAL CREAR USUARIO
+  private usuarioCreadoSubject = new Subject<void>();
+  usuarioCreado$ = this.usuarioCreadoSubject.asObservable();
+  
+  private mostrarModalCrearUsuarioSubject = new BehaviorSubject<boolean>(false);
+  mostrarModalCrearUsuario$ = this.mostrarModalCrearUsuarioSubject.asObservable();
+
+  abrirCrearUsuario() {
+    console.log('CONTROL 1');
+    this.mostrarModalCrearUsuarioSubject.next(true);
+  }
+
+  cerrarCrearUsuario() {
+    this.mostrarModalCrearUsuarioSubject.next(false);
+  }
+
+  notificarUsuarioCreado() {
+    this.usuarioCreadoSubject.next();
+  }
+
 }

@@ -41,6 +41,7 @@ import { BreadcrumbService } from 'src/services/breadcrumb.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { CrearProcesoComponent } from './crear-proceso/crear-proceso.component';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
+import { CrearUsuarioComponent } from './crear-usuario/crear-usuario.component';
 
 @Component({
   selector: 'app-root',
@@ -62,11 +63,14 @@ import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
     CrearProyectoComponent,
     BreadcrumbComponent,
     CrearProcesoComponent,
+    CrearUsuarioComponent
   ],
 })
 export class AppComponent implements OnInit, OnDestroy {
   mostrarModalProyecto = false;
   mostrarModalProceso = false;
+  mostrarModalUsuario = false;
+  botonCrearUsuario = false;
   title = 'Portal Auditoria';
   isIframe = false;
   loginDisplay = false;
@@ -77,7 +81,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isSidebarVisible = false;
   mostrarFondoNegro = false;
   profile: IUsuario | null = null;
-  botonCrearUsuario = false;
+
 
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
@@ -100,7 +104,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (event instanceof NavigationEnd) {
         // Evalúa la ruta actual
         const url = event.urlAfterRedirects.split('?')[0];
-        this.botonCrearUsuario = /^\/crear-usuario\/?$/.test(url);
+        this.botonCrearUsuario = /^\/administracion\/?$/.test(url);
       }
     });
 
@@ -112,6 +116,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.modalService.mostrarModalCrearProceso$.subscribe(
       (mostrar) => (this.mostrarModalProceso = mostrar)
     );
+
+    this.modalService.mostrarModalCrearUsuario$.subscribe(
+      (mostrar) => {
+        this.mostrarModalUsuario = mostrar;
+        console.log('Modal usuario state updated:', mostrar);
+      }
+    );
+  
   }
 
   ngOnInit(): void {
@@ -445,11 +457,18 @@ export class AppComponent implements OnInit, OnDestroy {
   //procesos
 
   abrirModalCrearProceso(): void {
+    
     this.modalService.abrirCrearProceso();
+
   }
 
   abrirModalCrearUsuario(): void {
-    this.modalService.abrirCrearProceso();
+    this.modalService.abrirCrearUsuario();
+  }
+
+  onUsuarioCreado(usuario: any) {
+    console.log('Usuario creado:', usuario);
+    // Aquí puedes hacer lo que necesites con el usuario creado
   }
 
   showBackdrop() {

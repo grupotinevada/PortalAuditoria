@@ -234,6 +234,7 @@ export class CrearProcesoComponent implements OnInit{
   cerrarModalProceso(){
     this.modalService.cerrarCrearProceso();
   }
+  
   // Validador personalizado
 fechaFinMayorQueInicioValidator(formGroup: FormGroup): Record<string, boolean> | null {
   const fechaInicio = formGroup.get('fechaInicio')?.value;

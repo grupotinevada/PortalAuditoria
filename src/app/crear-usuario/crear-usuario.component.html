@@ -1,36 +1,125 @@
-<!-- Modal -->
-<div class="modal fade" id="crearUsuarioModal" tabindex="-1" aria-labelledby="crearUsuarioModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="crearUsuarioModalLabel">Crear Usuario</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div
+  *ngIf="mostrarModal"
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
+  style="padding-right: 15px; background-color: rgba(0, 0, 0, 0.5)"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content p-3" style="max-width: 100%; overflow: hidden">
+      <div
+        class="modal-header d-flex justify-content-between align-items-center flex-wrap"
+      >
+        <div class="d-flex flex-column">
+          <h5 class="modal-title mb-0">Crear Nuevo Usuario</h5>
+          <small class="text-danger">Debe completar todos los campos</small>
+        </div>
+        <button
+          type="button"
+          class="btn-close ms-2"
+          (click)="cerrarModal()"
+          aria-label="Close"
+        ></button>
       </div>
-      <div class="modal-body">
-        <!-- Aquí puedes agregar el formulario o contenido para crear un usuario -->
-        <form>
+
+      <form>
+        <div class="modal-body">
           <div class="mb-3">
             <label for="nombreUsuario" class="form-label">Nombre de Usuario</label>
-            <input type="text" class="form-control" id="nombreUsuario" placeholder="Ingrese el nombre de usuario">
+            <input
+              id="nombreUsuario"
+              class="form-control"
+              type="text"
+              placeholder="Ingrese el nombre de usuario"
+              name="nombre"
+              required
+            />
+            <div
+              *ngIf="submitted && !usuario.nombre"
+              class="text-danger"
+            >
+              El nombre de usuario es requerido.
+            </div>
           </div>
+
           <div class="mb-3">
             <label for="correoUsuario" class="form-label">Correo Electrónico</label>
-            <input type="email" class="form-control" id="correoUsuario" placeholder="Ingrese el correo electrónico">
+            <input
+              id="correoUsuario"
+              class="form-control"
+              type="email"
+              placeholder="Ingrese el correo electrónico"
+              name="correo"
+              required
+            />
+            <div
+              *ngIf="submitted && !usuario.correo"
+              class="text-danger"
+            >
+              El correo electrónico es requerido.
+            </div>
           </div>
+
           <div class="mb-3">
             <label for="rolUsuario" class="form-label">Rol</label>
-            <select class="form-select" id="rolUsuario">
-              <option selected>Seleccione un rol</option>
+            <select
+              id="rolUsuario"
+              class="form-select"
+
+              name="rol"
+              required
+            >
+              <option value="">Seleccione un rol</option>
               <option value="1">Administrador</option>
               <option value="2">Usuario</option>
             </select>
+            <div
+              *ngIf="submitted && !usuario.rol"
+              class="text-danger"
+            >
+              El rol es requerido.
+            </div>
           </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        <button type="button" class="btn btn-primary">Guardar Cambios</button>
-      </div>
+
+          <div class="mb-3">
+            <label for="passwordUsuario" class="form-label">Contraseña</label>
+            <input
+              id="passwordUsuario"
+              class="form-control"
+              type="password"
+              placeholder="Ingrese la contraseña"
+              name="password"
+              required
+            />
+            <div
+              *ngIf="submitted && !usuario.password"
+              class="text-danger"
+            >
+              La contraseña es requerida.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-danger" (click)="cerrarModal()">
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" >
+            Guardar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
+
+<div *ngIf="mostrarModal" class="modal-backdrop fade show"></div>
+
+<div
+     *ngIf="isLoading"
+     class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+     style="z-index: 2000; background-color: rgba(255,255,255,0.5)"
+   >
+     <app-spinner [loading]="true" />
+   </div>

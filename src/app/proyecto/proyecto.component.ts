@@ -79,7 +79,21 @@ export class ProyectoComponent implements OnInit {
   }
 
   seleccionarProyecto(idProyecto: number | null) {
-    this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
+    const proyecto = this.proyectos.find(p => p.idproyecto === idProyecto);
+    if (proyecto) {    
+      if (!proyecto.habilitado) {
+        Swal.fire({
+          title: 'Proyecto Deshabilitado',
+          text: 'No se puede seleccionar un proyecto que está deshabilitado.',
+          icon: 'warning',
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+      this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
+    } else {
+    }
   }
 
   abrirModalEdicion(proyecto: IProyecto): void {
@@ -91,6 +105,16 @@ export class ProyectoComponent implements OnInit {
     // Buscar el proyecto con el ID correspondiente
     const proyecto = this.proyectos.find(p => p.idproyecto === idProyecto);
     if (proyecto) {    
+      if (!proyecto.habilitado) {
+        Swal.fire({
+          title: 'Proyecto Deshabilitado',
+          text: 'No se puede editar un proyecto que está deshabilitado.',
+          icon: 'warning',
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
       this.isLoading=true;
       console.log('Proyecto encontrado:', proyecto);
       this.isLoading=false;

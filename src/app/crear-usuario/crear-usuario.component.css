@@ -17,3 +17,33 @@
     width: 100%;
     max-width: 500px;
   }
+
+
+  .dark-input {
+    background-color: #1e2130;
+    color: #ffffff;
+    border-color: #2e3446;
+  }
+  
+  .dark-input:focus {
+    background-color: #1e2130;
+    color: #ffffff;
+    border-color: #3a4459;
+    box-shadow: 0 0 0 0.2rem rgba(58, 68, 89, 0.25);
+    outline: none;
+  }
+  
+  /* Estilos específicos para solucionar cualquier problema de contraste */
+  .dark-input::placeholder {
+    color: #adb5bd;
+  }
+  
+  /* Estilos para elementos seleccionados */
+  .dark-input option:checked {
+    background-color: #3a4459;
+  }
+  
+  /* Intento de estilización del datalist (limitado por navegador) */
+  input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }

@@ -1,3 +1,4 @@
+import { MsalService } from '@azure/msal-angular';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -12,7 +13,7 @@ import { environment } from 'src/environments/environment';
 export class UserService {
   private apiUrl = environment.apiUrl.api;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private msalService: MsalService) {}
 
   // Guardar usuario en la base de datos
   guardarUsuario(usuario: IUsuario): Observable<IUsuario> {
@@ -86,12 +87,12 @@ generateInitialsAvatar(name: string, userId: string): string {
   
   // Generar un color basado en el userId
   const colors = [
-    '#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9',
-    '#BBDEFB', '#B3E5FC', '#B2EBF2', '#B2DFDB', '#C8E6C9',
-    '#DCEDC8', '#F0F4C3', '#FFF9C4', '#FFECB3', '#FFE0B2',
-    '#FFCCBC', '#D7CCC8', '#F5F5F5', '#CFD8DC', '#E6EE9C',
-    '#A5D6A7', '#80CBC4', '#4DB6AC', '#81D4FA', '#90CAF9',
-    '#AED581', '#FFAB91', '#FF8A65', '#FFD54F', '#FFF176'
+    '#37474F', '#455A64', '#546E7A', '#607D8B', '#78909C',
+    '#90A4AE', '#B0BEC5', '#CFD8DC', '#ECEFF1', '#F5F5F5',
+    '#E0E0E0', '#BDBDBD', '#9E9E9E', '#757575', '#616161',
+    '#424242', '#212121', '#263238', '#37474F', '#455A64',
+    '#546E7A', '#607D8B', '#78909C', '#90A4AE', '#B0BEC5',
+    '#CFD8DC', '#ECEFF1', '#F5F5F5', '#E0E0E0', '#BDBDBD'
   ];
   
   
@@ -111,4 +112,34 @@ generateInitialsAvatar(name: string, userId: string): string {
   
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 }
+
+
+
+
+
+
+//TENNANT INFO
+getAccessToken(): Promise<string> {
+  return this.msalService.instance
+    .acquireTokenSilent({
+      scopes: environment.apiConfig.scopes,
+      account: this.msalService.instance.getActiveAccount() || undefined,
+    })
+    .then(result => result.accessToken);
 }
+
+async getUsers() {
+  const token = await this.getAccessToken();
+  return this.http.get('https://graph.microsoft.com/v1.0/users', {
+    headers: { Authorization: `Bearer ${token}` },
+  }).toPromise();
+}
+
+async getUserById(id: string) {
+  const token = await this.getAccessToken();
+  return this.http.get(`https://graph.microsoft.com/v1.0/users/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).toPromise();
+}
+}
+

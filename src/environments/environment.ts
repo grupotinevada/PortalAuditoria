@@ -19,7 +19,11 @@ export const environment = {
   },
   apiUrl: {
     api: 'http://localhost:3000'
-  }
+  },
+  sharepointId: '992e0913-eb95-4859-8b32-32c6b686c500',
+  siteName: 'PruebaAuditoria',
+  driveName: 'Biblioteca Prueba Auditoria'
 };
+
 
 

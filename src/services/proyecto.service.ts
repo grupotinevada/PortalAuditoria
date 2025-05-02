@@ -140,12 +140,9 @@ export class ProyectoService {
   
   //Solo sociedades por su propio id
   obtenerProyectoPorIdProyecto(idProyecto: number): Observable<IProyecto> {
-    return this.http.get<IProyecto[]>(`${this.apiUrl}/proyecto/${idProyecto}`).pipe(
-      map(response => response[0])
-
-    );
-  
+    return this.http.get<IProyecto>(`${this.apiUrl}/proyecto/${idProyecto}`);
   }
+  
   
   //Solo sociedades por su propio id
   obtenerSociedadesPorIdSociedad(idsociedad: number): Observable<ISociedad> {

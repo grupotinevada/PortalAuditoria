@@ -42,6 +42,7 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { CrearProcesoComponent } from './crear-proceso/crear-proceso.component';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 import { CrearUsuarioComponent } from './crear-usuario/crear-usuario.component';
+import { ProyectoService } from 'src/services/proyecto.service';
 
 @Component({
   selector: 'app-root',
@@ -81,7 +82,8 @@ export class AppComponent implements OnInit, OnDestroy {
   isSidebarVisible = false;
   mostrarFondoNegro = false;
   profile: IUsuario | null = null;
-
+  isAdmin = false;
+  proyectoHabilitado = false;
 
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
@@ -93,8 +95,12 @@ export class AppComponent implements OnInit, OnDestroy {
     private location: Location,
     private breadcrumbService: BreadcrumbService,
     private proyectoEventoService: ProyectoEventoService,
-    private modalService: ProyectoEventoService
+    private modalService: ProyectoEventoService,
+    private proyectoService : ProyectoService
   ) {
+
+    this.verificarProyecto();
+
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.mostrarNavbar = !['/login-failed'].includes(event.url);
@@ -107,7 +113,11 @@ export class AppComponent implements OnInit, OnDestroy {
         this.botonCrearUsuario = /^\/administracion\/?$/.test(url);
       }
     });
-
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.verificarProyecto();
+      }
+    });
 
     this.isDarkMode = localStorage.getItem('darkMode') === 'true';
     this.updateTheme();
@@ -176,11 +186,11 @@ export class AppComponent implements OnInit, OnDestroy {
       },
     });
 
-    // Inicialización de otros estados
+    // se inicializan otros estados
     this.isIframe = window !== window.parent && !window.opener;
     this.authService.instance.enableAccountStorageEvents();
 
-    // Verificar el estado inicial de autenticación (sin guardar usuario)
+    // se verifican los estados iniciales de autenticacion ( aun no guarda al usuario)
     this.checkInitialAuthState();
 
     this.msalBroadcastService.msalSubject$
@@ -253,7 +263,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }).then(() => {
       this.authService.logout().subscribe({
         complete: () => {
-          // Redirige manualmente si quieres
+          // Redirige obligatoriamente 
           this.hideBackdrop();
           this.router.navigateByUrl('/');
         },
@@ -265,7 +275,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const accounts = this.authService.instance.getAllAccounts();
     if (accounts.length > 0) {
       this.setLoginDisplay();
-
+      this.profile = this.userService.getProfile(); //obtiene el perfil de la session storage
       this.isLoading = false;
     } else {
       this.isLoading = false;
@@ -316,19 +326,28 @@ export class AppComponent implements OnInit, OnDestroy {
             });
         });
     }
-    this.getProfile();
+    this.profile = this.userService.getProfile();
   }
 
-  guardarUsuario(usuario: IUsuario): void {
-    this.userService.guardarUsuario(usuario).subscribe({
-      next: (response) => {
-        console.log('Usuario guardado exitosamente:', response);
-      },
-      error: (err) => {
-        console.error('Error al guardar usuario:', err);
-      },
-    });
+verificarProyecto(): void {
+    const match = this.router.url.match(/\/proyecto\/(\d+)/);
+    const idProyecto = match ? +match[1] : null;
+
+    if (idProyecto) {
+      this.proyectoService.obtenerProyectoPorIdProyecto(idProyecto).subscribe({
+        next: (proyecto) => {
+          this.proyectoHabilitado = proyecto.habilitado === 1;
+          console.log('proyecto id:', proyecto.idproyecto, proyecto.nombreproyecto, proyecto.habilitado)
+        },
+        error: (err) => {
+          console.error('Error al obtener el proyecto:', err);
+          this.proyectoHabilitado = false;
+        }
+      });
+    }
   }
+
+
 
   checkAndSetActiveAccount() {
     let activeAccount = this.authService.instance.getActiveAccount();
@@ -419,9 +438,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   get showNewProcessButton(): boolean {
-    // Verifica si la ruta actual coincide con /pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID
     const urlRegex = /^\/pais\/\d+\/proyecto\/\d+\/sociedad\/\d+$/;
-    return urlRegex.test(this.router.url);
+    return urlRegex.test(this.router.url) && this.proyectoHabilitado;
   }
 
 
@@ -481,13 +499,5 @@ export class AppComponent implements OnInit, OnDestroy {
     if (backdrop) backdrop.style.display = 'none';
   }
 
-  getProfile() {
-    const userData = sessionStorage.getItem('userData');
-    if (userData) {
-      console.log('data', userData);
-      this.profile = JSON.parse(userData) as IUsuario;
-    } else {
-      this.profile = null;
-    }
-  }
+
 }

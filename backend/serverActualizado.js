@@ -456,6 +456,35 @@ app.get('/usuario/:idusuario/:correo/perfil', async (req, res) => {
     }
 });
 
+app.get('/roles', async (req, res) => {
+  console.log('[INFO] Petición recibida para obtener los roles.');
+
+  const sql = `
+      SELECT
+          idrol,
+          descrol
+      FROM rol;
+  `;
+
+  try {
+      console.debug('[DEBUG] Ejecutando consulta SQL para obtener roles.');
+
+      const [results] = await db.promise().query(sql);
+
+      if (results.length === 0) {
+          console.warn('[WARN] No se encontraron roles.');
+          return res.status(404).json({ error: 'No se encontraron roles' });
+      }
+
+      console.info(`[INFO] Consulta exitosa. Roles encontrados: ${results.length}`);
+      console.debug('[SUCCESS] Datos de roles enviados al frontend:', results);
+
+      res.json(results);
+  } catch (err) {
+      console.error('[ERROR] Error al obtener los roles', err);
+      res.status(500).json({ error: 'Error al obtener los roles', details: err.message });
+  }
+});
 // Obtiene todos los usuarios
 app.get('/usuarios', async (req, res) => {
   console.log('[INFO] Petición recibida para obtener usuarios.');
@@ -674,6 +703,57 @@ app.get('/proyectos/:PaisID', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener proyectos', details: err.message });
     }
 });
+
+app.get('/proyecto/:idproyecto', async (req, res) => {
+    const { idproyecto } = req.params;
+
+    console.debug(`[DEBUG] Petición recibida: /proyecto/${idproyecto}`);
+
+    const sql = `
+        SELECT
+            p.idproyecto,
+            p.nombreproyecto,
+            p.fecha_inicio,
+            p.fecha_termino,
+            p.habilitado,
+            p.eliminado,
+            p2.idpais,
+            p2.nombrepais,
+            p2.cod,
+            s.idsociedad,
+            s.nombresociedad
+
+        FROM proyecto p
+        JOIN pais p2 ON p.idpais = p2.idpais
+        JOIN proyecto_sociedad ps ON p.idproyecto = ps.idproyecto
+        JOIN sociedad s ON ps.idsociedad = s.idsociedad
+        WHERE p.idproyecto = ?;
+    `;
+
+    try {
+        console.debug(`[DEBUG] Ejecutando consulta SQL con idproyecto: ${idproyecto}`);
+
+        const [results] = await db.promise().query(sql, [idproyecto]);
+
+        if (results.length === 0) {
+            console.warn(`[WARN] No se encontró el proyecto con idproyecto: ${idproyecto}`);
+            return res.status(404).json({ error: 'No se encontró el proyecto especificado' });
+        }
+
+        console.info(`[INFO] Consulta exitosa. Proyecto encontrado: ${results.length}`);
+        console.debug(`[SUCCESS] Datos enviados al frontend:`, results);
+
+        res.json(results[0]); // Devolver el primer resultado si existe
+    } catch (err) {
+        console.error(`[ERROR] Error al obtener el proyecto para idproyecto: ${idproyecto}`, err);
+        res.status(500).json({ error: 'Error al obtener el proyecto', details: err.message });
+    }
+});
+
+
+
+
+
 
 //Modificar un proyecto existente
 app.put('/proyecto/:idproyecto', async (req, res) => {

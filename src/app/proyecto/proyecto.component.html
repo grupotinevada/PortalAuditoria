@@ -58,7 +58,7 @@
       <button class="btn w-100 d-flex align-items-center justify-content-center gap-2"
               [ngClass]="{'btn-secondary': proyecto.habilitado, 'btn-outline-secondary': !proyecto.habilitado}"
               (click)="seleccionarProyecto(proyecto.idproyecto)"
-              [disabled]="!proyecto.habilitado"
+
               (keydown.enter)="seleccionarProyecto(proyecto.idproyecto)"
               tabindex="0"
               title="Seleccionar Proyecto">

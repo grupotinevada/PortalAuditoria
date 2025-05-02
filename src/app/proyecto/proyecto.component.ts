@@ -83,16 +83,17 @@ export class ProyectoComponent implements OnInit {
     if (proyecto) {    
       if (!proyecto.habilitado) {
         Swal.fire({
-          title: 'Proyecto Deshabilitado',
-          text: 'No se puede seleccionar un proyecto que está deshabilitado.',
+          title: 'Proyecto Cerrado',
+          text: 'Este proyecto está cerrado, no se puede editar, solo está en modo visualización',
           icon: 'warning',
           confirmButtonText: 'Aceptar',
           confirmButtonColor: '#3085d6'
         });
-        return;
       }
       this.router.navigate(['/pais', this.idPais, 'proyecto', idProyecto]);
-    } 
+    } else {
+      console.error('Proyecto no encontrado con ID:', idProyecto);
+    }
   }
 
   abrirModalEdicion(proyecto: IProyecto): void {

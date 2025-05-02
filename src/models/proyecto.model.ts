@@ -8,7 +8,7 @@ export interface IProyecto {
     idproyecto: number | null;
     fecha_inicio: Date | string | null;
     fecha_termino: Date | string | null;
-    habilitado: number | null;
+    habilitado: number | null | boolean;
     eliminado: number | null;
     nombreproyecto: string | null;
     sociedadesSeleccionadas?: number[] | null; // Cambiado a un array de números

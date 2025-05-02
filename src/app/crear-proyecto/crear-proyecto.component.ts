@@ -1,3 +1,4 @@
+import { UserService } from 'src/services/user.service';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, FormControl} from '@angular/forms';
@@ -30,7 +31,8 @@ export class CrearProyectoComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private proyectoService: ProyectoService
+    private proyectoService: ProyectoService,
+    private userService: UserService
   ){}
 
     ngOnInit(): void {
@@ -91,7 +93,7 @@ export class CrearProyectoComponent implements OnInit {
       }
     }
 
-      getProfile() {
+      obtenerPerfil() {
         const userData = sessionStorage.getItem('userData');
         if (userData) {
           console.log('data', userData)
@@ -105,7 +107,7 @@ export class CrearProyectoComponent implements OnInit {
       if (this.proyectoForm.valid && this.paisId) {
         this.isLoading = true;
         this.errorMessage = '';
-        this.getProfile();
+        this.profile = this.userService.getProfile();
 
         // Obtener IDs de sociedades seleccionadas
         const sociedadesSeleccionadas = this.proyectoForm.value.sociedades

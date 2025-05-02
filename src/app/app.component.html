@@ -139,6 +139,7 @@
             <i class="bi bi-bar-chart"></i> Informes
           </a>
           <a
+          *ngIf="profile?.idrol === 3"
           class="list-group-item list-group-item-action mt-2"
           routerLink="/administracion"
           data-bs-dismiss="offcanvas"

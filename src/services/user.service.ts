@@ -12,8 +12,29 @@ import { environment } from 'src/environments/environment';
 })
 export class UserService {
   private apiUrl = environment.apiUrl.api;
+  profile: IUsuario | null = null;
 
   constructor(private http: HttpClient, private msalService: MsalService) {}
+
+
+getProfile(): IUsuario | null {
+  const userData = sessionStorage.getItem('userData');
+  if (userData) {
+    console.log('data', userData);
+    this.profile = JSON.parse(userData) as IUsuario;
+  } else {
+    this.profile = null;
+  }
+
+  return this.profile; // RETORNAR EL VALOR
+}
+
+
+  obtenerRoles(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/roles`);
+  }
+
+
 
   // Guardar usuario en la base de datos
   guardarUsuario(usuario: IUsuario): Observable<IUsuario> {

@@ -21,3 +21,23 @@ describe('CrearUsuarioComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+// guardarUsuario(usuario: IUsuario): void {
+
+//   this.isLoading = true;
+
+//   this.userService.guardarUsuario(usuario).subscribe({
+//     next: (response) => {
+//       console.log('Usuario guardado exitosamente:', response);
+//       this.usuarioCreado.emit(usuario);
+//       this.modalService.notificarUsuarioCreado();
+//       this.cerrarModal();
+//     },
+//     error: (err) => {
+//       console.error('Error al guardar usuario:', err);
+//     },
+//     complete: () => {
+//       this.isLoading = false;
+//     }
+//   });
+  
+// }

@@ -16,45 +16,89 @@
       <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
         <div class="d-flex flex-column">
           <h5 class="modal-title mb-0">Crear Nuevo Usuario</h5>
-          <small class="text-danger">Debe completar todos los campos</small>
+          <small class="text-danger" *ngIf="submitted && !selectedUserId">Debe seleccionar un usuario</small>
         </div>
         <button type="button" class="btn-close ms-2" (click)="cerrarModal()" aria-label="Close"></button>
       </div>
 
-      
-<!-- Cuerpo -->
-<div class="modal-body">
-    <label for="filtroUsuario" class="form-label">Buscar usuario del tenant</label>
-    <div class="input-group mb-2">
-        <span class="input-group-text dark-input">🔍</span>
-        <input 
-          type="text"
-          class="form-control dark-input"
-          placeholder="Filtrar usuarios..."
-          [(ngModel)]="filtroUsuario"
+      <!-- Cuerpo -->
+      <div class="modal-body">
+        <label for="filtroUsuario" class="form-label">Buscar usuario del tenant</label>
+        <div class="input-group mb-2">
+          <span class="input-group-text">🔍</span>
+          <input 
+            type="text"
+            id="filtroUsuario"
+            class="form-control"
+            placeholder="Filtrar usuarios..."
+            [(ngModel)]="filtroUsuario"
+          >
+        </div>
+        
+        <select 
+          class="form-select"
+          [(ngModel)]="selectedUserId"
+          (change)="onSelectUser()"
+          [ngClass]="{'is-invalid': submitted && !selectedUserId}"
         >
+          <option value="" disabled selected>Seleccione un usuario</option>
+          <option 
+            *ngFor="let user of usuariosFiltrados()" 
+            [value]="user.id">
+            {{ user.displayName || 'Sin nombre' }} - {{ user.mail || user.userPrincipalName || 'Sin email' }}
+          </option>
+        </select>
+        
+        <div *ngIf="userDetails" class="mt-3 p-3 border rounded">
+          <h6>Usuario seleccionado:</h6>
+          <p><strong>Nombre:</strong> {{ userDetails.displayName || 'No disponible' }}</p>
+          <p><strong>Email:</strong> {{ userDetails.mail || userDetails.userPrincipalName || 'No disponible' }}</p>
+          <p><strong>ID:</strong> {{ userDetails.id }}</p>
+          
+          <!-- Campos adicionales del formulario -->
+          <div class="mt-3">
+            <div class="mb-3">
+              <label for="rolSelect" class="form-label">Rol del usuario:</label>
+              <select 
+                id="rolSelect" 
+                class="form-select"
+                [(ngModel)]="usuario.idrol"
+               
+              >
+                <option *ngFor="let rol of roles" [value]="rol.idrol">{{ rol.descrol }}</option>
+              </select>
+            </div>
+            
+            <div class="form-check">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="habilitadoCheck"
+                [(ngModel)]="usuario.habilitado"
+                [checked]="usuario.habilitado === 1"
+                
+              >
+              <label class="form-check-label" for="habilitadoCheck">
+                Usuario habilitado
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <select 
-        class="form-select dark-input"
-        [(ngModel)]="selectedUserId"
-        (change)="onSelectUser()"
-      >
-        <option 
-          *ngFor="let user of usuariosFiltrados()" 
-          [value]="user.id">
-          {{ user.displayName }} - {{ user.mail || user.userPrincipalName || 'Sin email' }}
-        </option>
-      </select>
-  
-    <div class="modal-footer justify-content-between">
-      <button type="button" class="btn btn-danger" (click)="cerrarModal()">Cancelar</button>
-      <button type="button" class="btn btn-primary" (click)="guardarUsuario()">Guardar</button>
+
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-danger" (click)="cerrarModal()">Cancelar</button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="guardarUsuario()"
+          [disabled]="!selectedUserId || !userDetails"
+        >Guardar</button>
+      </div>
     </div>
   </div>
-  
 
-  <!-- Spinner opcional -->
+  <!-- Spinner de carga -->
   <div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
     style="z-index: 2000; background-color: rgba(255, 255, 255, 0.5)">
     <app-spinner [loading]="true"></app-spinner>

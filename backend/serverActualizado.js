@@ -379,7 +379,7 @@ app.post('/usuarios', async (req, res) => {
         res.status(500).json({ error: 'Error en el servidor' });
     }
 });
- 
+ //devolver mensaje de error si el usuario ya existe en la base de datos
  
  
  

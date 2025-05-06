@@ -139,8 +139,14 @@ generateInitialsAvatar(name: string, userId: string): string {
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 }
 
+editarUsuario(usuario: IUsuario, accessToken: string): Observable<IUsuario> {
+  const headers = new HttpHeaders({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessToken}`
+  });
 
-
+  return this.http.put<IUsuario>(`${this.apiUrl}/usuarios`, usuario, { headers });
+}
 
 
 

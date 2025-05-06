@@ -49,18 +49,18 @@ export const routes: Routes = [
     path: 'pais/:PaisID',
     component: ProyectoComponent,
     canActivate: [MsalGuard, AuthGuard],
-    data: { breadcrumb: 'País' } // nombre real se carga dinámicamente
+    data: { breadcrumb: 'País' } 
   },
   {
     path: 'pais/:PaisID/proyecto/:ProyectoID',
     component: SociedadesComponent,
     canActivate: [MsalGuard, AuthGuard],
-    data: { breadcrumb: 'Proyecto' } // nombre real se carga dinámicamente
+    data: { breadcrumb: 'Proyecto' } 
   },
   {
     path: 'pais/:PaisID/proyecto/:ProyectoID/sociedad/:SociedadID',
     component: ProcesosComponent,
     canActivate: [MsalGuard, AuthGuard],
-    data: { breadcrumb: 'Sociedad' } // nombre real se carga dinámicamente
+    data: { breadcrumb: 'Sociedad' } 
   }
 ];

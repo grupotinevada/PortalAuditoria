@@ -454,6 +454,78 @@ async function obtenerUsuarioDesdeToken(accessToken) {
 //#####################################################################################################################################
 //#####################################################################################################################################
 
+async function quitarPermisosUsuarioDeTodasLasCarpetas(accessToken, emailUsuario) {
+  const DRIVE_NAME = process.env.DRIVE_NAME;
+  const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
+  const email = emailUsuario?.trim().toLowerCase();
+
+  try {
+    // 1. Obtener el drive por nombre
+    const drivesResponse = await axios.get(`https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_SITE_ID}/drives`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    const drive = drivesResponse.data.value.find(d => d.name === DRIVE_NAME);
+    if (!drive) throw new Error(`No se encontró el drive con nombre ${DRIVE_NAME}`);
+    const driveId = drive.id;
+
+    console.log('[PASO 1] Drive obtenido:', driveId);
+
+    // 2. Obtener todas las carpetas en el root del drive
+    const carpetasResponse = await axios.get(`https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    const carpetas = carpetasResponse.data.value.filter(item => item.folder);
+
+    console.log(`[PASO 2] ${carpetas.length} carpetas encontradas.`);
+
+    let eliminados = 0;
+
+    for (const carpeta of carpetas) {
+      const carpetaId = carpeta.id;
+
+      // 3. Obtener los permisos de la carpeta
+      const permisosResponse = await axios.get(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${carpetaId}/permissions`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        }
+      );
+
+      const permisos = permisosResponse.data.value;
+      const permisoUsuario = permisos.find(p =>
+        p.grantedToV2?.user?.email?.toLowerCase() === email
+      );
+
+      // 4. Eliminar el permiso si existe
+      if (permisoUsuario) {
+        await axios.delete(
+          `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${carpetaId}/permissions/${permisoUsuario.id}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+
+        console.log(`[SharePoint] Permiso eliminado en carpeta '${carpeta.name}'`);
+        eliminados++;
+      }
+    }
+
+    console.log(`[FINALIZADO] [PASO 3] Se eliminaron permisos en ${eliminados} carpeta(s).`);
+    return { eliminados };
+
+  } catch (error) {
+    console.error('[ERROR SharePoint] Al eliminar permisos en carpetas:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
 
 // Guardar o actualizar usuario autenticado y asignar permiso en SharePoint
 app.post('/usuarios', async (req, res) => {
@@ -520,7 +592,58 @@ app.post('/usuarios', async (req, res) => {
 });
 
 
- 
+ // Modificar rol y habilitado de un usuario, y quitar permisos si corresponde
+app.put('/usuarios', async (req, res) => {
+  const { correo, idrol, habilitado } = req.body;
+  const accessToken = req.headers.authorization?.replace('Bearer ', '');
+
+  if (!correo || idrol == null || habilitado == null) {
+    logger.warn('[WARN] Datos incompletos en la solicitud PUT /usuarios', { body: req.body });
+    return res.status(400).json({ error: 'Correo, idrol y habilitado son obligatorios' });
+  }
+
+  try {
+    logger.info(`[INFO] Verificando si existe el usuario con correo ${correo}...`);
+
+    const [results] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
+
+    if (results.length === 0) {
+      logger.warn(`[WARN] Usuario con correo ${correo} no encontrado`);
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const usuarioExistente = results[0];
+
+    // Evitar que se modifiquen campos no permitidos
+    logger.info(`[INFO] Actualizando idrol y habilitado del usuario ${correo}`);
+    await db.promise().query(
+      'UPDATE usuario SET idrol = ?, habilitado = ? WHERE correo = ?',
+      [idrol, habilitado, correo]
+    );
+
+    // Si habilitado === 0, quitar permisos de todas las carpetas
+    if (habilitado === 0 || habilitado === '0') {
+      try {
+        logger.info(`[INFO] Usuario deshabilitado. Eliminando permisos en SharePoint para ${correo}...`);
+        const resultado = await quitarPermisosUsuarioDeTodasLasCarpetas(accessToken, correo);
+        logger.info('[SUCCESS] Permisos eliminados en SharePoint:', resultado);
+      } catch (errorPermiso) {
+        logger.error('[ERROR] No se pudieron eliminar los permisos del usuario en SharePoint', {
+          error: errorPermiso.message
+        });
+        // Nota: no se aborta el proceso general si esto falla
+      }
+    }
+
+    logger.info('[SUCCESS] Usuario actualizado correctamente');
+    return res.json({ message: 'Usuario actualizado correctamente' });
+
+  } catch (error) {
+    logger.error('[ERROR] Error al actualizar usuario', { error: error.message });
+    return res.status(500).json({ error: 'Error en el servidor' });
+  }
+});
+
  
  
 // Obtener usuario con su perfil

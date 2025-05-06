@@ -1,68 +1,204 @@
 <div class="container py-4">
-    <div class="table-responsive shadow rounded">
-      <table class="table table-striped table-hover table-bordered align-middle mb-0 text-nowrap"
-             style="background-color: var(--bs-card-bg); color: var(--bs-card-color); border-color: var(--bs-border-color);">
-        <thead class="table-responsive">
-          <tr>
-            <th (click)="sortTable('idusuario')" class="procesos-th text-center sortable cursor-pointer" style="width: 10px !important; ">
-              ID Usuario <span [innerHTML]="getSortIcon('idusuario')"></span>
-            </th>
-            <th (click)="sortTable('nombreUsuario')" class="procesos-th text-center sortable cursor-pointer">
-              Nombre <span [innerHTML]="getSortIcon('nombreUsuario')"></span>
-            </th>
-            <th (click)="sortTable('correo')" class="procesos-th text-center sortable cursor-pointer">
-              Correo <span [innerHTML]="getSortIcon('correo')"></span>
-            </th>
-            <th (click)="sortTable('idrol')" class="procesos-th text-center sortable cursor-pointer">
-              Rol <span [innerHTML]="getSortIcon('descrol')"></span>
-            </th>
-            <th (click)="sortTable('habilitado')" class="procesos-th text-center sortable cursor-pointer">
-              Habilitado <span [innerHTML]="getSortIcon('habilitado')"></span>
-            </th>
-            <th class="procesos-th text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of sortedUsuarios">
-            <td class="procesos-td text-center fw-bold">
-                <div class="text-truncate" style="max-width: 150px; overflow: hidden; margin-left: 6px">
-                  {{ user.idusuario }}
-                </div>
-              </td>
-              
-            <td class="procesos-td text-center">
-              {{ user.nombreUsuario }}
-            </td>
-            <td class="procesos-td text-center">
-              {{ user.correo }}
-            </td>
-            <td class="procesos-td text-center">
-              <span class=" bg-info p-1 rounded text-dark">{{ user.descrol }}</span>
-            </td>
-            <td class="procesos-td text-center">
-                <span class="badge fs-6"  [ngClass]="user.habilitado ? 'bg-info' : 'bg-danger'">
-                  {{ user.habilitado ? 'Sí' : 'No' }}
-                </span>
-              </td>
-            <td class="procesos-btn text-center">
-              <button class="btn btn-sm btn-secondary me-1" title="Editar">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-              <button class="btn btn-sm btn-danger" title="Eliminar">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  
+  <div class="table-responsive shadow rounded">
+    <table
+      class="table table-striped table-hover table-bordered align-middle mb-0 text-nowrap"
+      style="
+        background-color: var(--bs-card-bg);
+        color: var(--bs-card-color);
+        border-color: var(--bs-border-color);
+      "
+    >
+      <thead class="table-responsive">
+        <tr>
+          <th
+            (click)="sortTable('idusuario')"
+            class="procesos-th text-center sortable cursor-pointer"
+            style="width: 10px !important"
+          >
+            ID Usuario <span [innerHTML]="getSortIcon('idusuario')"></span>
+          </th>
+          <th
+            (click)="sortTable('nombreUsuario')"
+            class="procesos-th text-center sortable cursor-pointer"
+          >
+            Nombre <span [innerHTML]="getSortIcon('nombreUsuario')"></span>
+          </th>
+          <th
+            (click)="sortTable('correo')"
+            class="procesos-th text-center sortable cursor-pointer"
+          >
+            Correo <span [innerHTML]="getSortIcon('correo')"></span>
+          </th>
+          <th
+            (click)="sortTable('idrol')"
+            class="procesos-th text-center sortable cursor-pointer"
+          >
+            Rol <span [innerHTML]="getSortIcon('descrol')"></span>
+          </th>
+          <th
+            (click)="sortTable('habilitado')"
+            class="procesos-th text-center sortable cursor-pointer"
+          >
+            Habilitado <span [innerHTML]="getSortIcon('habilitado')"></span>
+          </th>
+          <th class="procesos-th text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of sortedUsuarios">
+          <td class="procesos-td text-center fw-bold">
+            <div
+              class="text-truncate"
+              style="max-width: 150px; overflow: hidden; margin-left: 6px"
+            >
+              {{ user.idusuario }}
+            </div>
+          </td>
 
-  <div
+          <td class="procesos-td text-center">
+            {{ user.nombreUsuario }}
+          </td>
+          <td class="procesos-td text-center">
+            {{ user.correo }}
+          </td>
+          <td class="procesos-td text-center">
+            <span class="bg-info p-1 rounded text-dark">{{
+              user.descrol
+            }}</span>
+          </td>
+          <td class="procesos-td text-center">
+            <span
+              class="badge fs-6"
+              [ngClass]="user.habilitado ? 'bg-info' : 'bg-danger'"
+            >
+              {{ user.habilitado ? "Sí" : "No" }}
+            </span>
+          </td>
+          <td class="procesos-btn text-center">
+            <button
+              class="btn btn-sm btn-secondary me-1"
+              type="button"
+              title="Editar usuario"
+              (click)="seleccionarUsuario(user.idusuario)"
+              data-bs-toggle="modal"
+              data-bs-target="#modalId"
+            >
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div
   *ngIf="isLoading"
   class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-  style="z-index: 2000; background-color: rgba(255,255,255,0.5)"
+  style="z-index: 2000; background-color: rgba(255, 255, 255, 0.5)"
 >
   <app-spinner [loading]="true" />
 </div>
+
+<!-- MODAL PARA EDITAR AL USUARIO -->
+
+<div
+  class="modal fade"
+  id="modalId"
+  tabindex="-1"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  role="dialog"
+  aria-labelledby="modalTitleId"
+  aria-hidden="true"
+>
+  <div
+    class="modal-dialog modal-dialog-centered modal-lg modal-lg"
+    role="document"
+  >
+    <div class="modal-content">
+      <div class="modal-header modal-header d-flex justify-content-between align-items-center flex-wrap">
+        <h5 class="modal-title mb-0" id="modalTitleId">Editar Usuario</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body" *ngIf="usuarioSeleccionado">
+        <div class="mb-3">
+          <label for="inputCorreo" class="form-label">Correo electrónico</label>
+          <input
+            type="email"
+            class="form-control"
+            id="inputCorreo"
+            [(ngModel)]="usuarioSeleccionado.correo"
+            name="correo"
+            readonly
+          />
+        </div>
+        <div class="mb-3">
+          <label for="inputNombre" class="form-label">Nombre de usuario</label>
+          <input
+            type="text"
+            class="form-control"
+            id="inputNombre"
+            [(ngModel)]="usuarioSeleccionado.nombreUsuario"
+            name="nombreUsuario"
+            readonly
+          />
+        </div>
+        <div class="mb-3">
+          <label for="selectRol" class="form-label">Rol</label>
+          <select
+            id="selectRol"
+            class="form-select"
+            [(ngModel)]="usuarioSeleccionado.idrol"
+            name="rol"
+            style="cursor: pointer;"
+          >
+            <option *ngFor="let rol of roles" [value]="rol.idrol">
+              {{ rol.descrol }}
+            </option>
+          </select>
+        </div>
+        <div class="form-check mb-3">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="inputHabilitado"
+            [(ngModel)]="usuarioSeleccionado.habilitado"
+            name="habilitado"
+            style="cursor: pointer;"
+          />
+          <label class="form-check-label" for="inputHabilitado"    style="cursor: pointer;">
+            Usuario habilitado
+          </label>
+        </div>
+      </div>
+        <div class="modal-footer">
+          <button
+          type="button" class="btn btn-danger"
+            data-bs-dismiss="modal"
+          >
+            Cancelar
+          </button>
+          <button type="button" 
+          class="btn btn-primary" (click)="editarUsuario()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional: Place to the bottom of scripts -->
+  <script>
+    const myModal = new bootstrap.Modal(
+      document.getElementById("modalId"),
+      options
+    );
+  </script>
+

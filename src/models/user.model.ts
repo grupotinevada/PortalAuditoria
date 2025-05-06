@@ -1,6 +1,6 @@
 export interface IUsuario {
   idusuario?: string;
-  nombreUsuario: string;
+  nombreUsuario: string | null;
   correo: string;
   habilitado: number | null;
   idrol: number;

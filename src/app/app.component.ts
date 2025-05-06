@@ -192,7 +192,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // se verifican los estados iniciales de autenticacion ( aun no guarda al usuario)
     this.checkInitialAuthState();
-
+    this.profile = this.userService.getProfile();
     this.msalBroadcastService.msalSubject$
       .pipe(
         filter(
@@ -275,7 +275,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const accounts = this.authService.instance.getAllAccounts();
     if (accounts.length > 0) {
       this.setLoginDisplay();
-      this.profile = this.userService.getProfile(); //obtiene el perfil de la session storage
+      this.profile = this.userService.getProfile(); 
       this.isLoading = false;
     } else {
       this.isLoading = false;

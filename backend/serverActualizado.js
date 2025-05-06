@@ -237,7 +237,7 @@ async function subirArchivoASharepoint(accessToken, idproceso, archivo, overwrit
       // 3. Verificar si carpeta ya existe
       const folderCheck = await axios.get(
         `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$filter=name eq '${carpetaNombre}'`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
   
       if (folderCheck.data.value.length > 0) throw new Error('La carpeta del proceso ya existe');
@@ -289,6 +289,7 @@ async function subirArchivoASharepoint(accessToken, idproceso, archivo, overwrit
 //#####################################################################################################################################
 //#####################################################################################################################################
 //#####################################################################################################################################
+
 async function eliminarCarpetaSharePoint(accessToken, idproceso) {
   const nombreCarpeta = `proceso_${idproceso}`;
   const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
@@ -333,53 +334,192 @@ async function eliminarCarpetaSharePoint(accessToken, idproceso) {
 //#####################################################################################################################################
 //#####################################################################################################################################
 //#####################################################################################################################################
-// Guardar o actualizar usuario autenticado
-app.post('/usuarios', async (req, res) => {
-    const { idusuario, nombreUsuario, correo, idrol, habilitado } = req.body;
 
-    if (!idusuario || !nombreUsuario || !correo || !idrol || !habilitado) {
-        logger.warn('[WARN] Datos incompletos en la solicitud', { body: req.body });
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+async function gestionarPermisoUsuarioEnSharePoint(accessToken, idproceso, emailResponsable) {
+  const nombreCarpeta = `proceso_${idproceso}`;
+  const DRIVE_NAME = process.env.DRIVE_NAME;
+  const SHAREPOINT_SITE_ID = process.env.SHAREPOINT_SITE_ID;
+
+  try {
+    // Paso 1: Obtener ID del drive por nombre
+    const driveResponse = await axios.get(`https://graph.microsoft.com/v1.0/sites/${SHAREPOINT_SITE_ID}/drives`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+
+    const drive = driveResponse.data.value.find(d => d.name === DRIVE_NAME);
+    if (!drive) throw new Error(`No se encontró el drive con nombre ${DRIVE_NAME}`);
+    console.log('PASO 1')
+    const driveId = drive.id;
+
+    // Paso 2: Buscar la carpeta directamente
+    const carpetaResponse = await axios.get(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombreCarpeta}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    console.log('PASO 2')
+    const carpetaId = carpetaResponse.data.id;
+
+    // Paso 3: Obtener permisos actuales
+    const permisosResponse = await axios.get(`https://graph.microsoft.com/v1.0/drives/${driveId}/items/${carpetaId}/permissions`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+
+    });
+    console.log('PASO 3')
+
+    const email = emailResponsable?.trim().toLowerCase();
+    const permisoUsuario = permisosResponse.data.value.find(p =>
+      p.grantedToV2?.user?.email?.toLowerCase() === email
+    );
+
+    // Paso 4A: Agregar permisos
+    if (emailResponsable) {
+      console.log('PASO 4')
+      if (!permisoUsuario) {
+        await axios.post(
+          `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${carpetaId}/invite`,
+          {
+            requireSignIn: true,
+            sendInvitation: false,
+            roles: ['write'],
+            recipients: [{ email }]
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        console.log(`[SharePoint] Permisos otorgados a ${email}`);
+        return { agregado: true, eliminado: false };
+      } else {
+        console.log(`[SharePoint] ${email} ya tiene permisos.`);
+        return { agregado: false, eliminado: false };
+      }
     }
+
+    // Paso 4B: Eliminar permisos si no hay responsable
+    if (!emailResponsable && permisoUsuario) {
+      await axios.delete(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${carpetaId}/permissions/${permisoUsuario.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
+      console.log(`[SharePoint] Permisos eliminados para ${permisoUsuario.grantedToV2.user.email}`);
+      return { agregado: false, eliminado: true };
+    }
+
+    return { agregado: false, eliminado: false };
+
+  } catch (error) {
+    console.error('[ERROR SharePoint] Error al gestionar permisos:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+
+
+
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+
+
+async function obtenerUsuarioDesdeToken(accessToken) {
+  try {
+    const response = await axios.get("https://graph.microsoft.com/v1.0/me", {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    const { displayName, mail, userPrincipalName, id } = response.data;
+    return {
+      nombre: displayName,
+      correo: mail || userPrincipalName,
+      id,
+    };
+  } catch (error) {
+    logger.error('[ERROR] No se pudo obtener la identidad del token', { error: error.response?.data || error.message });
+    return null;
+  }
+}
+
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+//#####################################################################################################################################
+
+
+// Guardar o actualizar usuario autenticado y asignar permiso en SharePoint
+app.post('/usuarios', async (req, res) => {
+  const { idusuario, nombreUsuario, correo, idrol, habilitado } = req.body;
+
+  const accessToken = req.headers.authorization?.replace('Bearer ', '');
+
+  const admin = await obtenerUsuarioDesdeToken(accessToken);
+  if (admin) {
+    logger.info(`[ADMIN] ${admin.correo} está intentando crear o actualizar al usuario ${correo}`);
+  }
+  if (!idusuario || !nombreUsuario || !correo || !idrol || !habilitado ) {
+    logger.warn('[WARN] Datos incompletos en la solicitud', { body: req.body });
+
+    return res.status(400).json({ error: 'Todos los campos y el token de autorización son obligatorios' });
+  }
+
+  try {
+    logger.info(`[INFO] Verificando si el usuario con correo ${correo} existe...`);
+
+    const sqlCheck = `SELECT idusuario FROM usuario WHERE correo = ?`;
+    const [results] = await db.promise().query(sqlCheck, [correo]);
+
+    if (results.length > 0) {
+      const storedIdUsuario = results[0].idusuario;
+      logger.info(`[INFO] Usuario encontrado con idusuario: ${storedIdUsuario}`);
+
+      if (storedIdUsuario === idusuario) {
+        logger.info('[INFO] Usuario ya registrado con el mismo idusuario. No se realizan cambios.');
+        return res.json({ message: 'Usuario ya registrado con el mismo idusuario, no se realizan cambios' });
+      }
+
+      logger.info(`[INFO] idusuario ha cambiado (antes: ${storedIdUsuario}, ahora: ${idusuario}). Actualizando...`);
+      const sqlUpdate = `UPDATE usuario SET idusuario = ? WHERE correo = ?`;
+      await db.promise().query(sqlUpdate, [idusuario, correo]);
+
+      logger.info('[SUCCESS] idusuario actualizado correctamente.');
+      return res.json({ message: 'idusuario actualizado correctamente' });
+    }
+
+    // Insertar nuevo usuario
+    logger.info('[INFO] Usuario no encontrado. Insertando nuevo usuario...');
+    const sqlInsert = `INSERT INTO usuario (idusuario, nombreUsuario, correo, idrol, habilitado) VALUES (?, ?, ?, ?, ?)`;
+    await db.promise().query(sqlInsert, [idusuario, nombreUsuario, correo, idrol, habilitado]);
+
+    // Otorgar permisos en SharePoint
+    const usuarioNuevo = { idusuario, email: correo };
 
     try {
-        logger.info(`[INFO] Verificando si el usuario con correo ${correo} existe...`);
-
-        // Verificar si el usuario ya existe por correo
-        const sqlCheck = `SELECT idusuario FROM usuario WHERE correo = ?`;
-        const [results] = await db.promise().query(sqlCheck, [correo]);
-
-        if (results.length > 0) {
-            const storedIdUsuario = results[0].idusuario;
-            logger.info(`[INFO] Usuario encontrado con idusuario: ${storedIdUsuario}`);
-
-            if (storedIdUsuario === idusuario) {
-                logger.info('[INFO] Usuario ya registrado con el mismo idusuario. No se realizan cambios.');
-                return res.json({ message: 'Usuario ya registrado con el mismo idusuario, no se realizan cambios' });
-            }
-
-            // Si el token ID (idusuario) ha cambiado, actualizarlo
-            logger.info(`[INFO] idusuario ha cambiado (antes: ${storedIdUsuario}, ahora: ${idusuario}). Actualizando...`);
-            const sqlUpdate = `UPDATE usuario SET idusuario = ? WHERE correo = ?`;
-            await db.promise().query(sqlUpdate, [idusuario, correo]);
-
-            logger.info('[SUCCESS] idusuario actualizado correctamente.');
-            return res.json({ message: 'idusuario actualizado correctamente' });
-        }
-
-        // Si el usuario no existe, insertarlo con habilitado = 1
-        logger.info('[INFO] Usuario no encontrado. Insertando nuevo usuario...');
-        const sqlInsert = `INSERT INTO usuario (idusuario, nombreUsuario, correo, idrol, habilitado) VALUES (?, ?, ?, ?, ?)`;
-        await db.promise().query(sqlInsert, [idusuario, nombreUsuario, correo, idrol, habilitado]);
-
-        logger.info('[SUCCESS] Usuario guardado con éxito.');
-        res.json({ message: 'Usuario guardado con éxito' });
-    } catch (error) {
-        logger.error('[ERROR] Error en el proceso', { error });
-        res.status(500).json({ error: 'Error en el servidor' });
+      const resultadoPermiso = await agregarUsuarioSharePoint(accessToken, usuarioNuevo, 'read');
+      logger.info('[SUCCESS] Permiso otorgado en SharePoint', resultadoPermiso);
+    } catch (errorPermiso) {
+      logger.error('[ERROR] Error al asignar permisos en SharePoint', { error: errorPermiso.message });
+      // No abortamos la operación general si falla esta parte
     }
+
+    logger.info('[SUCCESS] Usuario guardado con éxito.');
+    res.json({ message: 'Usuario guardado con éxito y permisos asignados en SharePoint' });
+
+  } catch (error) {
+    logger.error('[ERROR] Error en el proceso', { error });
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
 });
- //devolver mensaje de error si el usuario ya existe en la base de datos
+
+
  
  
  
@@ -517,14 +657,14 @@ app.get('/usuarios/filter', async (req, res) => {
   try {
     const sql = `
       SELECT * FROM usuario
-      WHERE correo NOT IN (?, ?, ?, ?, ?)
+      WHERE correo NOT IN (?, ?, ?, ?)
     `;
     const [results] = await db.promise().query(sql, [
       'maguilera@inevada.cl',
-      'aastorga@inevada.cl',
+
       'isalazar@inevada.cl',
       'soporte@inevada.cl',
-      'soporteti@inevada.cl',
+
       'tecnologia@inevada.cl'
     ]);
 
@@ -1135,7 +1275,6 @@ app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
   const archivos = req.files;
   const accessToken = req.headers.authorization?.split(' ')[1];
   const overwrite = req.query.overwrite === 'true';
-
   const revisorFinal = !revisor || revisor === 'null' ? null : revisor;
 
   // ---------- VALIDACIONES ----------
@@ -1184,14 +1323,20 @@ app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
       return res.status(404).json({ error: 'Proceso no encontrado para actualizar' });
     }
 
-    let archivosSubidos = [];
+    // ---------- GESTIONAR PERMISO RESPONSABLE ----------
+    try {
+      await gestionarPermisoUsuarioEnSharePoint(accessToken, idproceso, responsable);
+    } catch (permError) {
+      console.warn(`[SharePoint] No se pudo gestionar permisos para ${responsable}:`, permError.message);
+    }
 
     // ---------- SUBIR ARCHIVOS ----------
+    let archivosSubidos = [];
+
     if (archivos?.length) {
       for (const archivo of archivos) {
         const nombreArchivo = archivo.originalname;
 
-        // Verificar si ya existe en la base de datos
         const [existentes] = await db.promise().query(`
           SELECT * FROM archivo WHERE idproceso = ? AND nombrearchivo = ?
         `, [idproceso, nombreArchivo]);
@@ -1204,13 +1349,9 @@ app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
             });
           }
 
-          // Eliminar archivo en SharePoint
           await eliminarArchivoSharePoint(accessToken, idproceso, nombreArchivo);
-
-          // Subir nuevo archivo a SharePoint
           const nuevoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo, true);
 
-          // Actualizar ruta manteniendo el idarchivo existente
           await db.promise().query(`
             UPDATE archivo SET ruta = ?, nombrearchivo = ?
             WHERE idarchivo = ?
@@ -1218,10 +1359,8 @@ app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
 
           archivosSubidos.push(nuevoArchivo);
         } else {
-          // Subir nuevo archivo a SharePoint
           const nuevoArchivo = await subirArchivoASharepoint(accessToken, idproceso, archivo);
 
-          // Insertar nuevo registro en la base de datos
           await db.promise().query(`
             INSERT INTO archivo (idproceso, ruta, nombrearchivo)
             VALUES (?, ?, ?)
@@ -1242,6 +1381,7 @@ app.put('/proceso/:idproceso', upload2.array('archivos'), async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar proceso', detalle: err.message });
   }
 });
+
 
 const uploadArchivos = multer();
 

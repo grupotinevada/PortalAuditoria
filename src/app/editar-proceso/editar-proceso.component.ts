@@ -225,7 +225,7 @@ export class EditarProcesoComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.userService.obtenerUsuariosFiltrados().subscribe(
       (data) => {
-        const correosExcluidos = ['maguilera@inevada.cl', 'aastorga@inevada.cl', 'isalazar@inevada.cl', 'soporte@inevada.cl'];
+        const correosExcluidos = ['maguilera@inevada.cl', 'isalazar@inevada.cl', 'tecnologia@inevada.cl'];
         this.usuarios = data.filter((usuario: IUsuario) =>
           !correosExcluidos.includes(usuario.correo)
         );

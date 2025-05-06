@@ -1,7 +1,7 @@
 import { MsalService } from '@azure/msal-angular';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IUsuario } from '../models/user.model';
 import { IPais } from 'src/models/pais.model';
@@ -37,9 +37,14 @@ getProfile(): IUsuario | null {
 
 
   // Guardar usuario en la base de datos
-  guardarUsuario(usuario: IUsuario): Observable<IUsuario> {
-    return this.http.post<IUsuario>(`${this.apiUrl}/usuarios`,usuario);
+  guardarUsuario(usuario: IUsuario, accessToken: string): Observable<IUsuario> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${accessToken}`
+    });
+  
+    return this.http.post<IUsuario>(`${this.apiUrl}/usuarios`, usuario, { headers });
   }
+  
 
   obtenerPerfil(usuarioId: string, CorreoElectronico: string) {
 

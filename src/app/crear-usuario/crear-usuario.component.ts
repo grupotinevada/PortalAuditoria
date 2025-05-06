@@ -1,15 +1,19 @@
+/* eslint-disable no-var */
 /* eslint-disable @typescript-eslint/array-type */
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UserService } from 'src/services/user.service';
 import { IUsuario } from 'src/models/user.model';
-import { OnInit } from '@angular/core';
+import { AfterViewInit, OnInit } from '@angular/core';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProyectoEventoService } from 'src/services/proyecto-evento.service';
 import { SpinnerComponent } from '../spinner/spinner.component';
 import { FormsModule } from '@angular/forms';
-
+import Swal from 'sweetalert2';
+import { MsalService } from '@azure/msal-angular';
+import { environment } from 'src/environments/environment';
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-crear-usuario',
@@ -19,7 +23,7 @@ import { FormsModule } from '@angular/forms';
 })
 
 
-export class CrearUsuarioComponent implements OnInit{
+export class CrearUsuarioComponent implements OnInit, AfterViewInit {
   @Output() usuarioCreado = new EventEmitter<any>();
 
   filtroUsuario = '';
@@ -39,8 +43,7 @@ export class CrearUsuarioComponent implements OnInit{
   userDetails: any;
   roles: Array<{ idrol: number; descrol: string }> = [];
   
-  constructor(private modalService: ProyectoEventoService, private userService: UserService){}
-
+  constructor(private authService: MsalService, private modalService: ProyectoEventoService, private userService: UserService){}
 
 
 
@@ -55,6 +58,12 @@ export class CrearUsuarioComponent implements OnInit{
     );
   }
 
+  ngAfterViewInit() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
 
   async cargarUsuarios() {
     try {
@@ -90,6 +99,7 @@ export class CrearUsuarioComponent implements OnInit{
     if (this.userDetails) {
       // Actualizar el objeto usuario con los detalles seleccionados
       this.usuario = {
+        idusuario: this.userDetails.id || '',
         nombreUsuario: this.userDetails.displayName || '',
         correo: this.userDetails.mail || this.userDetails.userPrincipalName || '',
         idrol: this.usuario.idrol, // Valor por defecto, puede ser ajustado según la lógica de negocio
@@ -107,6 +117,7 @@ export class CrearUsuarioComponent implements OnInit{
     
     // Resetear el objeto usuario
     this.usuario = {
+      idusuario: '',
       nombreUsuario: '',
       correo: '',
       descrol: '',
@@ -131,34 +142,52 @@ export class CrearUsuarioComponent implements OnInit{
   
   async guardarUsuario() {
     this.submitted = true;
-    
-    // Validar que se haya seleccionado un usuario
+  
     if (!this.selectedUserId || !this.userDetails) {
-      console.error('Debe seleccionar un usuario válido');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Usuario no válido',
+        text: 'Debe seleccionar un usuario válido antes de guardar.',
+      });
       return;
     }
-    
-    try {
-      this.isLoading = true;
-      
-      // Aquí deberías tener la lógica para guardar el usuario en tu backend
-      // Por ejemplo:
-      // await this.userService.createUser(this.usuario);
-      
-      console.log('Guardando usuario:', this.usuario);
-      
-      // Emitir evento para el componente padre
-      this.usuarioCreado.emit(this.usuario);
-      this.modalService.notificarUsuarioCreado();
-      
-      // Cerrar modal
-      this.cerrarModal();
-    } catch (error) {
-      console.error('Error al guardar el usuario:', error);
-    } finally {
-      this.isLoading = false;
-    }
+  
+    this.isLoading = true;
+  
+    this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe({
+      next: (result) => {
+        const accessToken = result.accessToken;
+        console.log('idusuario:', this.selectedUserId, 'nombre usuario', this.userDetails.nombre);
+       
+  
+        console.log('Guardando usuario:', this.usuario);
+  
+        this.userService.guardarUsuario(this.usuario, accessToken).subscribe({
+          next: (res) => {
+            console.log('Usuario guardado exitosamente', res);
+            Swal.fire('Éxito', 'Usuario creado satisfactoriamente', 'success').then(() => {
+              this.cerrarModal();
+              this.usuarioCreado.emit(this.usuario);
+              this.modalService.notificarUsuarioCreado();
+            });
+          },
+          error: (error) => {
+            console.error('Error al guardar el usuario:', error);
+            Swal.fire('Error', 'No se pudo guardar el usuario. Intente nuevamente.', 'error');
+            this.isLoading = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error al obtener el token:', err);
+        Swal.fire('Error', 'No se pudo obtener el token de acceso.', 'error');
+        this.isLoading = false;
+      }
+    });
   }
+  
+
+
   obtenerRoles() {
     this.userService.obtenerRoles().subscribe({
       next: (roles) => {

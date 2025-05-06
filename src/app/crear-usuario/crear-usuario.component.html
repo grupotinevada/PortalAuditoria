@@ -15,15 +15,30 @@
       <!-- Encabezado -->
       <div class="modal-header d-flex justify-content-between align-items-center flex-wrap">
         <div class="d-flex flex-column">
-          <h5 class="modal-title mb-0">Crear Nuevo Usuario</h5>
+          <h5 class="modal-title mb-0">
+            Crear Nuevo Usuario
+            <span
+              tabindex="0"
+              class="ms-2 text-primary"
+              data-bs-toggle="tooltip"
+              data-bs-placement="right"
+              title="Este usuario debe agregarse también en Azure > Aplicaciones empresariales > Login Portal Auditoría > Usuarios y grupos"
+              style="cursor: help;"
+            >
+              <i class="bi bi-question-circle-fill"></i>
+            </span>
+          </h5>
+      
+
           <small class="text-danger" *ngIf="submitted && !selectedUserId">Debe seleccionar un usuario</small>
         </div>
         <button type="button" class="btn-close ms-2" (click)="cerrarModal()" aria-label="Close"></button>
       </div>
+      
 
       <!-- Cuerpo -->
       <div class="modal-body">
-        <label for="filtroUsuario" class="form-label">Buscar usuario del tenant</label>
+        <label for="filtroUsuario" class="form-label">Buscar usuario</label>
         <div class="input-group mb-2">
           <span class="input-group-text">🔍</span>
           <input 

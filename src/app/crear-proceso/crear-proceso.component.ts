@@ -176,7 +176,7 @@ export class CrearProcesoComponent implements OnInit{
       // Obtener accessToken
       this.authService.acquireTokenSilent({ scopes: environment.apiConfig.scopes }).subscribe((result) => {
         const accessToken = result.accessToken;
-        console.log('Access Token:', accessToken);
+
   
         // Armar FormData
         const formData = new FormData();
